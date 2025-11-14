@@ -54,7 +54,7 @@ export default function LoginPage() {
           </Button>
           <div className="text-center text-sm">
             <span className="text-muted-foreground">Não tem uma conta? </span>
-            <Link href="/register" className="font-medium text-[#151928] hover:underline">
+            <Link href="/registro" className="font-medium text-[#151928] hover:underline">
               Crie sua conta
             </Link>
           </div>

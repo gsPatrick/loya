@@ -36,7 +36,6 @@ import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
-    TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import api from "@/services/api";

@@ -1,0 +1,205 @@
+.headerWrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 50;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Inicialmente transparente */
+    background: transparent;
+    border-bottom: 1px solid transparent;
+}
+
+/* Estado Scrolled (Efeito Vidro) */
+.scrolled {
+    /* Fundo Branco com alta transparência */
+    background: rgba(255, 255, 255, 0.6);
+
+    /* O Desfoque Mágico do Vidro */
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+
+    /* Borda sutil para definir o vidro */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+
+    /* Sombra suave */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+}
+
+.navContainer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Logo */
+.logo {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: #0F172A;
+    letter-spacing: -0.03em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+}
+
+/* Links */
+.navLinks {
+    display: none;
+    gap: 2.5rem;
+    padding: 0.5rem 1.5rem;
+    border-radius: 99px;
+    /* Fundo sutil nos links para legibilidade no vidro */
+    background: rgba(255, 255, 255, 0.0);
+    transition: background 0.3s;
+}
+
+/* Quando scrollado, podemos dar um destaque extra nos links se quiser */
+.scrolled .navLinks {
+    background: rgba(255, 255, 255, 0.0);
+}
+
+.link {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.link:hover {
+    color: #0EA5A4;
+    /* Teal */
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Transição de Saída (Overlay) */
+.transitionOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* ... (Mantenha o CSS anterior do Header/Nav) ... */
+
+.headerWrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 50;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Inicialmente transparente */
+    background: transparent;
+    border-bottom: 1px solid transparent;
+}
+
+/* Estado Scrolled (Efeito Vidro) */
+.scrolled {
+    /* Fundo Branco com alta transparência */
+    background: rgba(255, 255, 255, 0.6);
+
+    /* O Desfoque Mágico do Vidro */
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+
+    /* Borda sutil para definir o vidro */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+
+    /* Sombra suave */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+}
+
+.navContainer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Logo */
+.logo {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: #0F172A;
+    letter-spacing: -0.03em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+}
+
+/* Links */
+.navLinks {
+    display: none;
+    gap: 2.5rem;
+    padding: 0.5rem 1.5rem;
+    border-radius: 99px;
+    /* Fundo sutil nos links para legibilidade no vidro */
+    background: rgba(255, 255, 255, 0.0);
+    transition: background 0.3s;
+}
+
+/* Quando scrollado, podemos dar um destaque extra nos links se quiser */
+.scrolled .navLinks {
+    background: rgba(255, 255, 255, 0.0);
+}
+
+.link {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.link:hover {
+    color: #0EA5A4;
+    /* Teal */
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Transição de Saída (Overlay) */
+.transitionOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+
+
+@media (min-width: 768px) {
+    .navLinks {
+        display: flex;
+    }
+}

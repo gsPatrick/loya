@@ -1,0 +1,222 @@
+/* src/componentsLP/HowItWorks/HowItWorks.module.css */
+
+.section {
+    padding: 6rem 1.5rem;
+    background-color: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Background suave */
+.blobBackground {
+    position: absolute;
+    width: 900px;
+    height: 900px;
+    background: radial-gradient(circle, rgba(14, 165, 164, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+}
+
+/* --- HEADER --- */
+.header {
+    text-align: center;
+    max-width: 750px;
+    margin: 0 auto 4rem auto;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #F0FDFA;
+    color: #0F766E;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid #CCFBF1;
+}
+
+.title {
+    font-family: 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.titleHighlight {
+    background: linear-gradient(120deg, #0EA5A4 0%, #2DD4BF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    color: #64748B;
+    line-height: 1.6;
+}
+
+/* --- BENTO GRID COLORIDO --- */
+.bentoGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+}
+
+/* Card Base */
+.bentoCard {
+    border-radius: 1.5rem;
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid transparent;
+}
+
+.bentoCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+}
+
+/* Conteúdo do Card */
+.cardHeader {
+    position: relative;
+    z-index: 2;
+}
+
+.iconWrapper {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.cardTitle {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    color: white;
+    line-height: 1.2;
+}
+
+.cardText {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+/* --- VARIAÇÕES DE CORES (GRADIENTES VIBRANTES) --- */
+
+/* 1. Teal/Verde (PDV) */
+.cardTeal {
+    background: linear-gradient(135deg, #0F766E 0%, #0EA5A4 100%);
+    box-shadow: 0 10px 20px -5px rgba(14, 165, 164, 0.3);
+}
+
+/* 2. Roxo (Consignação) */
+.cardPurple {
+    background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+    box-shadow: 0 10px 20px -5px rgba(124, 58, 237, 0.3);
+}
+
+/* 3. Azul (Estoque) */
+.cardBlue {
+    background: linear-gradient(135deg, #2563EB 0%, #60A5FA 100%);
+    box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.3);
+}
+
+/* 4. Dark (Financeiro) */
+.cardDark {
+    background: linear-gradient(135deg, #0F172A 0%, #334155 100%);
+    box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
+}
+
+/* 5. Laranja (Precificação/Apps) */
+.cardOrange {
+    background: linear-gradient(135deg, #EA580C 0%, #F97316 100%);
+    box-shadow: 0 10px 20px -5px rgba(234, 88, 12, 0.3);
+}
+
+/* Elementos decorativos de fundo (Círculos sutis) */
+.decorCircle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.cardTeal .decorCircle {
+    width: 200px;
+    height: 200px;
+    top: -50px;
+    right: -50px;
+}
+
+.cardPurple .decorCircle {
+    width: 150px;
+    height: 150px;
+    bottom: -30px;
+    right: -30px;
+}
+
+.cardDark .decorCircle {
+    width: 300px;
+    height: 300px;
+    top: -100px;
+    left: -50px;
+    opacity: 0.05;
+}
+
+/* Grid Layout */
+@media (min-width: 768px) {
+    .title {
+        font-size: 3.5rem;
+    }
+
+    .bentoGrid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto auto;
+    }
+
+    .span2 {
+        grid-column: span 2;
+    }
+
+    .span1 {
+        grid-column: span 1;
+    }
+
+    .span3 {
+        grid-column: span 3;
+    }
+}

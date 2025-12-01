@@ -1,0 +1,117 @@
+.section {
+    padding: 6rem 1.5rem;
+    background-color: #0F172A;
+    /* Slate 900 - Dark */
+    color: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Background Effect (Aurora) */
+.aurora {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(14, 165, 164, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
+    top: -20%;
+    right: -10%;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.textContent {
+    max-width: 500px;
+}
+
+.label {
+    color: #2DD4BF;
+    /* Teal-400 */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.875rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.title {
+    font-family: 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    color: #F8FAFC;
+}
+
+.description {
+    font-size: 1.125rem;
+    color: #94A3B8;
+    /* Slate-400 */
+    line-height: 1.6;
+}
+
+/* Grid de Números */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+}
+
+.statCard {
+    background: rgba(30, 41, 59, 0.5);
+    /* Slate-800 com alpha */
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    padding: 2rem;
+    border-radius: 1.5rem;
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease;
+}
+
+.statCard:hover {
+    border-color: #0EA5A4;
+    transform: translateY(-5px);
+}
+
+.statValue {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #FFFFFF;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.statLabel {
+    font-size: 0.875rem;
+    color: #94A3B8;
+    font-weight: 500;
+}
+
+.icon {
+    color: #0EA5A4;
+    margin-bottom: 1rem;
+}
+
+/* Responsivo */
+@media (min-width: 1024px) {
+    .grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .title {
+        font-size: 3rem;
+    }
+}

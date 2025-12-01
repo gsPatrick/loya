@@ -1,0 +1,174 @@
+/* src/componentsLP/Testimonials/Testimonials.module.css */
+
+.section {
+    padding: 6rem 0;
+    /* Sem padding lateral para ir de ponta a ponta */
+    background-color: #F8FAFC;
+    position: relative;
+    overflow: hidden;
+}
+
+.header {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 4rem auto;
+    padding: 0 1.5rem;
+}
+
+.title {
+    font-family: 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    color: #64748B;
+    line-height: 1.6;
+}
+
+/* --- MARQUEE CONTAINER --- */
+.marqueeContainer {
+    display: flex;
+    overflow: hidden;
+    user-select: none;
+    /* Máscara de gradiente para suavizar as bordas laterais */
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    width: 100%;
+}
+
+.track {
+    display: flex;
+    align-items: stretch;
+    gap: 2rem;
+    /* Espaço entre os cards */
+    padding-right: 2rem;
+    /* Espaço extra no final para conectar com o próximo track */
+
+    /* A mágica para não sobrepor: */
+    width: max-content;
+    flex-shrink: 0;
+
+    animation: scroll 80s linear infinite;
+    /* Mais lento para leitura confortável */
+}
+
+/* Animação Contínua */
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* --- CARD DE DEPOIMENTO --- */
+.card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 1.5rem;
+    padding: 2rem;
+
+    /* Tamanho Fixo e proibição de encolher */
+    width: 400px;
+    min-width: 400px;
+    flex-shrink: 0;
+
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    margin-top: 30px
+}
+
+.card:hover {
+    border-color: #0EA5A4;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px -5px rgba(14, 165, 164, 0.1);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.avatar {
+    width: 3rem;
+    height: 3rem;
+    background-color: #F0FDFA;
+    /* Teal-50 */
+    color: #0F766E;
+    /* Teal-700 */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+.authorInfo {
+    flex: 1;
+    overflow: hidden;
+}
+
+.authorInfo h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.authorInfo span {
+    font-size: 0.875rem;
+    color: #64748B;
+    display: block;
+}
+
+.quoteIcon {
+    color: #CCFBF1;
+    /* Teal bem claro */
+    flex-shrink: 0;
+}
+
+.quote {
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.6;
+    font-style: italic;
+    /* Limitar linhas para manter altura uniforme */
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Pausar animação no hover para leitura */
+.marqueeContainer:hover .track {
+    animation-play-state: paused;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .title {
+        font-size: 2rem;
+    }
+
+    .card {
+        width: 320px;
+        min-width: 320px;
+        padding: 1.5rem;
+    }
+}

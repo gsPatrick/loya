@@ -1,0 +1,210 @@
+/* src/componentsLP/Footer/Footer.module.css */
+
+.footerWrapper {
+    padding: 0 1.5rem 2rem 1.5rem;
+    background-color: #F8FAFC;
+    margin-top: -2rem;
+    position: relative;
+    z-index: 20;
+}
+
+/* Footer Flutuante */
+.floatingFooter {
+    background: linear-gradient(145deg, #0F172A 0%, #1E293B 100%);
+    border-radius: 2.5rem;
+    padding: 4rem 3rem 2rem 3rem;
+    color: #F8FAFC;
+    max-width: 1280px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Grid Bipartido */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    margin-bottom: 4rem;
+    position: relative;
+    z-index: 10;
+}
+
+/* Coluna Marca */
+.brandColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 400px;
+}
+
+.logo {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 1.75rem;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tagline {
+    color: #94A3B8;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.contactInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #CBD5E1;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    width: fit-content;
+}
+
+/* Coluna Navegação (Agora alinhada) */
+.linksColumn h4 {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
+.linksList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.linkItem a {
+    color: #94A3B8;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.linkItem a:hover {
+    color: #0EA5A4;
+    transform: translateX(5px);
+}
+
+/* Barra Inferior */
+.bottomBar {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #64748B;
+}
+
+/* Crédito Dev */
+.devCredit {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #64748B;
+}
+
+.devLink {
+    position: relative;
+    font-weight: 600;
+    text-decoration: none;
+    color: #94A3B8;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.devLink:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(14, 165, 164, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(14, 165, 164, 0.15);
+}
+
+.devName {
+    background: linear-gradient(90deg, #94A3B8, #CBD5E1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: all 0.3s ease;
+}
+
+.devLink:hover .devName {
+    background: linear-gradient(90deg, #0EA5A4, #38BDF8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+.codeIcon {
+    width: 1rem;
+    height: 1rem;
+    color: #64748B;
+    transition: all 0.3s ease;
+}
+
+.devLink:hover .codeIcon {
+    color: #0EA5A4;
+    transform: rotate(-15deg) scale(1.1);
+}
+
+/* Fundo Decorativo */
+.bgDecoration {
+    position: absolute;
+    top: -150px;
+    right: -150px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(14, 165, 164, 0.1) 0%, rgba(15, 23, 42, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Responsivo */
+@media (min-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr 1fr;
+        /* Divisão meio a meio */
+    }
+
+    /* Alinhar Links à direita no desktop */
+    .linksColumn {
+        justify-self: end;
+        text-align: right;
+    }
+
+    /* Reverter o hover do link para ir para esquerda se estiver alinhado a direita */
+    .linksColumn .linkItem a:hover {
+        transform: translateX(-5px);
+    }
+
+    .bottomBar {
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+    }
+}

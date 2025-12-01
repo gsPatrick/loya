@@ -1,100 +1,402 @@
-// src/app/(dashboard)/page.js
+// src/app/dashboard/page.js
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card";
+import {
+  PlusCircle,
+  Clock,
+  Store,
+  CheckCircle2,
+  RotateCcw,
+  TrendingUp,
+  TrendingDown,
+  ArrowUp,
+  AlertCircle,
+  Package,
+  Users,
+  Truck
+} from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  AreaChart,
+  Area
+} from 'recharts';
 
-// Importação de Componentes
-import Header from "@/components/dashboard/Header";
-import StatCard from "@/components/dashboard/StatCard";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from '@/components/ui/skeleton';
-import { FileClock, FileCheck2, Files } from "lucide-react"; // Ícones mais representativos
+import { useState, useEffect } from "react";
+import api from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
+import { EmptyChartPlaceholder } from "@/components/ui/empty-chart-placeholder";
 
 export default function DashboardPage() {
-  // Obtém o usuário e o status de carregamento do AuthContext
-  const { user, loading: authLoading } = useAuth();
-  
-  // Estado para armazenar as estatísticas dos documentos
-  const [stats, setStats] = useState({
-    pending: 0,
-    signed: 0,
-    total: 0,
-  });
-  // Estado para o carregamento das estatísticas
-  const [statsLoading, setStatsLoading] = useState(true);
+  const { toast } = useToast();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Efeito para buscar as estatísticas da API quando o usuário for autenticado
   useEffect(() => {
-    if (user) { // Garante que só busca os dados se o usuário estiver logado
-      const fetchStats = async () => {
-        setStatsLoading(true);
-        try {
-          const { data } = await api.get('/documents/stats');
-          setStats(data);
-        } catch (error) {
-          console.error("Erro ao buscar estatísticas:", error);
-          // Opcional: Adicionar um estado de erro para exibir na UI
-        } finally {
-          setStatsLoading(false);
-        }
-      };
-      fetchStats();
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const response = await api.get('/dashboard/resumo');
+      setData(response.data);
+    } catch (error) {
+      console.error("Erro ao carregar dashboard:", error);
+      toast({ title: "Erro", description: "Erro ao carregar dados do dashboard.", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-  }, [user]); // Roda sempre que o objeto 'user' mudar
+  };
 
-  // Exibe um esqueleto da página inteira enquanto o usuário está sendo autenticado
-  if (authLoading) {
-    return (
-      <div className="flex-1 p-6 space-y-6">
-        <Skeleton className="h-10 w-1/4" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="p-10">Carregando...</div>;
+  if (!data) return <div className="p-10">Erro ao carregar dados.</div>;
 
-  const userName = user?.name || "Usuário";
-  const headerLeftContent = <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>;
+  const { kpis, vendas7Dias, vendasMes, resumo } = data;
 
   return (
-    <>
-      <Header
-        leftContent={headerLeftContent}
-        actionButtonText="Enviar Documento"
-        onActionButtonClick={() => console.log("Botão 'Enviar Documento' do Header clicado!")}
-      />
+    <div className="space-y-6 animate-in fade-in duration-500">
 
-      <main className="flex-1 p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800">Olá, {userName}</h2>
-            <p className="text-sm text-muted-foreground mt-1">Bem-vindo(a) de volta!</p>
-          </div>
-          <Button className="bg-[#1c4ed8] hover:bg-[#1c4ed8]/90 text-white font-semibold rounded-lg">
-            Alterar plano
-          </Button>
-        </div>
+      {/* --- 1. CABEÇALHO DO PAINEL --- */}
+      <div className="flex flex-col space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Painel de Controle</h1>
+        <p className="text-sm text-muted-foreground">Visão geral da sua loja e movimentações.</p>
+      </div>
 
-        {/* Grid de Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <StatCard title="Total de Documentos" icon={Files}>
-            {statsLoading ? <Skeleton className="h-12 w-20 mt-2" /> : <p className="text-5xl font-bold text-gray-800 mt-2">{stats.total}</p>}
-          </StatCard>
-          
-          <StatCard title="Aguardando Assinatura" icon={FileClock}>
-            {statsLoading ? <Skeleton className="h-12 w-20 mt-2" /> : <p className="text-5xl font-bold text-gray-800 mt-2">{stats.pending}</p>}
-          </StatCard>
-          
-          <StatCard title="Finalizados" icon={FileCheck2}>
-            {statsLoading ? <Skeleton className="h-12 w-20 mt-2" /> : <p className="text-5xl font-bold text-gray-800 mt-2">{stats.signed}</p>}
-          </StatCard>
-        </div>
-      </main>
-    </>
+      {/* --- 2. CARDS DE STATUS (Topo Colorido) --- */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Card Azul - Novas */}
+        <Card className="bg-primary text-primary-foreground border-none shadow-md relative overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+                <PlusCircle className="h-4 w-4" /> NOVAS
+              </CardTitle>
+              <PlusCircle className="h-5 w-5 opacity-50" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">{kpis.novas || 0}</div>
+            <p className="text-xs opacity-80 mt-2">{kpis.novas30d || 0} nos últimos 30 dias</p>
+            <p className="text-xs opacity-80">{kpis.novasOntem || 0} ontem</p>
+          </CardContent>
+        </Card>
+
+        {/* Card Amarelo - Em Autorização */}
+        <Card className="bg-yellow-500 text-white border-none shadow-md">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+                <Clock className="h-4 w-4" /> EM AUTORIZAÇÃO
+              </CardTitle>
+              <Clock className="h-5 w-5 opacity-50" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">{kpis.emAutorizacao || 0}</div>
+            <p className="text-xs opacity-80 mt-2">Aguardando revisão</p>
+            <p className="text-xs opacity-80">{kpis.autorizadasOntem || 0} autorizadas ontem</p>
+          </CardContent>
+        </Card>
+
+        {/* Card Verde - À Venda */}
+        <Card className="bg-green-600 text-white border-none shadow-md">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+                <Store className="h-4 w-4" /> À VENDA
+              </CardTitle>
+              <Store className="h-5 w-5 opacity-50" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">{kpis.aVenda || 0}</div>
+            <p className="text-xs opacity-80 mt-2">Itens disponíveis no estoque</p>
+            <p className="text-xs opacity-80">{kpis.aVendaOntem || 0} colocadas à venda ontem</p>
+          </CardContent>
+        </Card>
+
+        {/* Card Preto/Cinza - Vendidas */}
+        <Card className="bg-zinc-800 text-white border-none shadow-md">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" /> VENDIDAS (30d)
+              </CardTitle>
+              <CheckCircle2 className="h-5 w-5 opacity-50" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-2">
+              <div className="text-4xl font-bold">{kpis.vendidas30d || 0}</div>
+              <span className="mb-1 text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded flex items-center">
+                <ArrowUp className="h-3 w-3 mr-0.5" /> {kpis.vendidas30d || 0}
+              </span>
+            </div>
+            <p className="text-xs opacity-80 mt-2">Total de vendas no período</p>
+            <p className="text-xs opacity-80">100,00% vs ano anterior</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* --- 3. SEÇÃO PRINCIPAL (Gráfico + Resumo) --- */}
+      <div className="grid gap-6 md:grid-cols-12">
+
+        {/* Gráfico de Barras (Esquerda - Ocupa 8 colunas) */}
+        <Card className="md:col-span-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Vendas dos Últimos 7 dias</CardTitle>
+                <CardDescription className="text-pink-600 font-medium">
+                  (abatidos os descontos e fretes)
+                </CardDescription>
+              </div>
+              <RotateCcw className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent className="pl-0">
+            <div className="h-[350px] w-full">
+              {vendas7Dias && vendas7Dias.length > 0 && vendas7Dias.some(d => d.vendas > 0) ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={vendas7Dias}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#888888"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      stroke="#888888"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `R$${value}`}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'transparent' }}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    />
+                    <Bar dataKey="vendas" fill="var(--color-primary)" radius={[4, 4, 0, 0]} barSize={50} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyChartPlaceholder height="100%" message="Sem vendas nos últimos 7 dias" />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Resumo Geral (Direita - Ocupa 4 colunas) */}
+        <Card className="md:col-span-4 h-full">
+          <CardHeader>
+            <CardTitle className="text-lg text-purple-600">Resumo Geral</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+
+            {/* Item Resumo */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-100 p-2 rounded-full text-purple-600">
+                  <Package className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Estoque Total</p>
+                  <p className="text-[10px] text-muted-foreground max-w-[120px] leading-tight">
+                    Inclui: Novas, Em Autorização, À Venda...
+                  </p>
+                </div>
+              </div>
+              <span className="font-bold text-lg">{resumo.estoqueTotal || 0}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary/10 p-2 rounded-full text-primary">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Valor do Estoque</p>
+                  <p className="text-[10px] text-muted-foreground">Valor total em R$</p>
+                </div>
+              </div>
+              <span className="font-bold text-lg">R$ {(resumo.valorEstoque || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-green-100 p-2 rounded-full text-green-600">
+                  <Store className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Vendas (12 meses)</p>
+                  <p className="text-[10px] text-muted-foreground">Faturamento dos últimos 12 meses</p>
+                </div>
+              </div>
+              <span className="font-bold text-lg">R$ {(resumo.vendas12m || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-red-100 p-2 rounded-full text-red-600">
+                  <TrendingDown className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Saídas (12 meses)</p>
+                  <p className="text-[10px] text-muted-foreground">Despesas e pagamentos</p>
+                </div>
+              </div>
+              <span className="font-bold text-lg">R$ {(resumo.saidas12m || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-yellow-100 p-2 rounded-full text-yellow-600">
+                  <BanknoteIcon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Repasses (12 meses)</p>
+                  <p className="text-[10px] text-muted-foreground">Pagamentos a fornecedores</p>
+                </div>
+              </div>
+              <span className="font-bold text-lg">R$ {(resumo.repasses12m || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-100 p-2 rounded-full text-orange-600">
+                  <Truck className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Fornecedores</p>
+                  <p className="text-[10px] text-muted-foreground">Cadastrados</p>
+                </div>
+              </div>
+              <span className="font-bold text-lg">{resumo.fornecedores || 0}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary/10 p-2 rounded-full text-primary">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Clientes</p>
+                  <p className="text-[10px] text-muted-foreground">Cadastrados</p>
+                </div>
+              </div>
+              <span className="font-bold text-lg">{resumo.clientes || 0}</span>
+            </div>
+
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* --- 4. SEÇÃO INFERIOR (Gráfico Curvo + Notificações) --- */}
+      <div className="grid gap-6 md:grid-cols-12">
+
+        {/* Gráfico de Evolução (Curvo) */}
+        <Card className="md:col-span-8">
+          <CardHeader>
+            <CardTitle>Quantidade de Peças Vendidas por mês</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              {vendasMes && vendasMes.length > 0 && vendasMes.some(d => d.vendas > 0) ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={vendasMes}>
+                    <defs>
+                      <linearGradient id="colorVendas" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tickMargin={10} />
+                    <YAxis axisLine={false} tickLine={false} />
+                    <Tooltip />
+                    <Area
+                      type="monotone"
+                      dataKey="vendas"
+                      stroke="var(--color-primary)"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorVendas)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyChartPlaceholder height="100%" message="Sem histórico de vendas mensal" />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notificações */}
+        <Card className="md:col-span-4">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle>Últimas Notificações</CardTitle>
+            <span className="text-xs text-purple-600 cursor-pointer hover:underline">Ver tudo</span>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {(data.notificacoes || []).map((notif, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="min-w-[60px] text-xs font-medium text-muted-foreground text-right">
+                    {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="relative mt-1">
+                      <div className="absolute top-0 left-[3px] h-full w-[2px] bg-muted -z-10" />
+                      <div className={`h-2 w-2 rounded-full border-2 bg-background ${notif.tipo === 'ALERTA' ? 'border-yellow-500' : 'border-primary'}`} />
+                    </div>
+                    <p className="text-xs text-purple-700 font-medium leading-snug">
+                      {notif.mensagem}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
+}
+
+// Icon helper para o ícone de dinheiro que faltou no import acima
+function BanknoteIcon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="20" height="12" x="2" y="6" rx="2" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M6 12h.01M18 12h.01" />
+    </svg>
+  )
 }

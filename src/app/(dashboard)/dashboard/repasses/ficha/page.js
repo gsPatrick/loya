@@ -1,7 +1,7 @@
 // src/app/dashboard/repasses/ficha/page.js
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Search,
     Calendar as CalendarIcon,

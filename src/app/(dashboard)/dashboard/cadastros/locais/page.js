@@ -26,6 +26,7 @@ export default function InclusaoLocaisPage() {
 
     useEffect(() => {
         loadItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadItems = () => {

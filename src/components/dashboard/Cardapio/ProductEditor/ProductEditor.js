@@ -18,7 +18,7 @@ import {
 
 export default function ProductEditor({ product }) {
   const isEditing = !!product;
-  
+
   // Estado local para variações
   const [variations, setVariations] = useState(product?.variations || [{ id: 'var1', name: '', price: '' }]);
   const [associatedModifiers, setAssociatedModifiers] = useState(product?.modifiers || []);
@@ -30,11 +30,11 @@ export default function ProductEditor({ product }) {
   const handleRemoveVariation = (id) => {
     setVariations(variations.filter(v => v.id !== id));
   };
-  
+
   const handleSelectModifierGroup = (group) => {
-     if (!associatedModifiers.find(m => m.id === group.id)) {
-        setAssociatedModifiers([...associatedModifiers, group]);
-     }
+    if (!associatedModifiers.find(m => m.id === group.id)) {
+      setAssociatedModifiers([...associatedModifiers, group]);
+    }
   };
 
   return (
@@ -45,7 +45,7 @@ export default function ProductEditor({ product }) {
           Preencha os detalhes, variações e adicionais do produto.
         </SheetDescription>
       </SheetHeader>
-      
+
       <div className="flex flex-col gap-8">
         {/* Informações Básicas */}
         <Card>
@@ -98,11 +98,11 @@ export default function ProductEditor({ product }) {
           <CardHeader>
             <CardTitle>Grupos de Adicionais</CardTitle>
             <CardDescription>
-              Associe grupos de modificadores a este produto (Ex: "Ponto da Carne", "Molhos Extras").
+              Associe grupos de modificadores a este produto (Ex: &quot;Ponto da Carne&quot;, &quot;Molhos Extras&quot;).
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <div className="space-y-2 mb-4">
+            <div className="space-y-2 mb-4">
               {associatedModifiers.map(group => (
                 <div key={group.id} className="flex items-center justify-between p-2 bg-secondary rounded-md">
                   <span className="font-medium">{group.name}</span>
@@ -115,8 +115,8 @@ export default function ProductEditor({ product }) {
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full">
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Associar Grupo de Adicionais
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Associar Grupo de Adicionais
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">

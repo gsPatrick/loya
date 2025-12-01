@@ -333,7 +333,7 @@ export default function MarcasVendidasPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                                        Nenhuma marca encontrada com o termo "{searchTerm}"
+                                        Nenhuma marca encontrada com o termo &quot;{searchTerm}&quot;
                                     </TableCell>
                                 </TableRow>
                             )}

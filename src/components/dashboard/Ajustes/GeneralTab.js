@@ -40,7 +40,7 @@ export default function GeneralTab() {
           <Label>Funcionalidades Adicionais</Label>
           <p className="text-sm text-muted-foreground mb-4">Ative ou desative botões e funções específicas no tablet.</p>
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-3"><Label htmlFor="feat-valet">Ativar botão "Chamar Vallet"</Label><Switch id="feat-valet" /></div>
+            <div className="flex items-center justify-between rounded-lg border p-3"><Label htmlFor="feat-valet">Ativar botão &quot;Chamar Vallet&quot;</Label><Switch id="feat-valet" /></div>
             <div className="flex items-center justify-between rounded-lg border p-3"><Label htmlFor="feat-tip">Ativar opção de Gorjeta no pagamento</Label><Switch id="feat-tip" defaultChecked /></div>
           </div>
         </div>

@@ -74,7 +74,7 @@ export default function Testimonials() {
                                 </div>
                                 <Quote className={`w-6 h-6 ${styles.quoteIcon}`} fill="currentColor" />
                             </div>
-                            <p className={styles.quote}>"{t.text}"</p>
+                            <p className={styles.quote}>&quot;{t.text}&quot;</p>
                         </div>
                     ))}
                 </div>
@@ -93,7 +93,7 @@ export default function Testimonials() {
                                 </div>
                                 <Quote className={`w-6 h-6 ${styles.quoteIcon}`} fill="currentColor" />
                             </div>
-                            <p className={styles.quote}>"{t.text}"</p>
+                            <p className={styles.quote}>&quot;{t.text}&quot;</p>
                         </div>
                     ))}
                 </div>

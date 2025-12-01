@@ -265,7 +265,7 @@ export default function RevisaoPedidosPage() {
                                         <div className="space-y-1">
                                             <p className="text-xs font-bold text-yellow-700">Atenção ao Estornar</p>
                                             <p className="text-[10px] text-yellow-600 leading-tight">
-                                                Ao estornar, o valor será debitado do caixa do dia e as peças voltarão para "À Venda".
+                                                Ao estornar, o valor será debitado do caixa do dia e as peças voltarão para &quot;À Venda&quot;.
                                             </p>
                                         </div>
                                     </div>

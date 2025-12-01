@@ -20,17 +20,17 @@ export default function AboutTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Conteúdo "Sobre"</CardTitle>
+        <CardTitle>Conteúdo &quot;Sobre&quot;</CardTitle>
         <CardDescription>
           Edite as informações que contam a história do seu restaurante.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
-        
+
         {/* Editor de Texto */}
         <div>
           <Label htmlFor="about-text">História do Restaurante</Label>
-          <Textarea 
+          <Textarea
             id="about-text"
             placeholder="Conte um pouco sobre seu estabelecimento..."
             rows={8}
@@ -44,7 +44,7 @@ export default function AboutTab() {
             <div>
               <Label>Galeria de Fotos do Ambiente</Label>
               <p className="text-sm text-muted-foreground">
-                Estas imagens aparecerão na tela "Sobre".
+                Estas imagens aparecerão na tela &quot;Sobre&quot;.
               </p>
             </div>
             <Button variant="outline">

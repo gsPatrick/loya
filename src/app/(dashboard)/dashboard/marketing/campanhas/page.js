@@ -243,7 +243,7 @@ export default function GestaoCampanhasPage() {
                                         <DialogDescription>
                                             Você está prestes a adicionar <strong>{selectedIds.length} produtos</strong> à campanha:
                                             <br />
-                                            <span className="text-lg font-bold text-foreground mt-2 block">"{campaignInput}"</span>
+                                            <span className="text-lg font-bold text-foreground mt-2 block">&quot;{campaignInput}&quot;</span>
                                         </DialogDescription>
                                     </DialogHeader>
                                     <DialogFooter>

@@ -8,11 +8,11 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function CategoryColumn({ 
-  categories, 
-  selectedCategory, 
-  selectedSubcategory, 
-  onSelectCategory, 
+export default function CategoryColumn({
+  categories,
+  selectedCategory,
+  selectedSubcategory,
+  onSelectCategory,
   onSelectSubcategory,
   onAddCategory,
   onAddSubcategory
@@ -59,9 +59,9 @@ export default function CategoryColumn({
               <DialogHeader><DialogTitle>Criar Nova Categoria</DialogTitle></DialogHeader>
               <div className="grid gap-4 py-4">
                 <Label htmlFor="category-name">Nome da Categoria</Label>
-                <Input 
-                  id="category-name" 
-                  placeholder="Ex: Sobremesas" 
+                <Input
+                  id="category-name"
+                  placeholder="Ex: Sobremesas"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                 />
@@ -85,7 +85,7 @@ export default function CategoryColumn({
               >
                 {category.name}
               </Button>
-              
+
               {selectedCategory?.id === category.id && (
                 <ul className="pl-4 mt-1 space-y-1">
                   {category.subcategories.map(subcategory => (
@@ -100,27 +100,27 @@ export default function CategoryColumn({
                       </Button>
                     </li>
                   ))}
-                   {/* --- MUDANÇA-CHAVE: Modal de Subcategoria controlado por estado --- */}
-                   <Dialog open={isSubcategoryModalOpen} onOpenChange={setIsSubcategoryModalOpen}>
+                  {/* --- MUDANÇA-CHAVE: Modal de Subcategoria controlado por estado --- */}
+                  <Dialog open={isSubcategoryModalOpen} onOpenChange={setIsSubcategoryModalOpen}>
                     <DialogTrigger asChild>
-                       <Button variant="ghost" size="sm" className="w-full justify-start font-normal text-muted-foreground italic">
+                      <Button variant="ghost" size="sm" className="w-full justify-start font-normal text-muted-foreground italic">
                         <PlusCircle className="h-4 w-4 mr-2" />
                         Nova Subcategoria
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
-                      <DialogHeader><DialogTitle>Criar Subcategoria em "{category.name}"</DialogTitle></DialogHeader>
+                      <DialogHeader><DialogTitle>Criar Subcategoria em &quot;{category.name}&quot;</DialogTitle></DialogHeader>
                       <div className="grid gap-4 py-4">
                         <Label htmlFor="subcategory-name">Nome da Subcategoria</Label>
-                        <Input 
-                          id="subcategory-name" 
+                        <Input
+                          id="subcategory-name"
                           placeholder="Ex: Cafés Gelados"
                           value={newSubcategoryName}
                           onChange={(e) => setNewSubcategoryName(e.target.value)}
                         />
                       </div>
                       <DialogFooter>
-                         <Button variant="outline" onClick={() => setIsSubcategoryModalOpen(false)}>Cancelar</Button>
+                        <Button variant="outline" onClick={() => setIsSubcategoryModalOpen(false)}>Cancelar</Button>
                         <Button onClick={handleCreateSubcategory}>Criar Subcategoria</Button>
                       </DialogFooter>
                     </DialogContent>

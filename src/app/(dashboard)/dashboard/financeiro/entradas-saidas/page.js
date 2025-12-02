@@ -34,21 +34,29 @@ import { Label } from "@/components/ui/label";
 import api from "@/services/api";
 
 export default function EntradasSaidasPage() {
-    const [dateStart, setDateStart] = useState("2025-11-01");
-    const [dateEnd, setDateEnd] = useState("2025-11-30");
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    const [dateStart, setDateStart] = useState(firstDay);
+    const [dateEnd, setDateEnd] = useState(lastDay);
     const [compareMode, setCompareMode] = useState("mes");
+    const [contas, setContas] = useState([]);
+    const [contaSelecionada, setContaSelecionada] = useState("todas");
     const [financialData, setFinancialData] = useState({
         receitas: { atual: 0, anterior: 0 },
         despesas: { atual: 0, anterior: 0 },
     });
 
     useEffect(() => {
+        // Carregar contas reais
+        api.get('/cadastros/contas-loja').then(res => setContas(res.data)).catch(err => console.error("Erro ao carregar contas", err));
         loadData();
     }, []); // Initial load
 
     const loadData = async () => {
         try {
-            const { data } = await api.get(`/financeiro/entradas-saidas?inicio=${dateStart}&fim=${dateEnd}&compareMode=${compareMode}`);
+            const { data } = await api.get(`/financeiro/entradas-saidas?inicio=${dateStart}&fim=${dateEnd}&compareMode=${compareMode}&contaId=${contaSelecionada}`);
             setFinancialData(data);
         } catch (error) {
             console.error(error);
@@ -101,14 +109,15 @@ export default function EntradasSaidasPage() {
 
                         <div className="grid gap-1.5 flex-[1.5] w-full">
                             <Label className="text-xs font-bold text-purple-700">Conta Financeira</Label>
-                            <Select defaultValue="todas">
+                            <Select value={contaSelecionada} onValueChange={setContaSelecionada}>
                                 <SelectTrigger className="bg-gray-50 border-gray-200">
                                     <SelectValue placeholder="Selecione..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="todas">TODAS AS CONTAS</SelectItem>
-                                    <SelectItem value="caixa">Caixa Loja</SelectItem>
-                                    <SelectItem value="banco">Banco Itaú</SelectItem>
+                                    {contas.map(conta => (
+                                        <SelectItem key={conta.id} value={String(conta.id)}>{conta.nome_banco} - {conta.agencia}/{conta.conta}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>

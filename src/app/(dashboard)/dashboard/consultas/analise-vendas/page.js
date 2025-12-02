@@ -44,9 +44,13 @@ import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AnaliseVendasPage() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+
     const { toast } = useToast();
-    const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
-    const [dateEnd, setDateEnd] = useState(new Date().toISOString().split('T')[0]);
+    const [dateStart, setDateStart] = useState(firstDay);
+    const [dateEnd, setDateEnd] = useState(lastDay);
     const [activeTab, setActiveTab] = useState("resumo");
     const [fornecedoresData, setFornecedoresData] = useState([]);
     const [pecasData, setPecasData] = useState([]);

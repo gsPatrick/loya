@@ -72,9 +72,13 @@ import { useToast } from "@/hooks/use-toast";
 import { EmptyChartPlaceholder } from "@/components/ui/empty-chart-placeholder";
 
 export default function PerformanceVendedorPage() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+
     const { toast } = useToast();
-    const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
-    const [dateEnd, setDateEnd] = useState(new Date().toISOString().split('T')[0]);
+    const [dateStart, setDateStart] = useState(firstDay);
+    const [dateEnd, setDateEnd] = useState(lastDay);
     const [sellersData, setSellersData] = useState([]);
     const [loading, setLoading] = useState(false);
 

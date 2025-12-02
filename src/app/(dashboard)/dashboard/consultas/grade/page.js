@@ -63,8 +63,8 @@ export default function GradeEstoquePage() {
         try {
             const supRes = await api.get('/pessoas?is_fornecedor=true');
             setSuppliers(supRes.data);
-            // const brandRes = await api.get('/catalogo/marcas'); // If exists
-            // setBrands(brandRes.data);
+            const brandRes = await api.get('/catalogo/marcas');
+            setBrands(brandRes.data);
         } catch (error) {
             console.error("Error loading filters", error);
         }
@@ -146,9 +146,9 @@ export default function GradeEstoquePage() {
                                 <SelectTrigger className="h-9"><SelectValue placeholder="Todas" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="todas">Todas as Marcas</SelectItem>
-                                    {/* Add brands dynamically if available */}
-                                    <SelectItem value="zara">Zara</SelectItem>
-                                    <SelectItem value="farm">Farm</SelectItem>
+                                    {brands.map(brand => (
+                                        <SelectItem key={brand.id} value={String(brand.id)}>{brand.nome}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>

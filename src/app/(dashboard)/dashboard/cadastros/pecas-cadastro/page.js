@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, AlertTriangle, Shirt, Save, Trash2 } from "lucide-react";
+import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +27,10 @@ export default function CadastroPecasSimplesPage() {
         fornecedorId: "",
         preco_venda: "",
         tipo_aquisicao: "COMPRA", // Default
-        quantidade: 1
+        preco_venda: "",
+        tipo_aquisicao: "COMPRA", // Default
+        quantidade: 1,
+        fotos: []
     });
 
     // Data Lists
@@ -39,7 +42,9 @@ export default function CadastroPecasSimplesPage() {
     const [items, setItems] = useState([]);
 
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
+    const [editForm, setEditForm] = useState({});
 
     useEffect(() => {
         loadData();
@@ -100,7 +105,10 @@ export default function CadastroPecasSimplesPage() {
                     preco_venda: "",
                     preco_venda: "",
                     tipo_aquisicao: "COMPRA",
-                    quantidade: 1
+                    preco_venda: "",
+                    tipo_aquisicao: "COMPRA",
+                    quantidade: 1,
+                    fotos: []
                 });
                 toast({ title: "Sucesso", description: "Peça cadastrada.", className: "bg-primary text-primary-foreground border-none" });
             })
@@ -108,6 +116,29 @@ export default function CadastroPecasSimplesPage() {
                 console.error(err);
                 toast({ title: "Erro", description: "Erro ao cadastrar peça.", variant: "destructive" });
             });
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await api.post('/catalogo/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), res.data.url] }));
+            toast({ title: "Sucesso", description: "Imagem enviada." });
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Erro ao enviar imagem.", variant: "destructive" });
+        }
+    };
+
+    const removeImage = (index) => {
+        setForm(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== index) }));
     };
 
     const handleDelete = () => {
@@ -135,6 +166,30 @@ export default function CadastroPecasSimplesPage() {
             .catch(err => {
                 console.error(err);
                 toast({ title: "Erro", description: "Erro ao remover peça (Verifique se a rota existe).", variant: "destructive" });
+            });
+
+    };
+
+    const handleEdit = (item) => {
+        setCurrentItem(item);
+        setEditForm({
+            descricao_curta: item.descricao_curta,
+            preco_venda: item.preco_venda,
+            quantidade: item.quantidade || 1
+        });
+        setIsEditOpen(true);
+    };
+
+    const saveEdit = () => {
+        api.put(`/catalogo/pecas/${currentItem.id}`, editForm)
+            .then(res => {
+                setItems(items.map(i => i.id === currentItem.id ? res.data : i));
+                setIsEditOpen(false);
+                toast({ title: "Sucesso", description: "Peça atualizada.", className: "bg-primary text-primary-foreground border-none" });
+            })
+            .catch(err => {
+                console.error(err);
+                toast({ title: "Erro", description: "Erro ao atualizar peça.", variant: "destructive" });
             });
     };
 
@@ -227,7 +282,26 @@ export default function CadastroPecasSimplesPage() {
                             </Select>
                         </div>
 
-                        <div className="md:col-span-2 flex items-end justify-end">
+                        <div className="md:col-span-4 space-y-2">
+                            <Label>Fotos do Produto</Label>
+                            <div className="flex gap-4 items-center flex-wrap">
+                                {form.fotos && form.fotos.map((url, idx) => (
+                                    <div key={idx} className="relative w-20 h-20 border rounded overflow-hidden group">
+                                        <img src={url} alt="Foto" className="w-full h-full object-cover" />
+                                        <button onClick={() => removeImage(idx)} className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:text-primary transition-colors">
+                                    <Plus className="h-6 w-6" />
+                                    <span className="text-xs">Add Foto</span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="md:col-span-4 flex items-end justify-end">
                             <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10 px-8 w-full md:w-auto">
                                 <Plus className="mr-2 h-4 w-4" /> Adicionar ao Estoque
                             </Button>
@@ -260,9 +334,14 @@ export default function CadastroPecasSimplesPage() {
                                 <TableCell>{item.marca ? item.marca.nome : getName(marcas, item.marcaId)}</TableCell>
                                 <TableCell className="text-right font-bold text-primary">R$ {item.preco_venda}</TableCell>
                                 <TableCell className="text-center">
-                                    <Button size="sm" onClick={() => { setCurrentItem(item); setIsDeleteOpen(true); }} className="bg-red-500 hover:bg-red-600 text-white h-7 px-2">
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Button size="sm" onClick={() => handleEdit(item)} className="bg-blue-500 hover:bg-blue-600 text-white h-7 px-2">
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button size="sm" onClick={() => { setCurrentItem(item); setIsDeleteOpen(true); }} className="bg-red-500 hover:bg-red-600 text-white h-7 px-2">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -275,6 +354,32 @@ export default function CadastroPecasSimplesPage() {
                     <DialogHeader><DialogTitle className="text-red-600">Excluir Peça</DialogTitle></DialogHeader>
                     <p>Remover <strong>{currentItem?.descricao_curta}</strong> do cadastro?</p>
                     <DialogFooter><Button onClick={handleDelete} className="bg-red-600 text-white">Sim, excluir</Button></DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Editar Peça</DialogTitle></DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Descrição</Label>
+                            <Input value={editForm.descricao_curta} onChange={e => setEditForm({ ...editForm, descricao_curta: e.target.value })} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Preço Venda</Label>
+                                <Input type="number" value={editForm.preco_venda} onChange={e => setEditForm({ ...editForm, preco_venda: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Quantidade</Label>
+                                <Input type="number" value={editForm.quantidade} onChange={e => setEditForm({ ...editForm, quantidade: e.target.value })} />
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancelar</Button>
+                        <Button onClick={saveEdit}>Salvar Alterações</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

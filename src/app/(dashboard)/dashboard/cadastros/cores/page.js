@@ -17,12 +17,14 @@ export default function InclusaoCoresPage() {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [newItemName, setNewItemName] = useState("");
+    const [newItemHex, setNewItemHex] = useState("#000000");
 
     // Modais
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [editName, setEditName] = useState("");
+    const [editHex, setEditHex] = useState("");
 
     const [items, setItems] = useState([]);
 
@@ -42,10 +44,11 @@ export default function InclusaoCoresPage() {
     // Handlers
     const handleAdd = () => {
         if (!newItemName.trim()) return;
-        api.post('/cadastros/cores', { nome: newItemName.toUpperCase() })
+        api.post('/cadastros/cores', { nome: newItemName.toUpperCase(), hex: newItemHex })
             .then(res => {
                 setItems([...items, res.data]);
                 setNewItemName("");
+                setNewItemHex("#000000");
                 toast({ title: "Sucesso", description: "Cor adicionada.", className: "bg-primary text-primary-foreground" });
             })
             .catch(err => {
@@ -55,7 +58,7 @@ export default function InclusaoCoresPage() {
     };
 
     const handleConfirmEdit = () => {
-        api.put(`/cadastros/cores/${currentItem.id}`, { nome: editName.toUpperCase() })
+        api.put(`/cadastros/cores/${currentItem.id}`, { nome: editName.toUpperCase(), hex: editHex })
             .then(res => {
                 setItems(items.map(i => i.id === currentItem.id ? res.data : i));
                 setIsEditOpen(false);
@@ -106,6 +109,23 @@ export default function InclusaoCoresPage() {
                                 className="bg-gray-50 border-gray-200 h-11"
                             />
                         </div>
+                        <div className="space-y-2">
+                            <Label>Cor (Hex)</Label>
+                            <div className="flex gap-2">
+                                <Input
+                                    type="color"
+                                    value={newItemHex}
+                                    onChange={(e) => setNewItemHex(e.target.value)}
+                                    className="w-12 h-11 p-1"
+                                />
+                                <Input
+                                    value={newItemHex}
+                                    onChange={(e) => setNewItemHex(e.target.value)}
+                                    placeholder="#000000"
+                                    className="bg-gray-50 border-gray-200 h-11 flex-1"
+                                />
+                            </div>
+                        </div>
                         <div className="flex justify-end">
                             <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10 px-6">
                                 <Plus className="mr-2 h-4 w-4" /> Incluir Cor
@@ -137,8 +157,11 @@ export default function InclusaoCoresPage() {
                         {filteredItems.map((item) => (
                             <TableRow key={item.id} className="hover:bg-primary/5 border-b">
                                 <TableCell>{String(item.id).padStart(8, '0')}</TableCell>
-                                <TableCell className="font-medium">{item.nome}</TableCell>
-                                <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setEditName(item.nome); setIsEditOpen(true); }} className="h-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground text-[10px]">ALTERAR</Button></TableCell>
+                                <TableCell className="font-medium flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: item.hex || '#fff' }}></div>
+                                    {item.nome}
+                                </TableCell>
+                                <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setEditName(item.nome); setEditHex(item.hex || '#000000'); setIsEditOpen(true); }} className="h-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground text-[10px]">ALTERAR</Button></TableCell>
                                 <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setIsDeleteOpen(true); }} className="h-6 w-full bg-red-500 hover:bg-red-600 text-white text-[10px]">APAGAR</Button></TableCell>
                             </TableRow>
                         ))}
@@ -150,7 +173,19 @@ export default function InclusaoCoresPage() {
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent>
                     <DialogHeader><DialogTitle>Alterar Cor</DialogTitle></DialogHeader>
-                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Nome</Label>
+                            <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Cor</Label>
+                            <div className="flex gap-2">
+                                <Input type="color" value={editHex} onChange={(e) => setEditHex(e.target.value)} className="w-12 h-10 p-1" />
+                                <Input value={editHex} onChange={(e) => setEditHex(e.target.value)} className="flex-1" />
+                            </div>
+                        </div>
+                    </div>
                     <DialogFooter><Button onClick={handleConfirmEdit} className="bg-primary text-primary-foreground">Salvar</Button></DialogFooter>
                 </DialogContent>
             </Dialog>

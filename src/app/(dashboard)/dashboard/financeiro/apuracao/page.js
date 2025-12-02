@@ -95,7 +95,9 @@ export default function ApuracaoResultadoPage() {
         if (!currentData || !previousData) return [];
 
         const rows = [
-            { label: "( . ) Vendas", atual: currentData.receitaVendas, anterior: previousData.receitaVendas },
+            { label: "( + ) Vendas em Dinheiro (Real)", atual: currentData.receitaVendasReal, anterior: previousData.receitaVendasReal },
+            { label: "( + ) Vendas em Permuta (Crédito)", atual: currentData.receitaVendasPermuta, anterior: previousData.receitaVendasPermuta },
+            { label: "( = ) Venda Bruta Total", atual: currentData.receitaVendas, anterior: previousData.receitaVendas, isTotal: true },
             { label: "( + ) Receita de Frete", atual: currentData.receitaFrete, anterior: previousData.receitaFrete },
             { label: "( - ) Devolução de Vendas", atual: currentData.totalDevolucoes, anterior: previousData.totalDevolucoes },
         ];
@@ -215,8 +217,8 @@ export default function ApuracaoResultadoPage() {
                                     }
 
                                     return (
-                                        <TableRow key={idx} className="hover:bg-primary/5 border-b border-gray-100 text-sm">
-                                            <TableCell className="py-3 font-medium text-gray-700">{row.label}</TableCell>
+                                        <TableRow key={idx} className={`hover:bg-primary/5 border-b border-gray-100 text-sm ${row.isSub ? 'bg-gray-50/50' : ''} ${row.isTotal ? 'bg-primary/10 font-bold border-t border-primary/20' : ''}`}>
+                                            <TableCell className={`py-3 font-medium ${row.isSub ? 'text-gray-500 pl-8 text-xs' : 'text-gray-700'} ${row.isTotal ? 'text-primary' : ''}`}>{row.label}</TableCell>
                                             <TableCell className="py-3 text-right text-gray-900">{row.atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                                             <TableCell className="py-3 text-right text-gray-500">{row.anterior.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                                             <TableCell className={`py-3 text-right font-bold ${deltaColor}`}>

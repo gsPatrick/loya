@@ -51,6 +51,8 @@ export default function PDVPage() {
     const [clients, setClients] = useState([]);
     const [selectedClient, setSelectedClient] = useState(""); // ID or Object? Let's store ID
     const [clientSearch, setClientSearch] = useState("");
+    const [saldoPermuta, setSaldoPermuta] = useState(null);
+    const [loadingSaldo, setLoadingSaldo] = useState(false);
 
     // Product Search
     const [barcodeInput, setBarcodeInput] = useState("");
@@ -61,6 +63,7 @@ export default function PDVPage() {
     const [descontoValor, setDescontoValor] = useState(0);
     const [frete, setFrete] = useState(0);
     const [paymentMethod, setPaymentMethod] = useState("DINHEIRO"); // Default
+    const [voucherAmount, setVoucherAmount] = useState(0); // Amount to pay with voucher
     const [isProcessing, setIsProcessing] = useState(false);
 
     const barcodeInputRef = useRef(null);
@@ -96,6 +99,31 @@ export default function PDVPage() {
 
         } catch (err) {
             console.error("Erro ao carregar dados iniciais", err);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedClient) {
+            fetchSaldoPermuta(selectedClient);
+        } else {
+            setSaldoPermuta(null);
+        }
+    }, [selectedClient]);
+
+    const fetchSaldoPermuta = async (clientId) => {
+        setLoadingSaldo(true);
+        try {
+            const res = await api.get(`/pessoas/${clientId}/saldo-permuta`);
+            setSaldoPermuta(res.data);
+        } catch (err) {
+            console.error("Erro ao buscar saldo", err);
+            toast({
+                title: "Erro ao buscar saldo",
+                description: "Não foi possível verificar o saldo de permuta.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoadingSaldo(false);
         }
     };
 
@@ -191,16 +219,42 @@ export default function PDVPage() {
                     pecaId: i.pecaId,
                     valor_unitario_venda: i.preco
                 })),
-                pagamentos: [
-                    {
-                        metodo: paymentMethod,
-                        valor: total,
-                        parcelas: 1 // Default 1 for now
-                    }
-                ],
+                pagamentos: [], // Will be populated below
                 origemVendaId: null, // Optional
                 canal: "LOJA_FISICA"
             };
+
+            // Construct payments array
+            if (paymentMethod === 'VOUCHER_PERMUTA') {
+                // Split payment: Voucher + Remaining (Cash/Card/Pix)
+                // Actually, the requirement implies "Voucher + Money" if voucher < total.
+                // But the UI currently only selects ONE method.
+                // We need to support Mixed Payment if Voucher is used.
+                // The "No Calculator" logic implies we calculate the rest.
+                // Let's assume the rest is paid in CASH (Dinheiro) or allow selection?
+                // For simplicity and "No Calculator", let's assume the rest is DINHEIRO as per prompt "Voucher + Dinheiro".
+
+                payload.pagamentos.push({
+                    metodo: 'VOUCHER_PERMUTA',
+                    valor: voucherAmount,
+                    parcelas: 1
+                });
+
+                const remaining = total - voucherAmount;
+                if (remaining > 0.01) {
+                    payload.pagamentos.push({
+                        metodo: 'DINHEIRO', // Defaulting to Cash for the rest
+                        valor: remaining,
+                        parcelas: 1
+                    });
+                }
+            } else {
+                payload.pagamentos.push({
+                    metodo: paymentMethod,
+                    valor: total,
+                    parcelas: 1
+                });
+            }
 
             const res = await api.post('/vendas/pdv', payload);
 
@@ -234,6 +288,8 @@ export default function PDVPage() {
     const subtotal = items.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
     const descontoCalculado = descontoTipo === "percent" ? (subtotal * descontoValor) / 100 : parseFloat(descontoValor || 0);
     const total = Math.max(0, subtotal - descontoCalculado + parseFloat(frete || 0));
+
+    const isSaldoInsuficiente = paymentMethod === 'VOUCHER_PERMUTA' && (!saldoPermuta || parseFloat(saldoPermuta.saldo) < total);
 
     // Filter clients for search
     const filteredClients = clients.filter(c =>
@@ -298,15 +354,27 @@ export default function PDVPage() {
                             </Button>
                         </div>
                     </div>
+                    {saldoPermuta && (
+                        <div className="mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                Saldo Permuta: R$ {parseFloat(saldoPermuta.saldo).toFixed(2)}
+                            </Badge>
+                            {saldoPermuta.proximoVencimento && (
+                                <span className="text-[10px] text-muted-foreground">
+                                    Vence em {new Date(saldoPermuta.proximoVencimento).toLocaleDateString()}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
+            </div>
 
-                {/* Data */}
-                <div className="text-right hidden md:block pl-6 border-l">
-                    <span className="text-xs text-muted-foreground block uppercase font-bold">Data</span>
-                    <span className="font-mono text-xl font-bold text-primary">
-                        {new Date().toLocaleDateString()}
-                    </span>
-                </div>
+            {/* Data */}
+            <div className="text-right hidden md:block pl-6 border-l">
+                <span className="text-xs text-muted-foreground block uppercase font-bold">Data</span>
+                <span className="font-mono text-xl font-bold text-primary">
+                    {new Date().toLocaleDateString()}
+                </span>
             </div>
 
             {/* --- 2. GRID PRINCIPAL (Produtos + Checkout) --- */}
@@ -512,8 +580,74 @@ export default function PDVPage() {
                                     >
                                         <MoreHorizontal className="h-4 w-4" /> Crédito
                                     </Button>
+                                    <Button
+                                        variant={paymentMethod === 'VOUCHER_PERMUTA' ? 'default' : 'outline'}
+                                        onClick={() => {
+                                            if (!saldoPermuta || parseFloat(saldoPermuta.saldo) <= 0) {
+                                                toast({
+                                                    title: "Saldo Insuficiente",
+                                                    description: "Cliente não possui saldo de permuta.",
+                                                    variant: "destructive"
+                                                });
+                                                return;
+                                            }
+                                            setPaymentMethod('VOUCHER_PERMUTA');
+                                            // Auto-calculate max usable voucher
+                                            const maxVoucher = Math.min(parseFloat(saldoPermuta.saldo), total);
+                                            setVoucherAmount(maxVoucher);
+                                        }}
+                                        className={`justify-start gap-2 h-10 ${paymentMethod === 'VOUCHER_PERMUTA' ? 'bg-purple-600 text-white' : 'hover:border-purple-300 hover:bg-purple-50 text-purple-700'}`}
+                                    >
+                                        <RotateCcw className="h-4 w-4" /> Voucher Permuta
+                                    </Button>
                                 </div>
                             </div>
+
+                            {/* --- NO CALCULATOR AREA --- */}
+                            {paymentMethod === 'VOUCHER_PERMUTA' && (
+                                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 space-y-3 animate-in slide-in-from-top-2">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-purple-900 font-semibold">Valor do Voucher</Label>
+                                        <div className="relative w-32">
+                                            <span className="absolute left-2 top-1.5 text-purple-700 font-bold">R$</span>
+                                            <Input
+                                                type="number"
+                                                value={voucherAmount}
+                                                onChange={(e) => {
+                                                    let val = parseFloat(e.target.value);
+                                                    if (isNaN(val)) val = 0;
+                                                    // Cap at max balance or total
+                                                    const max = Math.min(parseFloat(saldoPermuta.saldo), total);
+                                                    if (val > max) val = max;
+                                                    setVoucherAmount(val);
+                                                }}
+                                                className="pl-8 h-8 bg-white border-purple-200 text-right font-bold text-purple-900"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <Separator className="bg-purple-200" />
+
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between text-muted-foreground">
+                                            <span>Total da Venda</span>
+                                            <span>R$ {total.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-purple-700 font-medium">
+                                            <span>(-) Voucher Aplicado</span>
+                                            <span>R$ {voucherAmount.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-lg font-bold text-green-700 pt-1 border-t border-purple-200">
+                                            <span>(=) Restante a Pagar</span>
+                                            <span>R$ {(total - voucherAmount).toFixed(2)}</span>
+                                        </div>
+                                        <div className="text-xs text-center text-muted-foreground pt-1">
+                                            O restante deve ser pago em <strong>DINHEIRO</strong>.
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {/* -------------------------- */}
 
                         </CardContent>
 
@@ -521,10 +655,10 @@ export default function PDVPage() {
                             <Button
                                 size="lg"
                                 onClick={handleFinishSale}
-                                disabled={isProcessing}
-                                className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-bold text-base shadow-lg shadow-green-200"
+                                disabled={isProcessing || isSaldoInsuficiente}
+                                className={`w-full h-12 font-bold text-base shadow-lg ${isSaldoInsuficiente ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white shadow-green-200'}`}
                             >
-                                {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : "CONCLUIR VENDA (F5)"}
+                                {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : (isSaldoInsuficiente ? "SALDO INSUFICIENTE" : "CONCLUIR VENDA (F5)")}
                             </Button>
 
                             <div className="grid grid-cols-2 gap-3 w-full">
@@ -573,6 +707,6 @@ export default function PDVPage() {
                     </Table>
                 </Card>
             </div>
-        </div>
+        </div >
     );
 }

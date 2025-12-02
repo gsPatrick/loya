@@ -174,7 +174,10 @@ export default function CadastroPessoasPage() {
                                         <div className="text-gray-400">{p.email}</div>
                                     </TableCell>
                                     <TableCell><Badge variant="outline">{getTipoLabel(p)}</Badge></TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className="text-center flex items-center justify-center gap-2">
+                                        <Button size="sm" variant="outline" onClick={() => window.location.href = `/dashboard/cadastros/pessoas/${p.id}`} className="h-7 w-7 p-0">
+                                            <Search className="h-3 w-3" />
+                                        </Button>
                                         <Button size="sm" onClick={() => { setCurrentItem(p); setIsDeleteOpen(true); }} className="h-7 w-7 p-0 bg-red-500 hover:bg-red-600 text-white rounded-md">
                                             <Trash2 className="h-4 w-4" />
                                         </Button>

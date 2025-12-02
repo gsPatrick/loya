@@ -251,6 +251,26 @@ export default function DashboardPage() {
               <span className="font-bold text-lg">R$ {(resumo.vendas12m || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
 
+            <div className="flex items-center justify-between pl-4 border-l-2 border-green-100">
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-xs font-bold text-green-700">↳ Faturamento Real</p>
+                  <p className="text-[9px] text-muted-foreground">Dinheiro/Pix/Cartão</p>
+                </div>
+              </div>
+              <span className="font-bold text-sm text-green-700">R$ {(resumo.vendas12mReal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex items-center justify-between pl-4 border-l-2 border-purple-100">
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-xs font-bold text-purple-700">↳ Faturamento Permuta</p>
+                  <p className="text-[9px] text-muted-foreground">Voucher/Crédito</p>
+                </div>
+              </div>
+              <span className="font-bold text-sm text-purple-700">R$ {(resumo.vendas12mPermuta || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-red-100 p-2 rounded-full text-red-600">

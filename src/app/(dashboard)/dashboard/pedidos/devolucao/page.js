@@ -47,6 +47,7 @@ export default function DevolucaoPage() {
 
     useEffect(() => {
         loadHistory();
+        loadSoldItems();
     }, []);
 
     const loadHistory = async () => {
@@ -66,13 +67,14 @@ export default function DevolucaoPage() {
         }
     };
 
-    const handleSearch = async () => {
-        if (!search.trim()) return;
+    const loadSoldItems = async (term = "") => {
         setLoadingSearch(true);
         try {
-            const res = await api.get('/vendas/itens-vendidos', { params: { search } });
+            const params = term ? { params: { search: term } } : {};
+            const res = await api.get('/vendas/itens-vendidos', params);
             setSoldItems(res.data);
-            if (res.data.length === 0) {
+
+            if (res.data.length === 0 && term) {
                 toast({
                     title: "Nenhum item encontrado",
                     description: "Verifique o código ou descrição.",
@@ -89,6 +91,10 @@ export default function DevolucaoPage() {
         } finally {
             setLoadingSearch(false);
         }
+    };
+
+    const handleSearch = async () => {
+        loadSoldItems(search);
     };
 
     const handleDevolver = async (item) => {

@@ -16,6 +16,7 @@ import {
 import {
     Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import Restricted from "@/components/auth/Restricted";
 
 const navItems = [
     {
@@ -70,6 +71,7 @@ const navItems = [
         children: [
             { title: "Pessoas (CRM)", href: "/dashboard/cadastros/pessoas", icon: Users },
             { title: "Peças (Estoque)", href: "/dashboard/cadastros/pecas-cadastro", icon: Shirt },
+            { title: "Importação de Dados", href: "/dashboard/cadastros/importacao", icon: FolderPlus }, // Novo
             { title: "Tamanhos", href: "/dashboard/cadastros/tamanhos", icon: Ruler },
             { title: "Cores", href: "/dashboard/cadastros/cores", icon: Palette },
             { title: "Categorias", href: "/dashboard/cadastros/categorias", icon: Layers },
@@ -97,6 +99,13 @@ const navItems = [
         children: [
             { title: "Campanhas Promo", href: "/dashboard/marketing/campanhas", icon: TicketPercent },
         ]
+    },
+    {
+        title: "Equipe",
+        href: "/dashboard/equipe",
+        icon: Users,
+        restricted: true, // Marker for custom rendering
+        roles: ['ADMIN']
     },
     {
         title: "Configurações",
@@ -153,6 +162,26 @@ export function Sidebar({ className, setIsOpen }) {
                 </Collapsible>
             );
         }
+        if (item.restricted) {
+            return (
+                <Restricted roles={item.roles} fallback={null} key={item.href}>
+                    <Link
+                        href={item.href}
+                        onClick={() => setIsOpen?.(false)}
+                        className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group",
+                            pathname === item.href
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                    >
+                        <item.icon className={cn("h-4 w-4 shrink-0 group-hover:text-primary", pathname === item.href && "text-primary")} />
+                        {item.title}
+                    </Link>
+                </Restricted>
+            );
+        }
+
         return (
             <Link
                 key={item.href}

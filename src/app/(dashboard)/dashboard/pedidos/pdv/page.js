@@ -93,9 +93,9 @@ export default function PDVPage() {
             // But the UI allows selecting a seller.
             // I'll leave seller selection as "Loja" (current user) for now or try to fetch.
 
-            // Fetch Clients
-            const clientsRes = await api.get('/pessoas?is_cliente=true');
-            setClients(clientsRes.data);
+            // Fetch Clients - Removed initial load in favor of dynamic search
+            // const clientsRes = await api.get('/pessoas?is_cliente=true');
+            // setClients(clientsRes.data);
 
         } catch (err) {
             console.error("Erro ao carregar dados iniciais", err);
@@ -340,7 +340,7 @@ export default function PDVPage() {
                                         if (val.length > 2) {
                                             try {
                                                 const res = await api.get('/pessoas', {
-                                                    params: { is_cliente: true, search: val }
+                                                    params: { search: val }
                                                 });
                                                 setClients(res.data);
                                             } catch (err) {

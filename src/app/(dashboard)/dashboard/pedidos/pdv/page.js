@@ -327,20 +327,38 @@ export default function PDVPage() {
                                     placeholder="Buscar Cliente (Nome/CPF)..."
                                     className="pl-10 h-10 bg-muted/20 border-muted-foreground/20"
                                     value={clientSearch}
-                                    onChange={e => {
-                                        setClientSearch(e.target.value);
-                                        if (!e.target.value) setSelectedClient("");
+                                    onChange={async (e) => {
+                                        const val = e.target.value;
+                                        setClientSearch(val);
+                                        if (!val) {
+                                            setSelectedClient("");
+                                            setClients([]); // Clear list if empty
+                                            return;
+                                        }
+
+                                        // Debounce or just search if length > 2
+                                        if (val.length > 2) {
+                                            try {
+                                                const res = await api.get('/pessoas', {
+                                                    params: { is_cliente: true, search: val }
+                                                });
+                                                setClients(res.data);
+                                            } catch (err) {
+                                                console.error("Erro ao buscar clientes", err);
+                                            }
+                                        }
                                     }}
                                 />
-                                {clientSearch && !selectedClient && filteredClients.length > 0 && (
+                                {clientSearch && !selectedClient && clients.length > 0 && (
                                     <div className="absolute top-full left-0 w-full bg-white border shadow-lg rounded-md mt-1 z-50 max-h-[200px] overflow-auto">
-                                        {filteredClients.map(c => (
+                                        {clients.map(c => (
                                             <div
                                                 key={c.id}
                                                 className="p-2 hover:bg-primary/5 cursor-pointer text-sm"
                                                 onClick={() => {
                                                     setSelectedClient(c.id);
                                                     setClientSearch(c.nome);
+                                                    setClients([]); // Close list
                                                 }}
                                             >
                                                 {c.nome} <span className="text-gray-400 text-xs">({c.cpf_cnpj || 'Sem CPF'})</span>

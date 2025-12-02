@@ -496,13 +496,13 @@ export default function PDVPage() {
                     {/* Input de Busca Grande */}
                     <Card className="border-l-4 border-l-primary shadow-sm">
                         <CardContent className="p-6">
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <div className="relative flex-1">
                                     <Barcode className="absolute left-4 top-3.5 h-6 w-6 text-primary" />
                                     <Input
                                         ref={barcodeInputRef}
                                         placeholder="Bipe o código de barras ou digite o nome..."
-                                        className="pl-12 h-14 text-lg shadow-inner bg-muted/10 border-primary/20 focus-visible:ring-primary"
+                                        className="pl-12 h-14 text-lg shadow-inner bg-muted/10 border-primary/20 focus-visible:ring-primary w-full"
                                         value={barcodeInput}
                                         onChange={(e) => {
                                             const val = e.target.value;
@@ -561,7 +561,7 @@ export default function PDVPage() {
                                     size="lg"
                                     onClick={handleSearchProduct}
                                     disabled={isSearchingProduct}
-                                    className="h-14 px-8 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold shadow-primary/20 shadow-lg"
+                                    className="h-14 px-8 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold shadow-primary/20 shadow-lg w-full sm:w-auto"
                                 >
                                     {isSearchingProduct ? <Loader2 className="h-5 w-5 animate-spin" /> : "ADICIONAR"}
                                 </Button>
@@ -707,34 +707,34 @@ export default function PDVPage() {
                             {/* Formas de Pagamento */}
                             <div className="space-y-3">
                                 <Label className="text-xs uppercase font-bold text-muted-foreground">Pagamento</Label>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     <Button
                                         variant={paymentMethod === 'CARTAO_CREDITO' ? 'default' : 'outline'}
                                         onClick={() => setPaymentMethod('CARTAO_CREDITO')}
-                                        className={`justify-start gap-2 h-10 ${paymentMethod === 'CARTAO_CREDITO' ? 'bg-primary text-primary-foreground' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'}`}
+                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 ${paymentMethod === 'CARTAO_CREDITO' ? 'bg-primary text-primary-foreground' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'}`}
                                     >
-                                        <CreditCard className="h-4 w-4" /> Cartão
+                                        <CreditCard className="h-4 w-4 shrink-0" /> <span className="text-left">Cartão</span>
                                     </Button>
                                     <Button
                                         variant={paymentMethod === 'DINHEIRO' ? 'default' : 'outline'}
                                         onClick={() => setPaymentMethod('DINHEIRO')}
-                                        className={`justify-start gap-2 h-10 ${paymentMethod === 'DINHEIRO' ? 'bg-green-600 text-white' : 'hover:border-green-300 hover:bg-green-50'}`}
+                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 ${paymentMethod === 'DINHEIRO' ? 'bg-green-600 text-white' : 'hover:border-green-300 hover:bg-green-50'}`}
                                     >
-                                        <Banknote className="h-4 w-4" /> Dinheiro
+                                        <Banknote className="h-4 w-4 shrink-0" /> <span className="text-left">Dinheiro</span>
                                     </Button>
                                     <Button
                                         variant={paymentMethod === 'PIX' ? 'default' : 'outline'}
                                         onClick={() => setPaymentMethod('PIX')}
-                                        className={`justify-start gap-2 h-10 ${paymentMethod === 'PIX' ? 'bg-orange-600 text-white' : 'hover:border-orange-300 hover:bg-orange-50'}`}
+                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 ${paymentMethod === 'PIX' ? 'bg-orange-600 text-white' : 'hover:border-orange-300 hover:bg-orange-50'}`}
                                     >
-                                        <div className="h-4 w-4 rounded-full border border-current flex items-center justify-center text-[10px] font-bold">P</div> Pix
+                                        <div className="h-4 w-4 rounded-full border border-current flex items-center justify-center text-[10px] font-bold shrink-0">P</div> <span className="text-left">Pix</span>
                                     </Button>
                                     <Button
                                         variant={paymentMethod === 'CREDITO_LOJA' ? 'default' : 'outline'}
                                         onClick={() => setPaymentMethod('CREDITO_LOJA')}
-                                        className="justify-start gap-2 h-10"
+                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2"
                                     >
-                                        <MoreHorizontal className="h-4 w-4" /> Crédito
+                                        <MoreHorizontal className="h-4 w-4 shrink-0" /> <span className="text-left">Crédito</span>
                                     </Button>
                                     <Button
                                         variant={paymentMethod === 'VOUCHER_PERMUTA' ? 'default' : 'outline'}
@@ -752,9 +752,9 @@ export default function PDVPage() {
                                             const maxVoucher = Math.min(parseFloat(saldoPermuta.saldo), total);
                                             setVoucherAmount(maxVoucher);
                                         }}
-                                        className={`justify-start gap-2 h-10 ${paymentMethod === 'VOUCHER_PERMUTA' ? 'bg-purple-600 text-white' : 'hover:border-purple-300 hover:bg-purple-50 text-purple-700'}`}
+                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 col-span-2 sm:col-span-1 ${paymentMethod === 'VOUCHER_PERMUTA' ? 'bg-purple-600 text-white' : 'hover:border-purple-300 hover:bg-purple-50 text-purple-700'}`}
                                     >
-                                        <RotateCcw className="h-4 w-4" /> Voucher Permuta
+                                        <RotateCcw className="h-4 w-4 shrink-0" /> <span className="text-left">Voucher Permuta</span>
                                     </Button>
                                 </div>
                             </div>

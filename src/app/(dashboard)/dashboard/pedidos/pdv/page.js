@@ -57,6 +57,7 @@ export default function PDVPage() {
     // Product Search
     const [barcodeInput, setBarcodeInput] = useState("");
     const [isSearchingProduct, setIsSearchingProduct] = useState(false);
+    const [productSuggestions, setProductSuggestions] = useState([]);
 
     // Checkout
     const [descontoTipo, setDescontoTipo] = useState("percent");
@@ -412,12 +413,60 @@ export default function PDVPage() {
                                         placeholder="Bipe o código de barras ou digite o nome..."
                                         className="pl-12 h-14 text-lg shadow-inner bg-muted/10 border-primary/20 focus-visible:ring-primary"
                                         value={barcodeInput}
-                                        onChange={(e) => setBarcodeInput(e.target.value)}
+                                        onChange={async (e) => {
+                                            const val = e.target.value;
+                                            setBarcodeInput(val);
+
+                                            // Clear suggestions if empty
+                                            if (!val) {
+                                                setProductSuggestions([]);
+                                                return;
+                                            }
+
+                                            // Search if length > 2
+                                            if (val.length > 2) {
+                                                try {
+                                                    const res = await api.get('/catalogo/pecas', {
+                                                        params: { search: val, status: 'DISPONIVEL' }
+                                                    });
+                                                    setProductSuggestions(res.data);
+                                                } catch (err) {
+                                                    console.error("Erro ao buscar produtos", err);
+                                                }
+                                            } else {
+                                                setProductSuggestions([]);
+                                            }
+                                        }}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') handleSearchProduct();
                                         }}
                                         autoFocus
                                     />
+                                    {productSuggestions.length > 0 && (
+                                        <div className="absolute top-full left-0 w-full bg-white border shadow-lg rounded-md mt-1 z-50 max-h-[300px] overflow-auto">
+                                            {productSuggestions.map(p => (
+                                                <div
+                                                    key={p.id}
+                                                    className="p-3 hover:bg-primary/5 cursor-pointer border-b last:border-none flex justify-between items-center"
+                                                    onClick={() => {
+                                                        addItemToCart(p);
+                                                        setBarcodeInput("");
+                                                        setProductSuggestions([]);
+                                                        if (barcodeInputRef.current) barcodeInputRef.current.focus();
+                                                    }}
+                                                >
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-base">{p.descricao_curta}</span>
+                                                        <span className="text-xs text-muted-foreground">SKU: {p.codigo_etiqueta}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="font-bold text-primary">R$ {parseFloat(p.preco_venda).toFixed(2)}</span>
+                                                        {p.tamanho && <Badge variant="outline">{p.tamanho.nome}</Badge>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 <Button
                                     size="lg"

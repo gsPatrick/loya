@@ -26,7 +26,8 @@ export default function CadastroPecasSimplesPage() {
         categoriaId: "",
         fornecedorId: "",
         preco_venda: "",
-        tipo_aquisicao: "COMPRA" // Default
+        tipo_aquisicao: "COMPRA", // Default
+        quantidade: 1
     });
 
     // Data Lists
@@ -83,6 +84,7 @@ export default function CadastroPecasSimplesPage() {
             marcaId: form.marcaId || null,
             categoriaId: form.categoriaId || null,
             fornecedorId: form.fornecedorId || null,
+            quantidade: form.quantidade || 1,
         };
 
         api.post('/catalogo/pecas', payload)
@@ -96,7 +98,9 @@ export default function CadastroPecasSimplesPage() {
                     categoriaId: "",
                     fornecedorId: "",
                     preco_venda: "",
-                    tipo_aquisicao: "COMPRA"
+                    preco_venda: "",
+                    tipo_aquisicao: "COMPRA",
+                    quantidade: 1
                 });
                 toast({ title: "Sucesso", description: "Peça cadastrada.", className: "bg-primary text-primary-foreground border-none" });
             })
@@ -166,6 +170,11 @@ export default function CadastroPecasSimplesPage() {
                         <div className="space-y-2">
                             <Label>Preço Venda (R$)</Label>
                             <Input type="number" value={form.preco_venda} onChange={e => setForm({ ...form, preco_venda: e.target.value })} placeholder="0.00" />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Quantidade</Label>
+                            <Input type="number" min="1" value={form.quantidade} onChange={e => setForm({ ...form, quantidade: e.target.value })} placeholder="1" />
                         </div>
 
                         <div className="space-y-2">

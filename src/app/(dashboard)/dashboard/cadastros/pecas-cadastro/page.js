@@ -129,7 +129,8 @@ export default function CadastroPecasSimplesPage() {
             const res = await api.post('/catalogo/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), res.data.url] }));
+            const fullUrl = `https://geral-tiptagapi.r954jc.easypanel.host${res.data.url}`;
+            setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), fullUrl] }));
             toast({ title: "Sucesso", description: "Imagem enviada." });
         } catch (err) {
             console.error(err);
@@ -287,7 +288,11 @@ export default function CadastroPecasSimplesPage() {
                             <div className="flex gap-4 items-center flex-wrap">
                                 {form.fotos && form.fotos.map((url, idx) => (
                                     <div key={idx} className="relative w-20 h-20 border rounded overflow-hidden group">
-                                        <img src={url} alt="Foto" className="w-full h-full object-cover" />
+                                        <img
+                                            src={url.startsWith('http') ? url : `https://geral-tiptagapi.r954jc.easypanel.host${url}`}
+                                            alt="Foto"
+                                            className="w-full h-full object-cover"
+                                        />
                                         <button onClick={() => removeImage(idx)} className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Trash2 className="h-3 w-3" />
                                         </button>

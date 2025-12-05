@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
 
@@ -30,6 +31,7 @@ export default function CadastroPecasSimplesPage() {
         preco_venda: "",
         tipo_aquisicao: "COMPRA", // Default
         quantidade: 1,
+        sync_ecommerce: true,
         fotos: []
     });
 
@@ -89,7 +91,9 @@ export default function CadastroPecasSimplesPage() {
             marcaId: form.marcaId || null,
             categoriaId: form.categoriaId || null,
             fornecedorId: form.fornecedorId || null,
+            fornecedorId: form.fornecedorId || null,
             quantidade: form.quantidade || 1,
+            sync_ecommerce: form.sync_ecommerce,
         };
 
         api.post('/catalogo/pecas', payload)
@@ -107,7 +111,9 @@ export default function CadastroPecasSimplesPage() {
                     tipo_aquisicao: "COMPRA",
                     preco_venda: "",
                     tipo_aquisicao: "COMPRA",
+                    tipo_aquisicao: "COMPRA",
                     quantidade: 1,
+                    sync_ecommerce: true,
                     fotos: []
                 });
                 toast({ title: "Sucesso", description: "Peça cadastrada.", className: "bg-primary text-primary-foreground border-none" });
@@ -119,22 +125,33 @@ export default function CadastroPecasSimplesPage() {
     };
 
     const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
+        const newFotos = [];
 
-        try {
-            const res = await api.post('/catalogo/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            const fullUrl = `https://geral-tiptagapi.r954jc.easypanel.host${res.data.url}`;
-            setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), fullUrl] }));
-            toast({ title: "Sucesso", description: "Imagem enviada." });
-        } catch (err) {
-            console.error(err);
-            toast({ title: "Erro", description: "Erro ao enviar imagem.", variant: "destructive" });
+        // Show loading toast?
+        toast({ title: "Enviando...", description: `Enviando ${files.length} imagens.` });
+
+        for (const file of files) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await api.post('/catalogo/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                const fullUrl = `https://geral-tiptagapi.r954jc.easypanel.host${res.data.url}`;
+                newFotos.push(fullUrl);
+            } catch (err) {
+                console.error(err);
+                toast({ title: "Erro", description: `Erro ao enviar ${file.name}.`, variant: "destructive" });
+            }
+        }
+
+        if (newFotos.length > 0) {
+            setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), ...newFotos] }));
+            toast({ title: "Sucesso", description: `${newFotos.length} imagens enviadas.` });
         }
     };
 
@@ -176,7 +193,10 @@ export default function CadastroPecasSimplesPage() {
         setEditForm({
             descricao_curta: item.descricao_curta,
             preco_venda: item.preco_venda,
-            quantidade: item.quantidade || 1
+            descricao_curta: item.descricao_curta,
+            preco_venda: item.preco_venda,
+            quantidade: item.quantidade || 1,
+            sync_ecommerce: item.sync_ecommerce !== undefined ? item.sync_ecommerce : true
         });
         setIsEditOpen(true);
     };
@@ -283,6 +303,15 @@ export default function CadastroPecasSimplesPage() {
                             </Select>
                         </div>
 
+                        <div className="space-y-2 flex items-center gap-2 mt-8">
+                            <Checkbox
+                                id="sync"
+                                checked={!form.sync_ecommerce}
+                                onCheckedChange={(checked) => setForm({ ...form, sync_ecommerce: !checked })}
+                            />
+                            <Label htmlFor="sync" className="cursor-pointer">Não Sincronizar com E-commerce</Label>
+                        </div>
+
                         <div className="md:col-span-4 space-y-2">
                             <Label>Fotos do Produto</Label>
                             <div className="flex gap-4 items-center flex-wrap">
@@ -300,8 +329,8 @@ export default function CadastroPecasSimplesPage() {
                                 ))}
                                 <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:text-primary transition-colors">
                                     <Plus className="h-6 w-6" />
-                                    <span className="text-xs">Add Foto</span>
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                                    <span className="text-xs text-center px-1">Add Fotos</span>
+                                    <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageUpload} />
                                 </label>
                             </div>
                         </div>
@@ -379,6 +408,14 @@ export default function CadastroPecasSimplesPage() {
                                 <Label>Quantidade</Label>
                                 <Input type="number" value={editForm.quantidade} onChange={e => setEditForm({ ...editForm, quantidade: e.target.value })} />
                             </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="edit-sync"
+                                checked={!editForm.sync_ecommerce}
+                                onCheckedChange={(checked) => setEditForm({ ...editForm, sync_ecommerce: !checked })}
+                            />
+                            <Label htmlFor="edit-sync" className="cursor-pointer">Não Sincronizar com E-commerce</Label>
                         </div>
                     </div>
                     <DialogFooter>

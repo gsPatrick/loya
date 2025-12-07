@@ -78,6 +78,33 @@ export default function InclusaoMarcasPage() {
             });
     };
 
+    const handleImageUpload = async (e, isEdit = false) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        toast({ title: "Enviando...", description: "Enviando imagem..." });
+
+        try {
+            const res = await api.post('/catalogo/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const fullUrl = `https://geral-tiptagapi.r954jc.easypanel.host${res.data.url}`;
+
+            if (isEdit) {
+                setEditImage(fullUrl);
+            } else {
+                setNewItemImage(fullUrl);
+            }
+            toast({ title: "Sucesso", description: "Imagem enviada." });
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Erro ao enviar imagem.", variant: "destructive" });
+        }
+    };
+
     const filteredItems = items.filter(i => i.nome && i.nome.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
@@ -103,13 +130,22 @@ export default function InclusaoMarcasPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>URL da Imagem (Logo)</Label>
-                                <Input
-                                    value={newItemImage}
-                                    onChange={(e) => setNewItemImage(e.target.value)}
-                                    placeholder="https://..."
-                                    className="bg-gray-50 border-gray-200 h-11"
-                                />
+                                <Label>Logo da Marca</Label>
+                                <div className="flex gap-2 items-center">
+                                    {newItemImage && (
+                                        <img src={newItemImage} alt="Preview" className="h-10 w-10 object-contain border rounded" />
+                                    )}
+                                    <Label htmlFor="upload-new" className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded text-sm font-medium transition-colors">
+                                        Escolher Imagem
+                                    </Label>
+                                    <Input
+                                        id="upload-new"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => handleImageUpload(e, false)}
+                                    />
+                                </div>
                             </div>
                         </div>
                         <div className="flex justify-end">
@@ -168,8 +204,22 @@ export default function InclusaoMarcasPage() {
                             <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label>URL da Imagem</Label>
-                            <Input value={editImage} onChange={(e) => setEditImage(e.target.value)} />
+                            <Label>Logo da Marca</Label>
+                            <div className="flex gap-2 items-center">
+                                {editImage && (
+                                    <img src={editImage} alt="Preview" className="h-10 w-10 object-contain border rounded" />
+                                )}
+                                <Label htmlFor="upload-edit" className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded text-sm font-medium transition-colors">
+                                    Alterar Imagem
+                                </Label>
+                                <Input
+                                    id="upload-edit"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => handleImageUpload(e, true)}
+                                />
+                            </div>
                         </div>
                     </div>
                     <DialogFooter><Button onClick={handleConfirmEdit} className="bg-primary text-primary-foreground">Salvar</Button></DialogFooter>

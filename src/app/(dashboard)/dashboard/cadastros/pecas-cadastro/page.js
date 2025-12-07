@@ -81,6 +81,11 @@ export default function CadastroPecasSimplesPage() {
         tipo_aquisicao: "COMPRA",
         quantidade: 1,
         sync_ecommerce: true,
+        is_accessory: false,
+        peso: "",
+        altura: "",
+        largura: "",
+        comprimento: "",
         fotos: [],
         medidas: []
     });
@@ -91,6 +96,7 @@ export default function CadastroPecasSimplesPage() {
     const [marcas, setMarcas] = useState([]);
     const [categorias, setCategorias] = useState([]);
     const [fornecedores, setFornecedores] = useState([]);
+    const [dimensoes, setDimensoes] = useState([]);
     const [items, setItems] = useState([]);
 
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -105,13 +111,14 @@ export default function CadastroPecasSimplesPage() {
 
     const loadData = async () => {
         try {
-            const [tamRes, corRes, marcaRes, catRes, fornRes, pecasRes] = await Promise.all([
+            const [tamRes, corRes, marcaRes, catRes, fornRes, pecasRes, dimRes] = await Promise.all([
                 api.get('/cadastros/tamanhos'),
                 api.get('/cadastros/cores'),
                 api.get('/cadastros/marcas'),
                 api.get('/cadastros/categorias'),
                 api.get('/pessoas?is_fornecedor=true'),
-                api.get('/catalogo/pecas')
+                api.get('/catalogo/pecas'),
+                api.get('/cadastros/dimensoes')
             ]);
 
             setTamanhos(tamRes.data);
@@ -120,6 +127,7 @@ export default function CadastroPecasSimplesPage() {
             setCategorias(catRes.data);
             setFornecedores(fornRes.data);
             setItems(pecasRes.data);
+            setDimensoes(dimRes.data);
         } catch (err) {
             console.error(err);
             toast({ title: "Erro", description: "Erro ao carregar dados.", variant: "destructive" });
@@ -142,6 +150,11 @@ export default function CadastroPecasSimplesPage() {
             fornecedorId: form.fornecedorId || null,
             quantidade: form.quantidade || 1,
             sync_ecommerce: form.sync_ecommerce,
+            is_accessory: form.is_accessory,
+            peso: form.peso,
+            altura: form.altura,
+            largura: form.largura,
+            comprimento: form.comprimento,
             medidas: form.medidas
         };
 
@@ -160,6 +173,11 @@ export default function CadastroPecasSimplesPage() {
                     tipo_aquisicao: "COMPRA",
                     quantidade: 1,
                     sync_ecommerce: true,
+                    is_accessory: false,
+                    peso: "",
+                    altura: "",
+                    largura: "",
+                    comprimento: "",
                     fotos: [],
                     medidas: []
                 });
@@ -275,6 +293,29 @@ export default function CadastroPecasSimplesPage() {
         }
     };
 
+    const handleDimensionSelect = (dimId, isEdit = false) => {
+        const dim = dimensoes.find(d => String(d.id) === dimId);
+        if (!dim) return;
+
+        if (isEdit) {
+            setEditForm(prev => ({
+                ...prev,
+                peso: dim.peso_kg,
+                altura: dim.altura_cm,
+                largura: dim.largura_cm,
+                comprimento: dim.comprimento_cm
+            }));
+        } else {
+            setForm(prev => ({
+                ...prev,
+                peso: dim.peso_kg,
+                altura: dim.altura_cm,
+                largura: dim.largura_cm,
+                comprimento: dim.comprimento_cm
+            }));
+        }
+    };
+
     const getName = (list, id) => list.find(i => i.id === id)?.nome || "-";
 
     return (
@@ -374,6 +415,46 @@ export default function CadastroPecasSimplesPage() {
 
                         <div className="md:col-span-4">
                             <MeasurementsInput value={form.medidas} onChange={(val) => setForm({ ...form, medidas: val })} />
+                        </div>
+
+                        <div className="md:col-span-4 border-t pt-4 mt-4">
+                            <h3 className="font-semibold mb-4">Frete e Dimensões</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                                <div className="space-y-2 md:col-span-1">
+                                    <Label>Dimensão Padrão</Label>
+                                    <Select onValueChange={(v) => handleDimensionSelect(v, false)}>
+                                        <SelectTrigger><SelectValue placeholder="Carregar padrão..." /></SelectTrigger>
+                                        <SelectContent>
+                                            {dimensoes.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.nome}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Peso (kg)</Label>
+                                    <Input type="number" step="0.001" value={form.peso} onChange={e => setForm({ ...form, peso: e.target.value })} placeholder="0.000" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Altura (cm)</Label>
+                                    <Input type="number" value={form.altura} onChange={e => setForm({ ...form, altura: e.target.value })} placeholder="0" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Largura (cm)</Label>
+                                    <Input type="number" value={form.largura} onChange={e => setForm({ ...form, largura: e.target.value })} placeholder="0" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Comprimento (cm)</Label>
+                                    <Input type="number" value={form.comprimento} onChange={e => setForm({ ...form, comprimento: e.target.value })} placeholder="0" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 flex items-center gap-2 mt-4">
+                            <Checkbox
+                                id="is_accessory"
+                                checked={form.is_accessory}
+                                onCheckedChange={(checked) => setForm({ ...form, is_accessory: checked })}
+                            />
+                            <Label htmlFor="is_accessory" className="cursor-pointer font-medium">Este produto é um Acessório?</Label>
                         </div>
 
                         <div className="space-y-2 flex items-center gap-2 mt-8">

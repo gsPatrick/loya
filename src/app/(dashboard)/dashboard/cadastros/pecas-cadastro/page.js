@@ -65,9 +65,11 @@ const MeasurementsInput = ({ value = [], onChange }) => {
 };
 
 export default function CadastroPecasSimplesPage() {
-    // ... existing state ...
+    const { toast } = useToast();
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // Form State
     const [form, setForm] = useState({
-        // ... existing fields ...
         descricao_curta: "",
         description: "",
         tamanhoId: "",
@@ -80,13 +82,51 @@ export default function CadastroPecasSimplesPage() {
         quantidade: 1,
         sync_ecommerce: true,
         fotos: [],
-        medidas: [] // New field
+        medidas: []
     });
 
-    // ... existing loadData ...
+    // Data Lists
+    const [tamanhos, setTamanhos] = useState([]);
+    const [cores, setCores] = useState([]);
+    const [marcas, setMarcas] = useState([]);
+    const [categorias, setCategorias] = useState([]);
+    const [fornecedores, setFornecedores] = useState([]);
+    const [items, setItems] = useState([]);
+
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [currentItem, setCurrentItem] = useState(null);
+    const [editForm, setEditForm] = useState({});
+    const [syncingId, setSyncingId] = useState(null);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            const [tamRes, corRes, marcaRes, catRes, fornRes, pecasRes] = await Promise.all([
+                api.get('/cadastros/tamanhos'),
+                api.get('/cadastros/cores'),
+                api.get('/cadastros/marcas'),
+                api.get('/cadastros/categorias'),
+                api.get('/pessoas?is_fornecedor=true'),
+                api.get('/catalogo/pecas')
+            ]);
+
+            setTamanhos(tamRes.data);
+            setCores(corRes.data);
+            setMarcas(marcaRes.data);
+            setCategorias(catRes.data);
+            setFornecedores(fornRes.data);
+            setItems(pecasRes.data);
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Erro ao carregar dados.", variant: "destructive" });
+        }
+    };
 
     const handleAdd = () => {
-        // ... validation ...
         if (!form.descricao_curta || !form.preco_venda) {
             toast({ title: "Erro", description: "Preencha a descrição e o preço.", variant: "destructive" });
             return;
@@ -102,7 +142,7 @@ export default function CadastroPecasSimplesPage() {
             fornecedorId: form.fornecedorId || null,
             quantidade: form.quantidade || 1,
             sync_ecommerce: form.sync_ecommerce,
-            medidas: form.medidas // Pass measurements
+            medidas: form.medidas
         };
 
         api.post('/catalogo/pecas', payload)
@@ -121,7 +161,7 @@ export default function CadastroPecasSimplesPage() {
                     quantidade: 1,
                     sync_ecommerce: true,
                     fotos: [],
-                    medidas: [] // Reset
+                    medidas: []
                 });
                 toast({ title: "Sucesso", description: "Peça cadastrada.", className: "bg-primary text-primary-foreground border-none" });
             })
@@ -131,7 +171,59 @@ export default function CadastroPecasSimplesPage() {
             });
     };
 
-    // ... handleImageUpload, removeImage, handleDelete ...
+    const handleImageUpload = async (e, isEdit = false) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        const newFotos = [];
+        toast({ title: "Enviando...", description: `Enviando ${files.length} imagens.` });
+
+        for (const file of files) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await api.post('/catalogo/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                const fullUrl = `https://geral-tiptagapi.r954jc.easypanel.host${res.data.url}`;
+                newFotos.push(fullUrl);
+            } catch (err) {
+                console.error(err);
+                toast({ title: "Erro", description: `Erro ao enviar ${file.name}.`, variant: "destructive" });
+            }
+        }
+
+        if (newFotos.length > 0) {
+            if (isEdit) {
+                setEditForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), ...newFotos] }));
+            } else {
+                setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), ...newFotos] }));
+            }
+            toast({ title: "Sucesso", description: `${newFotos.length} imagens enviadas.` });
+        }
+    };
+
+    const removeImage = (index, isEdit = false) => {
+        if (isEdit) {
+            setEditForm(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== index) }));
+        } else {
+            setForm(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== index) }));
+        }
+    };
+
+    const handleDelete = () => {
+        api.delete(`/catalogo/pecas/${currentItem.id}`)
+            .then(() => {
+                setItems(items.filter(i => i.id !== currentItem.id));
+                setIsDeleteOpen(false);
+                toast({ title: "Removido", description: "Peça removida.", className: "bg-red-600 text-white border-none" });
+            })
+            .catch(err => {
+                console.error(err);
+                toast({ title: "Erro", description: "Erro ao remover peça (Verifique se a rota existe).", variant: "destructive" });
+            });
+    };
 
     const handleEdit = (item) => {
         setCurrentItem(item);
@@ -148,7 +240,7 @@ export default function CadastroPecasSimplesPage() {
             fornecedorId: item.fornecedorId ? String(item.fornecedorId) : "",
             tipo_aquisicao: item.tipo_aquisicao || "COMPRA",
             fotos: item.fotos ? item.fotos.map(f => f.url) : [],
-            medidas: item.medidas || [] // Load measurements
+            medidas: item.medidas || []
         });
         if (item.fotos && item.fotos.length > 0 && typeof item.fotos[0] === 'object') {
             setEditForm(prev => ({ ...prev, fotos: item.fotos.map(f => f.url) }));
@@ -156,11 +248,37 @@ export default function CadastroPecasSimplesPage() {
         setIsEditOpen(true);
     };
 
-    // ... saveEdit, handleSync ...
+    const saveEdit = () => {
+        api.put(`/catalogo/pecas/${currentItem.id}`, editForm)
+            .then(res => {
+                loadData();
+                setIsEditOpen(false);
+                toast({ title: "Sucesso", description: "Peça atualizada.", className: "bg-primary text-primary-foreground border-none" });
+            })
+            .catch(err => {
+                console.error(err);
+                toast({ title: "Erro", description: "Erro ao atualizar peça.", variant: "destructive" });
+            });
+    };
+
+    const handleSync = async (item) => {
+        setSyncingId(item.id);
+        try {
+            await api.post(`/catalogo/pecas/${item.id}/sync`);
+            toast({ title: "Sincronizado", description: "Produto enviado para o E-commerce.", className: "bg-green-600 text-white border-none" });
+            setItems(items.map(i => i.id === item.id ? { ...i, sync_ecommerce: true } : i));
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Falha na sincronização.", variant: "destructive" });
+        } finally {
+            setSyncingId(null);
+        }
+    };
+
+    const getName = (list, id) => list.find(i => i.id === id)?.nome || "-";
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            {/* ... Header ... */}
             <div className="flex items-center gap-2 border-b pb-4">
                 <h1 className="text-2xl font-bold tracking-tight text-primary">Cadastro Simplificado de Peças</h1>
             </div>
@@ -168,12 +286,11 @@ export default function CadastroPecasSimplesPage() {
             <Card className="border-t-4 border-t-primary shadow-sm">
                 <CardContent className="p-6 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {/* ... Existing Inputs ... */}
                         <div className="md:col-span-2 space-y-2">
                             <Label>Descrição Curta (Título)</Label>
                             <Input value={form.descricao_curta} onChange={e => setForm({ ...form, descricao_curta: e.target.value })} placeholder="Ex: Vestido Longo..." />
                         </div>
-                        {/* ... Other Inputs (Tipo Aquisição, Preço, Quantidade, Tamanho, Cor, Marca, Categoria, Fornecedor) ... */}
+
                         <div className="space-y-2">
                             <Label>Tipo Aquisição</Label>
                             <Select value={form.tipo_aquisicao} onValueChange={v => setForm({ ...form, tipo_aquisicao: v })}>
@@ -255,12 +372,10 @@ export default function CadastroPecasSimplesPage() {
                             />
                         </div>
 
-                        {/* Measurements Input */}
                         <div className="md:col-span-4">
                             <MeasurementsInput value={form.medidas} onChange={(val) => setForm({ ...form, medidas: val })} />
                         </div>
 
-                        {/* ... Sync Checkbox ... */}
                         <div className="space-y-2 flex items-center gap-2 mt-8">
                             <Checkbox
                                 id="sync"
@@ -270,7 +385,6 @@ export default function CadastroPecasSimplesPage() {
                             <Label htmlFor="sync" className="cursor-pointer">Não Sincronizar com E-commerce</Label>
                         </div>
 
-                        {/* ... Photos ... */}
                         <div className="md:col-span-4 space-y-2">
                             <Label>Fotos do Produto</Label>
                             <div className="flex gap-4 items-center flex-wrap">
@@ -303,7 +417,6 @@ export default function CadastroPecasSimplesPage() {
                 </CardContent>
             </Card>
 
-            {/* ... Table ... */}
             <Card className="border-t-4 border-t-primary/50 shadow-sm overflow-hidden">
                 <div className="p-4 bg-white"><Input placeholder="Buscar peça..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
                 <Table>
@@ -352,7 +465,6 @@ export default function CadastroPecasSimplesPage() {
                 </Table>
             </Card>
 
-            {/* ... Delete Dialog ... */}
             <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
                 <DialogContent>
                     <DialogHeader><DialogTitle className="text-red-600">Excluir Peça</DialogTitle></DialogHeader>
@@ -361,13 +473,11 @@ export default function CadastroPecasSimplesPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* ... Edit Dialog ... */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader><DialogTitle>Editar Peça</DialogTitle></DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* ... Edit Inputs ... */}
                             <div className="space-y-2">
                                 <Label>Descrição Curta</Label>
                                 <Input value={editForm.descricao_curta} onChange={e => setEditForm({ ...editForm, descricao_curta: e.target.value })} />
@@ -446,7 +556,6 @@ export default function CadastroPecasSimplesPage() {
                             />
                         </div>
 
-                        {/* Edit Measurements Input */}
                         <div className="space-y-2">
                             <MeasurementsInput value={editForm.medidas} onChange={(val) => setEditForm({ ...editForm, medidas: val })} />
                         </div>

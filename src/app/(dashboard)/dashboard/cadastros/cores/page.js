@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, Trash2, Edit, Save, ArrowUpDown, AlertTriangle } from "lucide-react";
+import { Search, Plus, Trash2, Edit, Save, ArrowUpDown, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -83,6 +83,18 @@ export default function InclusaoCoresPage() {
             });
     };
 
+    const handleSync = (item) => {
+        toast({ title: "Sincronizando...", description: `Sincronizando ${item.nome}...` });
+        api.post(`/cadastros/cores/${item.id}/sync`)
+            .then(() => {
+                toast({ title: "Sucesso", description: "Cor sincronizada com sucesso!", className: "bg-green-600 text-white border-none" });
+            })
+            .catch(err => {
+                console.error(err);
+                toast({ title: "Erro", description: "Erro ao sincronizar cor.", variant: "destructive" });
+            });
+    };
+
     const filteredItems = items.filter(i => i.nome && i.nome.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
@@ -149,6 +161,7 @@ export default function InclusaoCoresPage() {
                         <TableRow>
                             <TableHead className="w-[100px] font-bold">Id</TableHead>
                             <TableHead className="font-bold">Referência de Cor</TableHead>
+                            <TableHead className="w-[100px] text-center font-bold">Sync</TableHead>
                             <TableHead className="w-[100px] text-center font-bold">Ação</TableHead>
                             <TableHead className="w-[100px] text-center font-bold">Ação</TableHead>
                         </TableRow>
@@ -161,6 +174,7 @@ export default function InclusaoCoresPage() {
                                     <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: item.hex || '#fff' }}></div>
                                     {item.nome}
                                 </TableCell>
+                                <TableCell className="text-center"><Button size="sm" onClick={() => handleSync(item)} className="h-6 w-full bg-blue-500 hover:bg-blue-600 text-white text-[10px]"><RefreshCw className="w-3 h-3 mr-1" /> SYNC</Button></TableCell>
                                 <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setEditName(item.nome); setEditHex(item.hex || '#000000'); setIsEditOpen(true); }} className="h-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground text-[10px]">ALTERAR</Button></TableCell>
                                 <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setIsDeleteOpen(true); }} className="h-6 w-full bg-red-500 hover:bg-red-600 text-white text-[10px]">APAGAR</Button></TableCell>
                             </TableRow>

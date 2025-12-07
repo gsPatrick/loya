@@ -13,7 +13,9 @@ import {
     ArrowUpDown,
     AlertTriangle,
     Save,
-    X
+    Save,
+    X,
+    RefreshCw
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -167,6 +169,18 @@ export default function InclusaoTamanhosPage() {
             });
     };
 
+    const handleSync = (item) => {
+        toast({ title: "Sincronizando...", description: `Sincronizando ${item.nome}...` });
+        api.post(`/cadastros/tamanhos/${item.id}/sync`)
+            .then(() => {
+                toast({ title: "Sucesso", description: "Tamanho sincronizado com sucesso!", className: "bg-green-600 text-white border-none" });
+            })
+            .catch(err => {
+                console.error(err);
+                toast({ title: "Erro", description: "Erro ao sincronizar tamanho.", variant: "destructive" });
+            });
+    };
+
     // Filtro
     const filteredSizes = sizes.filter(s =>
         (s.nome && s.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -265,6 +279,7 @@ export default function InclusaoTamanhosPage() {
                                         Referência de Tamanho <ArrowUpDown className="h-3 w-3" />
                                     </div>
                                 </TableHead>
+                                <TableHead className="w-[100px] font-bold text-gray-700 text-xs text-center py-3">Sync</TableHead>
                                 <TableHead className="w-[100px] font-bold text-gray-700 text-xs text-center py-3">Ação</TableHead>
                                 <TableHead className="w-[100px] font-bold text-gray-700 text-xs text-center py-3">Ação</TableHead>
                             </TableRow>
@@ -275,6 +290,15 @@ export default function InclusaoTamanhosPage() {
                                     <TableRow key={size.id} className="hover:bg-primary/5 odd:bg-gray-50/30 even:bg-white border-b border-gray-100 h-10">
                                         <TableCell className="text-xs text-gray-600 py-2">{size.id}</TableCell>
                                         <TableCell className="text-xs font-medium text-gray-800 py-2">{size.nome}</TableCell>
+                                        <TableCell className="text-center py-1">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleSync(size)}
+                                                className="h-6 w-full bg-blue-500 hover:bg-blue-600 text-white text-[10px] uppercase font-bold rounded-sm shadow-sm"
+                                            >
+                                                <RefreshCw className="w-3 h-3 mr-1" /> Sync
+                                            </Button>
+                                        </TableCell>
                                         <TableCell className="text-center py-1">
                                             <Button
                                                 size="sm"

@@ -82,10 +82,10 @@ export default function CadastroPecasSimplesPage() {
         quantidade: 1,
         sync_ecommerce: true,
         is_accessory: false,
-        peso: "",
-        altura: "",
-        largura: "",
-        comprimento: "",
+        peso_kg: "",
+        altura_cm: "",
+        largura_cm: "",
+        profundidade_cm: "",
         fotos: [],
         medidas: []
     });
@@ -151,10 +151,10 @@ export default function CadastroPecasSimplesPage() {
             quantidade: form.quantidade || 1,
             sync_ecommerce: form.sync_ecommerce,
             is_accessory: form.is_accessory,
-            peso: form.peso,
-            altura: form.altura,
-            largura: form.largura,
-            comprimento: form.comprimento,
+            peso_kg: form.peso_kg,
+            altura_cm: form.altura_cm,
+            largura_cm: form.largura_cm,
+            profundidade_cm: form.profundidade_cm,
             medidas: form.medidas
         };
 
@@ -174,10 +174,10 @@ export default function CadastroPecasSimplesPage() {
                     quantidade: 1,
                     sync_ecommerce: true,
                     is_accessory: false,
-                    peso: "",
-                    altura: "",
-                    largura: "",
-                    comprimento: "",
+                    peso_kg: "",
+                    altura_cm: "",
+                    largura_cm: "",
+                    profundidade_cm: "",
                     fotos: [],
                     medidas: []
                 });
@@ -300,18 +300,18 @@ export default function CadastroPecasSimplesPage() {
         if (isEdit) {
             setEditForm(prev => ({
                 ...prev,
-                peso: dim.peso_kg,
-                altura: dim.altura_cm,
-                largura: dim.largura_cm,
-                comprimento: dim.comprimento_cm
+                peso_kg: dim.peso_kg,
+                altura_cm: dim.altura_cm,
+                largura_cm: dim.largura_cm,
+                profundidade_cm: dim.comprimento_cm // Map comprimento_cm to profundidade_cm
             }));
         } else {
             setForm(prev => ({
                 ...prev,
-                peso: dim.peso_kg,
-                altura: dim.altura_cm,
-                largura: dim.largura_cm,
-                comprimento: dim.comprimento_cm
+                peso_kg: dim.peso_kg,
+                altura_cm: dim.altura_cm,
+                largura_cm: dim.largura_cm,
+                profundidade_cm: dim.comprimento_cm // Map comprimento_cm to profundidade_cm
             }));
         }
     };
@@ -431,19 +431,19 @@ export default function CadastroPecasSimplesPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Peso (kg)</Label>
-                                    <Input type="number" step="0.001" value={form.peso} onChange={e => setForm({ ...form, peso: e.target.value })} placeholder="0.000" />
+                                    <Input type="number" step="0.001" value={form.peso_kg} onChange={e => setForm({ ...form, peso_kg: e.target.value })} placeholder="0.000" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Altura (cm)</Label>
-                                    <Input type="number" value={form.altura} onChange={e => setForm({ ...form, altura: e.target.value })} placeholder="0" />
+                                    <Input type="number" value={form.altura_cm} onChange={e => setForm({ ...form, altura_cm: e.target.value })} placeholder="0" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Largura (cm)</Label>
-                                    <Input type="number" value={form.largura} onChange={e => setForm({ ...form, largura: e.target.value })} placeholder="0" />
+                                    <Input type="number" value={form.largura_cm} onChange={e => setForm({ ...form, largura_cm: e.target.value })} placeholder="0" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Comprimento (cm)</Label>
-                                    <Input type="number" value={form.comprimento} onChange={e => setForm({ ...form, comprimento: e.target.value })} placeholder="0" />
+                                    <Input type="number" value={form.profundidade_cm} onChange={e => setForm({ ...form, profundidade_cm: e.target.value })} placeholder="0" />
                                 </div>
                             </div>
                         </div>

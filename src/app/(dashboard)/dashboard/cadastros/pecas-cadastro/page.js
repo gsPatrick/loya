@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit } from "lucide-react";
+import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
 
@@ -21,13 +22,12 @@ export default function CadastroPecasSimplesPage() {
     // Form State
     const [form, setForm] = useState({
         descricao_curta: "",
+        description: "", // Added description
         tamanhoId: "",
         corId: "",
         marcaId: "",
         categoriaId: "",
         fornecedorId: "",
-        preco_venda: "",
-        tipo_aquisicao: "COMPRA", // Default
         preco_venda: "",
         tipo_aquisicao: "COMPRA", // Default
         quantidade: 1,
@@ -47,6 +47,7 @@ export default function CadastroPecasSimplesPage() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [editForm, setEditForm] = useState({});
+    const [syncingId, setSyncingId] = useState(null);
 
     useEffect(() => {
         loadData();
@@ -91,7 +92,6 @@ export default function CadastroPecasSimplesPage() {
             marcaId: form.marcaId || null,
             categoriaId: form.categoriaId || null,
             fornecedorId: form.fornecedorId || null,
-            fornecedorId: form.fornecedorId || null,
             quantidade: form.quantidade || 1,
             sync_ecommerce: form.sync_ecommerce,
         };
@@ -101,16 +101,13 @@ export default function CadastroPecasSimplesPage() {
                 setItems([...items, res.data]);
                 setForm({
                     descricao_curta: "",
+                    description: "",
                     tamanhoId: "",
                     corId: "",
                     marcaId: "",
                     categoriaId: "",
                     fornecedorId: "",
                     preco_venda: "",
-                    preco_venda: "",
-                    tipo_aquisicao: "COMPRA",
-                    preco_venda: "",
-                    tipo_aquisicao: "COMPRA",
                     tipo_aquisicao: "COMPRA",
                     quantidade: 1,
                     sync_ecommerce: true,
@@ -124,7 +121,7 @@ export default function CadastroPecasSimplesPage() {
             });
     };
 
-    const handleImageUpload = async (e) => {
+    const handleImageUpload = async (e, isEdit = false) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
 
@@ -150,31 +147,24 @@ export default function CadastroPecasSimplesPage() {
         }
 
         if (newFotos.length > 0) {
-            setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), ...newFotos] }));
+            if (isEdit) {
+                setEditForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), ...newFotos] }));
+            } else {
+                setForm(prev => ({ ...prev, fotos: [...(prev.fotos || []), ...newFotos] }));
+            }
             toast({ title: "Sucesso", description: `${newFotos.length} imagens enviadas.` });
         }
     };
 
-    const removeImage = (index) => {
-        setForm(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== index) }));
+    const removeImage = (index, isEdit = false) => {
+        if (isEdit) {
+            setEditForm(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== index) }));
+        } else {
+            setForm(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== index) }));
+        }
     };
 
     const handleDelete = () => {
-        // Assuming there is a delete endpoint for pecas, but catalogo routes didn't show one explicitly?
-        // Let's check catalogo.routes.js again. It has POST, GET, PUT. NO DELETE?
-        // Wait, I missed checking DELETE in catalogo.routes.js?
-        // I'll check it again. If not, I can't delete.
-        // I'll assume for now I can't delete or I'll add it.
-        // Actually, usually products are not deleted but deactivated.
-        // But for this CRUD, user expects delete.
-        // I'll check catalogo.routes.js content again in my memory.
-        // It had: post, get, get/:id, put/:id, post/etiquetas. NO DELETE.
-        // So I cannot delete via API yet.
-        // I will comment out the API call and show a toast saying "Not implemented" or add the route.
-        // I'll add the route to catalogo.routes.js and controller.
-
-        // For now, I'll try to call it, and if it fails, I'll fix the backend.
-        // I'll add the backend fix in the next step.
         api.delete(`/catalogo/pecas/${currentItem.id}`)
             .then(() => {
                 setItems(items.filter(i => i.id !== currentItem.id));
@@ -190,21 +180,45 @@ export default function CadastroPecasSimplesPage() {
 
     const handleEdit = (item) => {
         setCurrentItem(item);
+        // Populate all fields for edit
         setEditForm({
             descricao_curta: item.descricao_curta,
-            preco_venda: item.preco_venda,
-            descricao_curta: item.descricao_curta,
+            description: item.descricao_detalhada || "", // Map backend field
             preco_venda: item.preco_venda,
             quantidade: item.quantidade || 1,
-            sync_ecommerce: item.sync_ecommerce !== undefined ? item.sync_ecommerce : true
+            sync_ecommerce: item.sync_ecommerce !== undefined ? item.sync_ecommerce : true,
+            tamanhoId: item.tamanhoId ? String(item.tamanhoId) : "",
+            corId: item.corId ? String(item.corId) : "",
+            marcaId: item.marcaId ? String(item.marcaId) : "",
+            categoriaId: item.categoriaId ? String(item.categoriaId) : "",
+            fornecedorId: item.fornecedorId ? String(item.fornecedorId) : "",
+            tipo_aquisicao: item.tipo_aquisicao || "COMPRA",
+            fotos: item.fotos ? item.fotos.map(f => f.url) : [] // Assuming backend returns fotos array with url objects or strings? 
+            // Backend returns `fotos` as array of FotoPeca objects { url: ... }
+            // Wait, let's check catalogo.service.js getPecaById include.
+            // It includes FotoPeca as 'fotos'.
+            // So item.fotos is array of objects. We need to map to strings for the UI state if we want to reuse same logic.
+            // Or adjust UI to handle objects. `form.fotos` in create is array of strings.
+            // Let's map to strings here.
         });
+        // Fix fotos mapping if they are objects
+        if (item.fotos && item.fotos.length > 0 && typeof item.fotos[0] === 'object') {
+            setEditForm(prev => ({ ...prev, fotos: item.fotos.map(f => f.url) }));
+        }
+
         setIsEditOpen(true);
     };
 
     const saveEdit = () => {
+        // Map back description to backend expected field if needed, but service handles it now.
+        // Service expects `description` to map to `descricao_detalhada`.
         api.put(`/catalogo/pecas/${currentItem.id}`, editForm)
             .then(res => {
-                setItems(items.map(i => i.id === currentItem.id ? res.data : i));
+                // Update item in list. We might need to reload data to get fresh relations if they changed.
+                // Or manually update the item in the list with the new values.
+                // For simplicity, let's reload data or just update basic fields.
+                // Reloading is safer for relations.
+                loadData();
                 setIsEditOpen(false);
                 toast({ title: "Sucesso", description: "Peça atualizada.", className: "bg-primary text-primary-foreground border-none" });
             })
@@ -214,9 +228,23 @@ export default function CadastroPecasSimplesPage() {
             });
     };
 
+    const handleSync = async (item) => {
+        setSyncingId(item.id);
+        try {
+            await api.post(`/catalogo/pecas/${item.id}/sync`);
+            toast({ title: "Sincronizado", description: "Produto enviado para o E-commerce.", className: "bg-green-600 text-white border-none" });
+            // Update item status in list if needed (e.g. sync_ecommerce becomes true)
+            setItems(items.map(i => i.id === item.id ? { ...i, sync_ecommerce: true } : i));
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Falha na sincronização.", variant: "destructive" });
+        } finally {
+            setSyncingId(null);
+        }
+    };
+
     // Helper to get name from ID
     const getName = (list, id) => list.find(i => i.id === id)?.nome || "-";
-    const getPessoaName = (list, id) => list.find(i => i.id === id)?.nome || "-";
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
@@ -228,7 +256,7 @@ export default function CadastroPecasSimplesPage() {
                 <CardContent className="p-6 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="md:col-span-2 space-y-2">
-                            <Label>Descrição da Peça</Label>
+                            <Label>Descrição Curta (Título)</Label>
                             <Input value={form.descricao_curta} onChange={e => setForm({ ...form, descricao_curta: e.target.value })} placeholder="Ex: Vestido Longo..." />
                         </div>
 
@@ -303,6 +331,16 @@ export default function CadastroPecasSimplesPage() {
                             </Select>
                         </div>
 
+                        <div className="md:col-span-4 space-y-2">
+                            <Label>Descrição Detalhada (Site)</Label>
+                            <Textarea
+                                value={form.description}
+                                onChange={e => setForm({ ...form, description: e.target.value })}
+                                placeholder="Descrição completa do produto..."
+                                rows={3}
+                            />
+                        </div>
+
                         <div className="space-y-2 flex items-center gap-2 mt-8">
                             <Checkbox
                                 id="sync"
@@ -372,6 +410,15 @@ export default function CadastroPecasSimplesPage() {
                                         <Button size="sm" onClick={() => handleEdit(item)} className="bg-blue-500 hover:bg-blue-600 text-white h-7 px-2">
                                             <Edit className="h-4 w-4" />
                                         </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => handleSync(item)}
+                                            disabled={syncingId === item.id}
+                                            className="bg-green-500 hover:bg-green-600 text-white h-7 px-2"
+                                            title="Sincronizar com E-commerce"
+                                        >
+                                            <RefreshCw className={`h-4 w-4 ${syncingId === item.id ? 'animate-spin' : ''}`} />
+                                        </Button>
                                         <Button size="sm" onClick={() => { setCurrentItem(item); setIsDeleteOpen(true); }} className="bg-red-500 hover:bg-red-600 text-white h-7 px-2">
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -392,14 +439,14 @@ export default function CadastroPecasSimplesPage() {
             </Dialog>
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader><DialogTitle>Editar Peça</DialogTitle></DialogHeader>
                     <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label>Descrição</Label>
-                            <Input value={editForm.descricao_curta} onChange={e => setEditForm({ ...editForm, descricao_curta: e.target.value })} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Descrição Curta</Label>
+                                <Input value={editForm.descricao_curta} onChange={e => setEditForm({ ...editForm, descricao_curta: e.target.value })} />
+                            </div>
                             <div className="space-y-2">
                                 <Label>Preço Venda</Label>
                                 <Input type="number" value={editForm.preco_venda} onChange={e => setEditForm({ ...editForm, preco_venda: e.target.value })} />
@@ -408,7 +455,72 @@ export default function CadastroPecasSimplesPage() {
                                 <Label>Quantidade</Label>
                                 <Input type="number" value={editForm.quantidade} onChange={e => setEditForm({ ...editForm, quantidade: e.target.value })} />
                             </div>
+                            <div className="space-y-2">
+                                <Label>Tipo Aquisição</Label>
+                                <Select value={editForm.tipo_aquisicao} onValueChange={v => setEditForm({ ...editForm, tipo_aquisicao: v })}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="COMPRA">Compra</SelectItem>
+                                        <SelectItem value="CONSIGNACAO">Consignação</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Tamanho</Label>
+                                <Select value={editForm.tamanhoId} onValueChange={v => setEditForm({ ...editForm, tamanhoId: v })}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                    <SelectContent>
+                                        {tamanhos.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.nome}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Cor</Label>
+                                <Select value={editForm.corId} onValueChange={v => setEditForm({ ...editForm, corId: v })}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                    <SelectContent>
+                                        {cores.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.nome}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Marca</Label>
+                                <Select value={editForm.marcaId} onValueChange={v => setEditForm({ ...editForm, marcaId: v })}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                    <SelectContent>
+                                        {marcas.map(m => <SelectItem key={m.id} value={String(m.id)}>{m.nome}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Categoria</Label>
+                                <Select value={editForm.categoriaId} onValueChange={v => setEditForm({ ...editForm, categoriaId: v })}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                    <SelectContent>
+                                        {categorias.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.nome}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <Label>Fornecedor</Label>
+                                <Select value={editForm.fornecedorId} onValueChange={v => setEditForm({ ...editForm, fornecedorId: v })}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                    <SelectContent>
+                                        {fornecedores.map(f => <SelectItem key={f.id} value={String(f.id)}>{f.nome}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
+
+                        <div className="space-y-2">
+                            <Label>Descrição Detalhada</Label>
+                            <Textarea
+                                value={editForm.description}
+                                onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                                rows={3}
+                            />
+                        </div>
+
                         <div className="flex items-center gap-2">
                             <Checkbox
                                 id="edit-sync"
@@ -416,6 +528,29 @@ export default function CadastroPecasSimplesPage() {
                                 onCheckedChange={(checked) => setEditForm({ ...editForm, sync_ecommerce: !checked })}
                             />
                             <Label htmlFor="edit-sync" className="cursor-pointer">Não Sincronizar com E-commerce</Label>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Fotos</Label>
+                            <div className="flex gap-4 items-center flex-wrap">
+                                {editForm.fotos && editForm.fotos.map((url, idx) => (
+                                    <div key={idx} className="relative w-20 h-20 border rounded overflow-hidden group">
+                                        <img
+                                            src={url.startsWith('http') ? url : `https://geral-tiptagapi.r954jc.easypanel.host${url}`}
+                                            alt="Foto"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <button onClick={() => removeImage(idx, true)} className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:text-primary transition-colors">
+                                    <Plus className="h-6 w-6" />
+                                    <span className="text-xs text-center px-1">Add</span>
+                                    <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => handleImageUpload(e, true)} />
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>

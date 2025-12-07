@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, AlertTriangle } from "lucide-react";
+import { Search, Plus, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +24,7 @@ export default function InclusaoCategoriasPage() {
     const [currentItem, setCurrentItem] = useState(null);
     const [editName, setEditName] = useState("");
     const [editFoto, setEditFoto] = useState("");
+    const [syncingId, setSyncingId] = useState(null);
 
     const [items, setItems] = useState([]);
 
@@ -102,6 +103,19 @@ export default function InclusaoCategoriasPage() {
                 console.error(err);
                 toast({ title: "Erro", description: "Erro ao remover categoria.", variant: "destructive" });
             });
+    };
+
+    const handleSync = async (item) => {
+        setSyncingId(item.id);
+        try {
+            await api.post(`/cadastros/categorias/${item.id}/sync`);
+            toast({ title: "Sincronizado", description: "Categoria enviada para o E-commerce.", className: "bg-green-600 text-white border-none" });
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Falha na sincronização.", variant: "destructive" });
+        } finally {
+            setSyncingId(null);
+        }
     };
 
     const filteredItems = items.filter(i =>
@@ -211,15 +225,26 @@ export default function InclusaoCategoriasPage() {
                                 </TableCell>
 
                                 <TableCell className="text-center">
-                                    <Button size="sm"
-                                        onClick={() => {
-                                            setCurrentItem(item);
-                                            setEditName(item.nome);
-                                            setEditFoto(item.foto || "");
-                                            setIsEditOpen(true);
-                                        }}
-                                        className="h-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground text-[10px]"
-                                    >ALTERAR</Button>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Button size="sm"
+                                            onClick={() => {
+                                                setCurrentItem(item);
+                                                setEditName(item.nome);
+                                                setEditFoto(item.foto || "");
+                                                setIsEditOpen(true);
+                                            }}
+                                            className="h-6 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px]"
+                                        >ALTERAR</Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => handleSync(item)}
+                                            disabled={syncingId === item.id}
+                                            className="h-6 bg-green-500 hover:bg-green-600 text-white text-[10px] px-2"
+                                            title="Sincronizar"
+                                        >
+                                            <RefreshCw className={`h-3 w-3 ${syncingId === item.id ? 'animate-spin' : ''}`} />
+                                        </Button>
+                                    </div>
                                 </TableCell>
 
                                 <TableCell className="text-center">

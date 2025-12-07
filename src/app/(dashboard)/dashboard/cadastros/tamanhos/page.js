@@ -13,7 +13,6 @@ import {
     ArrowUpDown,
     AlertTriangle,
     Save,
-    Save,
     X,
     RefreshCw
 } from "lucide-react";

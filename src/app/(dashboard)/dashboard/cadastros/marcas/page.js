@@ -15,9 +15,14 @@ import api from "@/services/api";
 export default function InclusaoMarcasPage() {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
+    const [newItemName, setNewItemName] = useState("");
     const [newItemImage, setNewItemImage] = useState("");
+    const [editName, setEditName] = useState("");
     const [editImage, setEditImage] = useState("");
     const [items, setItems] = useState([]);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [currentItem, setCurrentItem] = useState(null);
 
     useEffect(() => {
         loadItems();

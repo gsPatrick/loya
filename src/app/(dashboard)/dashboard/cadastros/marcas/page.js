@@ -17,6 +17,7 @@ export default function InclusaoMarcasPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [newItemImage, setNewItemImage] = useState("");
     const [editImage, setEditImage] = useState("");
+    const [items, setItems] = useState([]);
 
     useEffect(() => {
         loadItems();

@@ -15,14 +15,8 @@ import api from "@/services/api";
 export default function InclusaoMarcasPage() {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
-    const [newItemName, setNewItemName] = useState("");
-
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [currentItem, setCurrentItem] = useState(null);
-    const [editName, setEditName] = useState("");
-
-    const [items, setItems] = useState([]);
+    const [newItemImage, setNewItemImage] = useState("");
+    const [editImage, setEditImage] = useState("");
 
     useEffect(() => {
         loadItems();
@@ -39,10 +33,11 @@ export default function InclusaoMarcasPage() {
 
     const handleAdd = () => {
         if (!newItemName.trim()) return;
-        api.post('/cadastros/marcas', { nome: newItemName.toUpperCase() })
+        api.post('/cadastros/marcas', { nome: newItemName.toUpperCase(), imagem: newItemImage })
             .then(res => {
                 setItems([...items, res.data]);
                 setNewItemName("");
+                setNewItemImage("");
                 toast({ title: "Sucesso", description: "Marca adicionada.", className: "bg-primary text-primary-foreground border-none" });
             })
             .catch(err => {
@@ -52,7 +47,7 @@ export default function InclusaoMarcasPage() {
     };
 
     const handleConfirmEdit = () => {
-        api.put(`/cadastros/marcas/${currentItem.id}`, { nome: editName.toUpperCase() })
+        api.put(`/cadastros/marcas/${currentItem.id}`, { nome: editName.toUpperCase(), imagem: editImage })
             .then(res => {
                 setItems(items.map(i => i.id === currentItem.id ? res.data : i));
                 setIsEditOpen(false);
@@ -91,14 +86,25 @@ export default function InclusaoMarcasPage() {
                         <Badge className="bg-primary text-primary-foreground text-base py-1 px-3">{String(items.length + 1).padStart(8, '0')}</Badge>
                     </div>
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Nome da Marca</Label>
-                            <Input
-                                value={newItemName}
-                                onChange={(e) => setNewItemName(e.target.value)}
-                                placeholder="Digite a marca..."
-                                className="bg-gray-50 border-gray-200 h-11"
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Nome da Marca</Label>
+                                <Input
+                                    value={newItemName}
+                                    onChange={(e) => setNewItemName(e.target.value)}
+                                    placeholder="Digite a marca..."
+                                    className="bg-gray-50 border-gray-200 h-11"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>URL da Imagem (Logo)</Label>
+                                <Input
+                                    value={newItemImage}
+                                    onChange={(e) => setNewItemImage(e.target.value)}
+                                    placeholder="https://..."
+                                    className="bg-gray-50 border-gray-200 h-11"
+                                />
+                            </div>
                         </div>
                         <div className="flex justify-end">
                             <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10 px-6">
@@ -121,6 +127,7 @@ export default function InclusaoMarcasPage() {
                     <TableHeader className="bg-white">
                         <TableRow>
                             <TableHead className="w-[100px] font-bold">Id</TableHead>
+                            <TableHead className="w-[80px] font-bold">Logo</TableHead>
                             <TableHead className="font-bold">Marca</TableHead>
                             <TableHead className="w-[100px] text-center font-bold">Ação</TableHead>
                             <TableHead className="w-[100px] text-center font-bold">Ação</TableHead>
@@ -130,8 +137,15 @@ export default function InclusaoMarcasPage() {
                         {filteredItems.map((item) => (
                             <TableRow key={item.id} className="hover:bg-primary/5 border-b">
                                 <TableCell>{String(item.id).padStart(8, '0')}</TableCell>
+                                <TableCell>
+                                    {item.imagem ? (
+                                        <img src={item.imagem} alt={item.nome} className="w-10 h-10 object-contain" />
+                                    ) : (
+                                        <div className="w-10 h-10 bg-gray-100 flex items-center justify-center text-xs">N/A</div>
+                                    )}
+                                </TableCell>
                                 <TableCell className="font-medium">{item.nome}</TableCell>
-                                <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setEditName(item.nome); setIsEditOpen(true); }} className="h-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground text-[10px]">ALTERAR</Button></TableCell>
+                                <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setEditName(item.nome); setEditImage(item.imagem || ""); setIsEditOpen(true); }} className="h-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground text-[10px]">ALTERAR</Button></TableCell>
                                 <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setIsDeleteOpen(true); }} className="h-6 w-full bg-red-500 hover:bg-red-600 text-white text-[10px]">APAGAR</Button></TableCell>
                             </TableRow>
                         ))}
@@ -142,7 +156,16 @@ export default function InclusaoMarcasPage() {
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogContent>
                     <DialogHeader><DialogTitle>Alterar Marca</DialogTitle></DialogHeader>
-                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Nome</Label>
+                            <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>URL da Imagem</Label>
+                            <Input value={editImage} onChange={(e) => setEditImage(e.target.value)} />
+                        </div>
+                    </div>
                     <DialogFooter><Button onClick={handleConfirmEdit} className="bg-primary text-primary-foreground">Salvar</Button></DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -27,12 +27,14 @@ const productSchema = z.object({
     sku: z.string().min(1, 'SKU é obrigatório'),
     stock: z.coerce.number().min(0, 'Estoque não pode ser negativo'),
     categoryId: z.string().min(1, 'Categoria é obrigatória'),
-    
+
     // Shipping
     weight: z.coerce.number().min(0.001, 'Peso é obrigatório (kg)'),
     height: z.coerce.number().min(1, 'Altura é obrigatória (cm)'),
     width: z.coerce.number().min(1, 'Largura é obrigatória (cm)'),
     length: z.coerce.number().min(1, 'Comprimento é obrigatório (cm)'),
+
+    is_accessory: z.boolean().default(false),
 
     // Variations
     is_variable: z.boolean().default(false),
@@ -69,7 +71,8 @@ export default function ProductForm({ initialData }) {
             length: 0,
             is_variable: false,
             options: [],
-            variations: []
+            variations: [],
+            is_accessory: false
         }
     });
 
@@ -98,8 +101,8 @@ export default function ProductForm({ initialData }) {
             router.push('/products');
         },
         onError: (err) => {
-            toast({ 
-                title: 'Erro ao salvar', 
+            toast({
+                title: 'Erro ao salvar',
                 description: err.response?.data?.error || 'Erro desconhecido',
                 variant: 'destructive'
             });
@@ -123,7 +126,7 @@ export default function ProductForm({ initialData }) {
 
         // Cartesian product of option values
         const cartesian = (...a) => a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
-        
+
         const valueArrays = options.map(opt => opt.values.filter(v => v)); // Filter empty
         if (valueArrays.some(arr => arr.length === 0)) return;
 
@@ -134,7 +137,7 @@ export default function ProductForm({ initialData }) {
             options.forEach((opt, idx) => {
                 attributes[opt.name] = Array.isArray(combo) ? combo[idx] : combo;
             });
-            
+
             // Generate SKU suffix
             const suffix = Object.values(attributes).join('-').toUpperCase();
             const baseSku = form.getValues('sku') || 'PROD';
@@ -246,6 +249,15 @@ export default function ProductForm({ initialData }) {
                                     {errors.categoryId && <span className="text-red-500 text-sm">{errors.categoryId.message}</span>}
                                 </div>
                             </div>
+
+                            <div className="flex items-center space-x-2 pt-4">
+                                <Checkbox
+                                    id="is_accessory"
+                                    checked={watch('is_accessory')}
+                                    onCheckedChange={(checked) => setValue('is_accessory', checked)}
+                                />
+                                <Label htmlFor="is_accessory">Este produto é um Acessório?</Label>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -286,10 +298,10 @@ export default function ProductForm({ initialData }) {
                             <div className="flex items-center justify-between">
                                 <CardTitle>Variações de Produto</CardTitle>
                                 <div className="flex items-center space-x-2">
-                                    <Checkbox 
-                                        id="is_variable" 
-                                        checked={isVariable} 
-                                        onCheckedChange={(checked) => setValue('is_variable', checked)} 
+                                    <Checkbox
+                                        id="is_variable"
+                                        checked={isVariable}
+                                        onCheckedChange={(checked) => setValue('is_variable', checked)}
                                     />
                                     <Label htmlFor="is_variable">Este produto tem variações?</Label>
                                 </div>
@@ -307,8 +319,8 @@ export default function ProductForm({ initialData }) {
                                             </div>
                                             <div className="space-y-2 flex-[2]">
                                                 <Label>Valores (Separados por vírgula)</Label>
-                                                <Input 
-                                                    placeholder="Azul, Vermelho, Verde" 
+                                                <Input
+                                                    placeholder="Azul, Vermelho, Verde"
                                                     onChange={(e) => {
                                                         const vals = e.target.value.split(',').map(v => v.trim()).filter(v => v);
                                                         setValue(`options.${index}.values`, vals);

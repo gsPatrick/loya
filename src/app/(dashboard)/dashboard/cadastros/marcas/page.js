@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, AlertTriangle, Tag, Edit } from "lucide-react";
+import { Search, Plus, AlertTriangle, Tag, Edit, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -75,6 +75,18 @@ export default function InclusaoMarcasPage() {
             .catch(err => {
                 console.error(err);
                 toast({ title: "Erro", description: "Erro ao remover marca.", variant: "destructive" });
+            });
+    };
+
+    const handleSync = (item) => {
+        toast({ title: "Sincronizando...", description: `Sincronizando ${item.nome}...` });
+        api.post(`/cadastros/marcas/${item.id}/sync`)
+            .then(() => {
+                toast({ title: "Sucesso", description: "Marca sincronizada com sucesso!", className: "bg-green-600 text-white border-none" });
+            })
+            .catch(err => {
+                console.error(err);
+                toast({ title: "Erro", description: "Erro ao sincronizar marca.", variant: "destructive" });
             });
     };
 
@@ -171,6 +183,7 @@ export default function InclusaoMarcasPage() {
                             <TableHead className="w-[100px] font-bold">Id</TableHead>
                             <TableHead className="w-[80px] font-bold">Logo</TableHead>
                             <TableHead className="font-bold">Marca</TableHead>
+                            <TableHead className="w-[100px] text-center font-bold">Sync</TableHead>
                             <TableHead className="w-[100px] text-center font-bold">Ação</TableHead>
                             <TableHead className="w-[100px] text-center font-bold">Ação</TableHead>
                         </TableRow>
@@ -187,6 +200,7 @@ export default function InclusaoMarcasPage() {
                                     )}
                                 </TableCell>
                                 <TableCell className="font-medium">{item.nome}</TableCell>
+                                <TableCell className="text-center"><Button size="sm" onClick={() => handleSync(item)} className="h-6 w-full bg-blue-500 hover:bg-blue-600 text-white text-[10px]"><RefreshCw className="w-3 h-3 mr-1" /> SYNC</Button></TableCell>
                                 <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setEditName(item.nome); setEditImage(item.imagem || ""); setIsEditOpen(true); }} className="h-6 w-full bg-primary hover:bg-primary/90 text-primary-foreground text-[10px]">ALTERAR</Button></TableCell>
                                 <TableCell className="text-center"><Button size="sm" onClick={() => { setCurrentItem(item); setIsDeleteOpen(true); }} className="h-6 w-full bg-red-500 hover:bg-red-600 text-white text-[10px]">APAGAR</Button></TableCell>
                             </TableRow>

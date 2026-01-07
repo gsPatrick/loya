@@ -262,7 +262,7 @@ export default function PerformanceVendedorPage() {
                 <Tabs defaultValue="detalhado" className="w-full">
                     <TabsList className="w-full justify-start bg-white border-b rounded-none h-auto p-0 px-4 gap-6 overflow-x-auto">
                         <TabsTrigger value="score" className="py-3 gap-2 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none shadow-none font-medium">
-                            <Trophy className="h-4 w-4" /> Score TicTag
+                            <Trophy className="h-4 w-4" /> Score Loja Simples
                         </TabsTrigger>
                         <TabsTrigger value="detalhado" className="py-3 gap-2 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none shadow-none font-medium">
                             <List className="h-4 w-4" /> Detalhamento Completo
@@ -282,7 +282,7 @@ export default function PerformanceVendedorPage() {
                             <div className="bg-primary/10 border border-primary/20 rounded-md p-4 flex items-start gap-3">
                                 <Trophy className="h-5 w-5 text-primary mt-0.5" />
                                 <div>
-                                    <h4 className="text-sm font-bold text-primary">Score TicTag - Metodologia Científica</h4>
+                                    <h4 className="text-sm font-bold text-primary">Score Loja Simples - Metodologia Científica</h4>
                                     <p className="text-xs text-primary/80 mt-1">
                                         Ranking baseado em 5 categorias ponderadas.
                                     </p>

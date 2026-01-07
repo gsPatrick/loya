@@ -8,7 +8,7 @@ import styles from "./FAQ.module.css";
 const faqs = [
     {
         q: "Preciso instalar algo no meu computador?",
-        a: "Não! O TicTag é 100% na nuvem. Você acessa pelo navegador de qualquer computador, tablet ou celular, sem ocupar espaço e sem instalações complicadas."
+        a: "Não! O Loja Simples é 100% na nuvem. Você acessa pelo navegador de qualquer computador, tablet ou celular, sem ocupar espaço e sem instalações complicadas."
     },
     {
         q: "O sistema funciona para brechós pequenos?",
@@ -42,7 +42,7 @@ export default function FAQ() {
                 <div className={styles.header}>
                     <h2 className={styles.title}>Dúvidas Frequentes</h2>
                     <p className={styles.subtitle}>
-                        Tudo o que você precisa saber para começar a usar o TicTag hoje mesmo.
+                        Tudo o que você precisa saber para começar a usar o Loja Simples hoje mesmo.
                     </p>
                 </div>
 

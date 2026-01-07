@@ -53,7 +53,7 @@ export default function Impact() {
                             <span className="text-teal-400">preserva o futuro.</span>
                         </h2>
                         <p className={styles.description}>
-                            O TicTag não é apenas um sistema, é um motor de crescimento para o varejo circular.
+                            O Loja Simples não é apenas um sistema, é um motor de crescimento para o varejo circular.
                             Ajudamos brechós a escalar suas operações enquanto reduzimos o desperdício têxtil global.
                         </p>
                     </motion.div>

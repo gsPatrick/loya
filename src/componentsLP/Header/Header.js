@@ -39,7 +39,7 @@ export default function Header() {
                         <div className="bg-teal-50 p-2 rounded-xl border border-teal-100">
                             <ShoppingBag className="w-5 h-5 text-teal-600" />
                         </div>
-                        <span>TicTag<span className="text-teal-500">.</span></span>
+                        <span>Loja Simples<span className="text-teal-500">.</span></span>
                     </Link>
 
                     <nav className={styles.navLinks}>
@@ -101,7 +101,7 @@ export default function Header() {
                                     <ShoppingBag className="w-10 h-10 text-teal-400" strokeWidth={1.5} />
                                 </div>
                                 <div className="flex flex-col items-center">
-                                    <h1 className="text-3xl font-bold tracking-tight text-white">TicTag</h1>
+                                    <h1 className="text-3xl font-bold tracking-tight text-white">Loja Simples</h1>
                                     <div className="flex items-center gap-2 text-teal-400 text-sm font-medium">
                                         <Sparkles className="w-3 h-3 animate-spin-slow" />
                                         <span>Moda Circular Inteligente</span>

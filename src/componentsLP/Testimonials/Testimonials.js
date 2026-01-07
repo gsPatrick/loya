@@ -9,7 +9,7 @@ const testimonials = [
     {
         name: "Katia Zanetti",
         role: "Maria Fofura Brechó",
-        text: "O controle de estoque em tempo real facilita decisões rápidas. Os relatórios detalhados oferecem uma visão clara do desempenho. O sistema TicTag é crucial para o sucesso do nosso brechó."
+        text: "O controle de estoque em tempo real facilita decisões rápidas. Os relatórios detalhados oferecem uma visão clara do desempenho. O sistema Loja Simples é crucial para o sucesso do nosso brechó."
     },
     {
         name: "Rayanne",
@@ -44,7 +44,7 @@ const testimonials = [
     {
         name: "Daniela Prado",
         role: "Mundo Poopiss Brechó",
-        text: "A melhor solução que encontrei. Fazia tudo no papel, mas para crescer precisei do TicTag. É uma ferramenta completa e o app para fornecedoras ajuda muito na autonomia."
+        text: "A melhor solução que encontrei. Fazia tudo no papel, mas para crescer precisei do Loja Simples. É uma ferramenta completa e o app para fornecedoras ajuda muito na autonomia."
     }
 ];
 

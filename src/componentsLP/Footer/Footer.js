@@ -16,7 +16,7 @@ export default function Footer() {
                     <div className={styles.brandColumn}>
                         <div className={styles.logo}>
                             <ShoppingBag className="w-6 h-6 text-teal-400" />
-                            <span>TicTag<span className="text-teal-400">.</span></span>
+                            <span>Loja Simples<span className="text-teal-400">.</span></span>
                         </div>
                         <p className={styles.tagline}>
                             O sistema operacional completo para o varejo circular.
@@ -25,8 +25,8 @@ export default function Footer() {
 
                         <div className={styles.contactInfo}>
                             <Mail className="w-4 h-4 text-teal-500" />
-                            <a href="mailto:contato@tictag.com.br" className="hover:text-white transition-colors">
-                                contato@tictag.com.br
+                            <a href="mailto:contato@lojasimples.com.br" className="hover:text-white transition-colors">
+                                contato@lojasimples.com.br
                             </a>
                         </div>
                     </div>
@@ -47,7 +47,7 @@ export default function Footer() {
                 {/* Barra Inferior */}
                 <div className={styles.bottomBar}>
                     <div>
-                        &copy; {new Date().getFullYear()} TicTag. Todos os direitos reservados.
+                        &copy; {new Date().getFullYear()} Loja Simples. Todos os direitos reservados.
                     </div>
 
                     {/* CRÉDITO DO DESENVOLVEDOR */}

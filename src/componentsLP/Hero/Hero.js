@@ -31,7 +31,7 @@ export default function Hero() {
 
                     <p className={styles.description}>
                         Organize seu estoque, automatize a consignação e venda mais.
-                        O <strong>TicTag</strong> transforma a complexidade do seu brechó em processos simples e lucrativos.
+                        O <strong>Loja Simples</strong> transforma a complexidade do seu brechó em processos simples e lucrativos.
                     </p>
 
                     <div className={styles.btnGroup}>

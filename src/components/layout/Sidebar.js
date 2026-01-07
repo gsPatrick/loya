@@ -122,7 +122,7 @@ export function Sidebar({ className, setIsOpen }) {
 
     // Fallback to defaults if context is missing (shouldn't happen)
     const config = {
-        SYSTEM_NAME: themeConfig?.SYSTEM_NAME || "TicTag",
+        SYSTEM_NAME: themeConfig?.SYSTEM_NAME || "Loja Simples",
         SYSTEM_LOGO: themeConfig?.SYSTEM_LOGO || null
     };
 
@@ -211,7 +211,7 @@ export function Sidebar({ className, setIsOpen }) {
                             <Package className="w-5 h-5" />
                         </div>
                     )}
-                    <span>{config.SYSTEM_NAME || 'TicTag'}</span>
+                    <span>{config.SYSTEM_NAME || 'Loja Simples'}</span>
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto py-4 px-3 scrollbar-thin scrollbar-thumb-muted">

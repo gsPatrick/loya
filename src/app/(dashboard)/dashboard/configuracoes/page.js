@@ -112,7 +112,7 @@ export default function ConfiguracoesPage() {
                             name="SYSTEM_NAME"
                             value={configs.SYSTEM_NAME}
                             onChange={handleChange}
-                            placeholder="Ex: Tiptag Admin"
+                            placeholder="Ex: Loja Simples Admin"
                         />
                     </div>
 

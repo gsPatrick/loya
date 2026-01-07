@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "TicTag - Gestão de Brechós", // Atualizei o título para ficar correto
+  title: "Loja Simples - Gestão de Brechós", // Atualizei o título para ficar correto
   description: "Sistema de Gestão Inteligente",
 };
 
@@ -28,7 +28,7 @@ export default async function RootLayout({ children }) {
   try {
     // Fetch public config from backend
     // Note: We use fetch here because axios interceptors in api.js might rely on window/localStorage
-    const res = await fetch('https://geral-tiptagapi.r954jc.easypanel.host/api/public/system-config', {
+    const res = await fetch('https://n8n-hunterbd-lojasimples.r954jc.easypanel.host/api/v1/public/system-config', {
       next: { revalidate: 60 } // Cache for 60 seconds
     });
 

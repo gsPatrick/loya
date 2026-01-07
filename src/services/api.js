@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://geral-tiptagapi.r954jc.easypanel.host/api/v1',
+    baseURL: 'https://n8n-hunterbd-lojasimples.r954jc.easypanel.host/api/v1',
 });
 
 // Interceptor para adicionar Token (se houver auth no futuro)

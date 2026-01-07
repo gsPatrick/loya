@@ -28,7 +28,7 @@ export default function LoginPage() {
     password: "",
   });
 
-  // Configurações visuais do cliente (Fallback para TicTag padrão)
+  // Configurações visuais do cliente (Fallback para Loja Simples padrão)
   const systemLogo = themeConfig?.SYSTEM_LOGO || null;
   const primaryColor = themeConfig?.SYSTEM_COLOR_PRIMARY || "hsl(var(--primary))";
 
@@ -42,7 +42,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${'https://geral-tiptagapi.r954jc.easypanel.host/api/v1'}/auth/login`, {
+      const response = await fetch(`${'https://n8n-hunterbd-lojasimples.r954jc.easypanel.host/api/v1'}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -168,7 +168,7 @@ export default function LoginPage() {
       >
         <Image
           src="/login/login.png"
-          alt="Login TicTag"
+          alt="Login Loja Simples"
           fill
           className="object-cover opacity-90"
           priority
@@ -230,7 +230,7 @@ export default function LoginPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="admin@tictag.com"
+                placeholder="admin@lojasimples.com"
                 required
                 value={formData.email}
                 onChange={handleInputChange}

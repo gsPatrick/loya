@@ -55,12 +55,11 @@
     gap: 2.5rem;
     padding: 0.5rem 1.5rem;
     border-radius: 99px;
-    /* Fundo sutil nos links para legibilidade no vidro */
     background: rgba(255, 255, 255, 0.0);
     transition: background 0.3s;
 }
 
-/* Quando scrollado, podemos dar um destaque extra nos links se quiser */
+/* Quando scrollado */
 .scrolled .navLinks {
     background: rgba(255, 255, 255, 0.0);
 }
@@ -75,7 +74,6 @@
 
 .link:hover {
     color: #0EA5A4;
-    /* Teal */
 }
 
 /* Actions */
@@ -84,122 +82,94 @@
     align-items: center;
     gap: 1rem;
 }
-
-/* Transição de Saída (Overlay) */
-.transitionOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    pointer-events: none;
-    z-index: 9999;
-}
-
-/* ... (Mantenha o CSS anterior do Header/Nav) ... */
-
-.headerWrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 50;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    /* Inicialmente transparente */
-    background: transparent;
-    border-bottom: 1px solid transparent;
-}
-
-/* Estado Scrolled (Efeito Vidro) */
-.scrolled {
-    /* Fundo Branco com alta transparência */
-    background: rgba(255, 255, 255, 0.6);
-
-    /* O Desfoque Mágico do Vidro */
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-
-    /* Borda sutil para definir o vidro */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-
-    /* Sombra suave */
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
-}
-
-.navContainer {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-/* Logo */
-.logo {
-    font-family: 'Inter', sans-serif;
-    font-weight: 800;
-    font-size: 1.5rem;
-    color: #0F172A;
-    letter-spacing: -0.03em;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    text-decoration: none;
-}
-
-/* Links */
-.navLinks {
-    display: none;
-    gap: 2.5rem;
-    padding: 0.5rem 1.5rem;
-    border-radius: 99px;
-    /* Fundo sutil nos links para legibilidade no vidro */
-    background: rgba(255, 255, 255, 0.0);
-    transition: background 0.3s;
-}
-
-/* Quando scrollado, podemos dar um destaque extra nos links se quiser */
-.scrolled .navLinks {
-    background: rgba(255, 255, 255, 0.0);
-}
-
-.link {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #475569;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-
-.link:hover {
-    color: #0EA5A4;
-    /* Teal */
-}
-
-/* Actions */
-.actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-/* Transição de Saída (Overlay) */
-.transitionOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    pointer-events: none;
-    z-index: 9999;
-}
-
-
 
 @media (min-width: 768px) {
     .navLinks {
         display: flex;
     }
+}
+
+/* ========================================
+   ANIMAÇÃO DE TRANSIÇÃO - LOGIN
+   ======================================== */
+
+/* Container Principal do Overlay */
+.overlayContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Base das Cortinas */
+.curtain {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    will-change: transform;
+}
+
+/* Camada de Acento (Teal) - Passa rápido */
+.curtainAccent {
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    z-index: 1;
+}
+
+/* Camada de Luz (Branca) - Limpa a visão */
+.curtainLight {
+    background: #ffffff;
+    z-index: 2;
+}
+
+/* Camada Principal (Slate Escuro) - Fica na tela com o logo */
+.curtainPrimary {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Container do Logo na Transição */
+.transitionLogo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+/* Caixa do Ícone */
+.transitionIconBox {
+    width: 80px;
+    height: 80px;
+    background: rgba(20, 184, 166, 0.1);
+    border: 2px solid rgba(20, 184, 166, 0.3);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 40px rgba(20, 184, 166, 0.2);
+}
+
+/* Animação de Spin Lento para o Sparkles */
+@keyframes spin-slow {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Classe global usada no componente */
+:global(.animate-spin-slow) {
+    animation: spin-slow 3s linear infinite;
 }

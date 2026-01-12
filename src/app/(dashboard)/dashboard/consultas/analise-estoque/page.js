@@ -95,7 +95,7 @@ export default function AnaliseEstoquePage() {
         return null;
     };
 
-    // Componente de Card de Gráfico + Tabela
+    // Componente de Card de Gráfico + Tabela (para poucos itens)
     const ChartAnalysisCard = ({ title, icon: Icon, data, total }) => (
         <Card className="shadow-sm border-muted flex flex-col">
             <CardHeader className="pb-2 bg-muted/5 border-b">
@@ -168,6 +168,113 @@ export default function AnaliseEstoquePage() {
         </Card>
     );
 
+    // Componente especial para Categorias (com legenda customizada para muitos itens)
+    const CategoryChartCard = ({ title, icon: Icon, data, total }) => {
+        // Gerar mais cores para suportar muitas categorias
+        const EXTENDED_COLORS = [
+            "#4f46e5", "#10b981", "#06b6d4", "#f59e0b", "#ef4444", "#6b7280",
+            "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#84cc16", "#22d3ee",
+            "#a855f7", "#f43f5e", "#0ea5e9", "#eab308", "#64748b", "#d946ef",
+            "#2dd4bf", "#fb923c", "#4ade80", "#38bdf8", "#c084fc", "#fb7185",
+            "#34d399", "#fbbf24", "#60a5fa", "#a78bfa", "#f472b6", "#2563eb"
+        ];
+
+        const coloredData = data.map((item, idx) => ({
+            ...item,
+            color: EXTENDED_COLORS[idx % EXTENDED_COLORS.length]
+        }));
+
+        return (
+            <Card className="shadow-sm border-muted flex flex-col">
+                <CardHeader className="pb-2 bg-muted/5 border-b">
+                    <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2 uppercase">
+                        <Icon className="h-4 w-4 text-primary" /> {title}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 p-0 flex flex-col">
+                    {/* Área do Gráfico */}
+                    <div className="h-[200px] w-full bg-white relative">
+                        {coloredData && coloredData.length > 0 ? (
+                            <>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={coloredData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={50}
+                                            outerRadius={70}
+                                            paddingAngle={1}
+                                            dataKey="value"
+                                        >
+                                            {coloredData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={1} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<CustomTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                {/* Texto Central do Donut */}
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                                    <span className="text-xs text-muted-foreground block">Total</span>
+                                    <span className="text-xl font-bold text-foreground">{total.toLocaleString()}</span>
+                                </div>
+                            </>
+                        ) : (
+                            <EmptyChartPlaceholder height="100%" message="Sem dados" />
+                        )}
+                    </div>
+
+                    {/* Legenda Customizada com Scroll */}
+                    <div className="px-3 py-2 border-t bg-muted/5">
+                        <div className="flex flex-wrap gap-1.5 max-h-[80px] overflow-y-auto">
+                            {coloredData.map((item, idx) => (
+                                <span
+                                    key={idx}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white border shadow-sm whitespace-nowrap"
+                                    style={{ borderColor: item.color }}
+                                >
+                                    <span
+                                        className="w-2 h-2 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: item.color }}
+                                    />
+                                    {item.name}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Tabela Resumo com Scroll */}
+                    <div className="border-t max-h-[180px] overflow-y-auto">
+                        <Table>
+                            <TableHeader className="sticky top-0 bg-white z-10">
+                                <TableRow className="bg-muted/10 hover:bg-muted/10">
+                                    <TableHead className="h-8 text-xs font-bold">Faixa/Categoria</TableHead>
+                                    <TableHead className="h-8 text-xs font-bold text-right">Qtd</TableHead>
+                                    <TableHead className="h-8 text-xs font-bold text-right">%</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {coloredData.map((item, idx) => (
+                                    <TableRow key={idx} className="hover:bg-muted/5 text-xs">
+                                        <TableCell className="py-1.5 flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                                            <span className="truncate max-w-[120px]" title={item.name}>{item.name}</span>
+                                        </TableCell>
+                                        <TableCell className="py-1.5 text-right">{item.value.toLocaleString()}</TableCell>
+                                        <TableCell className="py-1.5 text-right text-muted-foreground">
+                                            {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
 
@@ -229,8 +336,8 @@ export default function AnaliseEstoquePage() {
                     total={data.kpis.totalPecas} // Note: This total might differ if we only count available items for time in stock, but for simplicity using totalPecas or sum of timeData
                 />
 
-                {/* Gráfico 4: Categoria */}
-                <ChartAnalysisCard
+                {/* Gráfico 4: Categoria (componente especial para muitos itens) */}
+                <CategoryChartCard
                     title="Análise por Categoria"
                     icon={Layers}
                     data={categoryData}

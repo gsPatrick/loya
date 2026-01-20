@@ -204,7 +204,7 @@ export default function CadastroPecasSimplesPage() {
                 const res = await api.post('/catalogo/upload', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                const fullUrl = `https://geral-tiptagapi.r954jc.easypanel.host${res.data.url}`;
+                const fullUrl = `https://jackbear-backend-apilojasimples-revestese.r954jc.easypanel.host${res.data.url}`;
                 newFotos.push(fullUrl);
             } catch (err) {
                 console.error(err);
@@ -472,7 +472,7 @@ export default function CadastroPecasSimplesPage() {
                                 {form.fotos && form.fotos.map((url, idx) => (
                                     <div key={idx} className="relative w-20 h-20 border rounded overflow-hidden group">
                                         <img
-                                            src={url.startsWith('http') ? url : `https://geral-tiptagapi.r954jc.easypanel.host${url}`}
+                                            src={url.startsWith('http') ? url : `https://jackbear-backend-apilojasimples-revestese.r954jc.easypanel.host${url}`}
                                             alt="Foto"
                                             className="w-full h-full object-cover"
                                         />
@@ -656,7 +656,7 @@ export default function CadastroPecasSimplesPage() {
                                 {editForm.fotos && editForm.fotos.map((url, idx) => (
                                     <div key={idx} className="relative w-20 h-20 border rounded overflow-hidden group">
                                         <img
-                                            src={url.startsWith('http') ? url : `https://geral-tiptagapi.r954jc.easypanel.host${url}`}
+                                            src={url.startsWith('http') ? url : `https://jackbear-backend-apilojasimples-revestese.r954jc.easypanel.host${url}`}
                                             alt="Foto"
                                             className="w-full h-full object-cover"
                                         />

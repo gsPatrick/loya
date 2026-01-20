@@ -103,7 +103,7 @@ export default function InclusaoMarcasPage() {
             const res = await api.post('/catalogo/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            const fullUrl = `https://geral-tiptagapi.r954jc.easypanel.host${res.data.url}`;
+            const fullUrl = `https://jackbear-backend-apilojasimples-revestese.r954jc.easypanel.host${res.data.url}`;
 
             if (isEdit) {
                 setEditImage(fullUrl);

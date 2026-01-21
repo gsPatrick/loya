@@ -67,6 +67,7 @@ const MeasurementsInput = ({ value = [], onChange }) => {
 export default function CadastroPecasSimplesPage() {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
 
     // Form State
     const [form, setForm] = useState({
@@ -99,38 +100,87 @@ export default function CadastroPecasSimplesPage() {
     const [dimensoes, setDimensoes] = useState([]);
     const [items, setItems] = useState([]);
 
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const ITEMS_PER_PAGE = 20;
+
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [editForm, setEditForm] = useState({});
     const [syncingId, setSyncingId] = useState(null);
 
+    // Debounce search input
     useEffect(() => {
-        loadData();
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setCurrentPage(1); // Reset to first page on new search
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Load dropdown data once on mount
+    useEffect(() => {
+        loadDropdownData();
     }, []);
 
-    const loadData = async () => {
+    // Load items when page or search changes
+    useEffect(() => {
+        loadItems();
+    }, [currentPage, debouncedSearch]);
+
+    const loadDropdownData = async () => {
         try {
-            const [tamRes, corRes, marcaRes, catRes, fornRes, pecasRes, dimRes] = await Promise.all([
+            const [tamRes, corRes, marcaRes, catRes, fornRes, dimRes] = await Promise.all([
                 api.get('/cadastros/tamanhos'),
                 api.get('/cadastros/cores'),
                 api.get('/cadastros/marcas'),
                 api.get('/cadastros/categorias'),
-                api.get('/pessoas?is_fornecedor=true'),
-                api.get('/catalogo/pecas'),
+                api.get('/pessoas?is_fornecedor=true&simple=true'),
                 api.get('/cadastros/dimensoes')
             ]);
-
             setTamanhos(tamRes.data);
             setCores(corRes.data);
             setMarcas(marcaRes.data);
             setCategorias(catRes.data);
             setFornecedores(fornRes.data);
-            setItems(pecasRes.data);
             setDimensoes(dimRes.data);
         } catch (err) {
             console.error(err);
-            toast({ title: "Erro", description: "Erro ao carregar dados.", variant: "destructive" });
+            toast({ title: "Erro", description: "Erro ao carregar dados auxiliares.", variant: "destructive" });
+        }
+    };
+
+    const loadItems = async () => {
+        setIsLoading(true);
+        try {
+            const params = new URLSearchParams({
+                page: currentPage,
+                limit: ITEMS_PER_PAGE
+            });
+            if (debouncedSearch) {
+                params.append('search', debouncedSearch);
+            }
+            const res = await api.get(`/catalogo/pecas?${params.toString()}`);
+            // New paginated response format
+            if (res.data.data) {
+                setItems(res.data.data);
+                setTotalPages(res.data.totalPages || 1);
+                setTotalItems(res.data.total || 0);
+            } else {
+                // Fallback for legacy array response
+                setItems(res.data);
+                setTotalPages(1);
+                setTotalItems(res.data.length);
+            }
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Erro ao carregar peças.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -160,7 +210,8 @@ export default function CadastroPecasSimplesPage() {
 
         api.post('/catalogo/pecas', payload)
             .then(res => {
-                setItems([...items, res.data]);
+                // Reload items from server to get updated list with pagination
+                loadItems();
                 setForm({
                     descricao_curta: "",
                     description: "",
@@ -233,7 +284,7 @@ export default function CadastroPecasSimplesPage() {
     const handleDelete = () => {
         api.delete(`/catalogo/pecas/${currentItem.id}`)
             .then(() => {
-                setItems(items.filter(i => i.id !== currentItem.id));
+                loadItems(); // Reload from server
                 setIsDeleteOpen(false);
                 toast({ title: "Removido", description: "Peça removida.", className: "bg-red-600 text-white border-none" });
             })
@@ -269,7 +320,7 @@ export default function CadastroPecasSimplesPage() {
     const saveEdit = () => {
         api.put(`/catalogo/pecas/${currentItem.id}`, editForm)
             .then(res => {
-                loadData();
+                loadItems(); // Reload from server
                 setIsEditOpen(false);
                 toast({ title: "Sucesso", description: "Peça atualizada.", className: "bg-primary text-primary-foreground border-none" });
             })
@@ -499,7 +550,12 @@ export default function CadastroPecasSimplesPage() {
             </Card>
 
             <Card className="border-t-4 border-t-primary/50 shadow-sm overflow-hidden">
-                <div className="p-4 bg-white"><Input placeholder="Buscar peça..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
+                <div className="p-4 bg-white flex items-center gap-4">
+                    <Input placeholder="Buscar peça..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="flex-1" />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        {isLoading ? "Carregando..." : `${totalItems} peças encontradas`}
+                    </span>
+                </div>
                 <Table>
                     <TableHeader className="bg-white">
                         <TableRow>
@@ -513,7 +569,7 @@ export default function CadastroPecasSimplesPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {items.filter(i => i.descricao_curta && i.descricao_curta.includes(searchTerm.toUpperCase())).map((item) => (
+                        {items.map((item) => (
                             <TableRow key={item.id} className="border-b">
                                 <TableCell>{String(item.id).padStart(6, '0')}</TableCell>
                                 <TableCell className="font-medium">{item.descricao_curta}</TableCell>
@@ -544,6 +600,30 @@ export default function CadastroPecasSimplesPage() {
                         ))}
                     </TableBody>
                 </Table>
+                {/* Pagination Controls */}
+                <div className="p-4 bg-white border-t flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                        Página {currentPage} de {totalPages}
+                    </span>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={currentPage <= 1 || isLoading}
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        >
+                            Anterior
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={currentPage >= totalPages || isLoading}
+                            onClick={() => setCurrentPage(p => p + 1)}
+                        >
+                            Próxima
+                        </Button>
+                    </div>
+                </div>
             </Card>
 
             <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>

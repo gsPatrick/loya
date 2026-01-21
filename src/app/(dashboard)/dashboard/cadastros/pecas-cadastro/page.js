@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
 
@@ -406,52 +407,57 @@ export default function CadastroPecasSimplesPage() {
 
                         <div className="space-y-2">
                             <Label>Tamanho</Label>
-                            <Select value={String(form.tamanhoId)} onValueChange={v => setForm({ ...form, tamanhoId: v })}>
-                                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                <SelectContent>
-                                    {tamanhos.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.nome}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                options={tamanhos}
+                                value={form.tamanhoId}
+                                onValueChange={v => setForm({ ...form, tamanhoId: v })}
+                                placeholder="Selecione tamanho"
+                                searchPlaceholder="Buscar tamanho..."
+                            />
                         </div>
 
                         <div className="space-y-2">
                             <Label>Cor</Label>
-                            <Select value={String(form.corId)} onValueChange={v => setForm({ ...form, corId: v })}>
-                                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                <SelectContent>
-                                    {cores.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.nome}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                options={cores}
+                                value={form.corId}
+                                onValueChange={v => setForm({ ...form, corId: v })}
+                                placeholder="Selecione cor"
+                                searchPlaceholder="Buscar cor..."
+                            />
                         </div>
 
                         <div className="space-y-2">
                             <Label>Marca</Label>
-                            <Select value={String(form.marcaId)} onValueChange={v => setForm({ ...form, marcaId: v })}>
-                                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                <SelectContent>
-                                    {marcas.map(m => <SelectItem key={m.id} value={String(m.id)}>{m.nome}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                options={marcas}
+                                value={form.marcaId}
+                                onValueChange={v => setForm({ ...form, marcaId: v })}
+                                placeholder="Selecione marca"
+                                searchPlaceholder="Buscar marca..."
+                            />
                         </div>
 
                         <div className="space-y-2">
                             <Label>Categoria</Label>
-                            <Select value={String(form.categoriaId)} onValueChange={v => setForm({ ...form, categoriaId: v })}>
-                                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                <SelectContent>
-                                    {categorias.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.nome}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                options={categorias}
+                                value={form.categoriaId}
+                                onValueChange={v => setForm({ ...form, categoriaId: v })}
+                                placeholder="Selecione categoria"
+                                searchPlaceholder="Buscar categoria..."
+                            />
                         </div>
 
                         <div className="space-y-2 md:col-span-2">
                             <Label>Fornecedor</Label>
-                            <Select value={String(form.fornecedorId)} onValueChange={v => setForm({ ...form, fornecedorId: v })}>
-                                <SelectTrigger><SelectValue placeholder="Selecione o fornecedor" /></SelectTrigger>
-                                <SelectContent>
-                                    {fornecedores.map(f => <SelectItem key={f.id} value={String(f.id)}>{f.nome}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                options={fornecedores}
+                                value={form.fornecedorId}
+                                onValueChange={v => setForm({ ...form, fornecedorId: v })}
+                                placeholder="Selecione fornecedor"
+                                searchPlaceholder="Buscar fornecedor..."
+                            />
                         </div>
 
                         <div className="md:col-span-4 space-y-2">
@@ -663,48 +669,53 @@ export default function CadastroPecasSimplesPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label>Tamanho</Label>
-                                <Select value={editForm.tamanhoId} onValueChange={v => setEditForm({ ...editForm, tamanhoId: v })}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                    <SelectContent>
-                                        {tamanhos.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.nome}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <SearchableSelect
+                                    options={tamanhos}
+                                    value={editForm.tamanhoId}
+                                    onValueChange={v => setEditForm({ ...editForm, tamanhoId: v })}
+                                    placeholder="Selecione tamanho"
+                                    searchPlaceholder="Buscar tamanho..."
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>Cor</Label>
-                                <Select value={editForm.corId} onValueChange={v => setEditForm({ ...editForm, corId: v })}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                    <SelectContent>
-                                        {cores.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.nome}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <SearchableSelect
+                                    options={cores}
+                                    value={editForm.corId}
+                                    onValueChange={v => setEditForm({ ...editForm, corId: v })}
+                                    placeholder="Selecione cor"
+                                    searchPlaceholder="Buscar cor..."
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>Marca</Label>
-                                <Select value={editForm.marcaId} onValueChange={v => setEditForm({ ...editForm, marcaId: v })}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                    <SelectContent>
-                                        {marcas.map(m => <SelectItem key={m.id} value={String(m.id)}>{m.nome}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <SearchableSelect
+                                    options={marcas}
+                                    value={editForm.marcaId}
+                                    onValueChange={v => setEditForm({ ...editForm, marcaId: v })}
+                                    placeholder="Selecione marca"
+                                    searchPlaceholder="Buscar marca..."
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>Categoria</Label>
-                                <Select value={editForm.categoriaId} onValueChange={v => setEditForm({ ...editForm, categoriaId: v })}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                    <SelectContent>
-                                        {categorias.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.nome}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <SearchableSelect
+                                    options={categorias}
+                                    value={editForm.categoriaId}
+                                    onValueChange={v => setEditForm({ ...editForm, categoriaId: v })}
+                                    placeholder="Selecione categoria"
+                                    searchPlaceholder="Buscar categoria..."
+                                />
                             </div>
                             <div className="space-y-2 md:col-span-2">
                                 <Label>Fornecedor</Label>
-                                <Select value={editForm.fornecedorId} onValueChange={v => setEditForm({ ...editForm, fornecedorId: v })}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                    <SelectContent>
-                                        {fornecedores.map(f => <SelectItem key={f.id} value={String(f.id)}>{f.nome}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <SearchableSelect
+                                    options={fornecedores}
+                                    value={editForm.fornecedorId}
+                                    onValueChange={v => setEditForm({ ...editForm, fornecedorId: v })}
+                                    placeholder="Selecione fornecedor"
+                                    searchPlaceholder="Buscar fornecedor..."
+                                />
                             </div>
                         </div>
 

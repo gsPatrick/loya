@@ -113,12 +113,12 @@ export default function ImprimirEtiquetasPage() {
                         .etiquetas-container {
                             display: flex;
                             flex-wrap: wrap;
-                            gap: 4mm;
+                            gap: 3mm;
                             justify-content: flex-start;
                         }
                         .etiqueta {
-                            width: 40mm;
-                            height: 70mm;
+                            width: 30mm;
+                            height: 50mm;
                             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
                             background-image: 
                                 linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%),
@@ -129,7 +129,7 @@ export default function ImprimirEtiquetasPage() {
                             flex-direction: column;
                             align-items: center;
                             justify-content: space-between;
-                            padding: 3mm 2mm;
+                            padding: 2mm 1.5mm;
                             position: relative;
                             page-break-inside: avoid;
                         }
@@ -139,42 +139,42 @@ export default function ImprimirEtiquetasPage() {
                             top: 0;
                             left: 50%;
                             transform: translateX(-50%);
-                            width: 8mm;
-                            height: 4mm;
+                            width: 6mm;
+                            height: 3mm;
                             background: #f5f5f5;
-                            border-radius: 0 0 4mm 4mm;
+                            border-radius: 0 0 3mm 3mm;
                         }
                         .logo-area {
-                            margin-top: 4mm;
+                            margin-top: 3mm;
                             text-align: center;
                         }
                         .logo {
                             font-family: 'Dancing Script', cursive;
-                            font-size: 18pt;
+                            font-size: 12pt;
                             font-weight: 700;
                             color: white;
-                            letter-spacing: 1px;
+                            letter-spacing: 0.5px;
                         }
                         .subtitulo {
                             font-family: 'Dancing Script', cursive;
-                            font-size: 10pt;
+                            font-size: 7pt;
                             color: rgba(255,255,255,0.7);
-                            margin-top: 1mm;
+                            margin-top: 0.5mm;
                         }
                         .barcode-area {
                             background: white;
-                            padding: 2mm;
+                            padding: 1.5mm;
                             border-radius: 1mm;
-                            margin: 2mm 0;
+                            margin: 1.5mm 0;
                         }
                         .barcode-area svg {
                             display: block;
                         }
                         .codigo-text {
-                            font-size: 7pt;
+                            font-size: 5pt;
                             color: white;
                             text-align: center;
-                            margin-top: 1mm;
+                            margin-top: 0.5mm;
                             font-family: monospace;
                         }
                         .preco-area {
@@ -182,24 +182,24 @@ export default function ImprimirEtiquetasPage() {
                             justify-content: space-between;
                             align-items: center;
                             width: 100%;
-                            padding: 0 2mm;
-                            margin-top: 2mm;
+                            padding: 0 1.5mm;
+                            margin-top: 1mm;
                         }
                         .preco {
-                            font-size: 14pt;
+                            font-size: 10pt;
                             font-weight: bold;
                             color: white;
                         }
                         .tamanho {
-                            font-size: 14pt;
+                            font-size: 10pt;
                             font-weight: bold;
                             color: white;
                         }
                         .codigo-inferior {
-                            font-size: 6pt;
+                            font-size: 4pt;
                             color: rgba(255,255,255,0.6);
                             text-align: center;
-                            margin-top: 1mm;
+                            margin-top: 0.5mm;
                             font-family: monospace;
                         }
                         @media print {
@@ -246,8 +246,8 @@ export default function ImprimirEtiquetasPage() {
                 return `
                                     JsBarcode("#barcode-${idx}", "${codigo}", {
                                         format: "CODE128",
-                                        width: 1.5,
-                                        height: 30,
+                                        width: 1,
+                                        height: 20,
                                         displayValue: false,
                                         margin: 0
                                     });

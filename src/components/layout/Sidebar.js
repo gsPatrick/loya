@@ -11,7 +11,7 @@ import {
     LineChart, TrendingUp, HandCoins, Wallet, Calculator,
     FileBarChart, ArrowRightLeft, LockKeyhole, ShoppingBasket,
     FolderPlus, Palette, Layers, Maximize, HelpCircle, FileText,
-    MapPin, Globe, Landmark, TicketPercent, ScrollText, CreditCard
+    MapPin, Globe, Landmark, TicketPercent, ScrollText, CreditCard, Printer
 } from "lucide-react";
 import {
     Collapsible, CollapsibleContent, CollapsibleTrigger,
@@ -71,6 +71,7 @@ const navItems = [
         children: [
             { title: "Pessoas (CRM)", href: "/dashboard/cadastros/pessoas", icon: Users },
             { title: "Peças (Estoque)", href: "/dashboard/cadastros/pecas-cadastro", icon: Shirt },
+            { title: "Imprimir Etiqueta", href: "/dashboard/cadastros/etiquetas", icon: Printer },
             { title: "Importação de Dados", href: "/dashboard/cadastros/importacao", icon: FolderPlus }, // Novo
             { title: "Tamanhos", href: "/dashboard/cadastros/tamanhos", icon: Ruler },
             { title: "Cores", href: "/dashboard/cadastros/cores", icon: Palette },

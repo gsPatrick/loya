@@ -221,10 +221,14 @@ export default function PDVPage() {
                 return;
             }
 
-            // If exact match or only one result, add immediately
-            // If multiple, maybe show a selector? For PDV, usually exact match is best.
-            // Let's pick the first one for now or exact match.
-            const product = foundProducts[0];
+            // Tenta encontrar match exato de código de etiqueta
+            // Isso evita adicionar produto errado se a busca for parcial (ex: buscar "123" e retornar "1234")
+            const exactMatch = foundProducts.find(p =>
+                p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase() === barcodeInput.trim().toLowerCase()
+            );
+
+            // Usa o match exato ou o primeiro da lista (fallback)
+            const product = exactMatch || foundProducts[0];
 
             // Check if already in cart
             if (items.find(i => i.pecaId === product.id)) {

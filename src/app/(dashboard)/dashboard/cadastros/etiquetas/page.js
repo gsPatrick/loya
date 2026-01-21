@@ -94,54 +94,174 @@ export default function ImprimirEtiquetasPage() {
             // Get selected items data
             const selectedItems = items.filter(i => selectedIds.includes(i.id));
 
-            // Generate printable content
+            // Generate printable content with design matching reference image
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>Etiquetas - Impressão</title>
+                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
                     <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
                         * { margin: 0; padding: 0; box-sizing: border-box; }
-                        body { font-family: Arial, sans-serif; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            background: #f5f5f5;
+                            padding: 10px;
+                        }
+                        .etiquetas-container {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 4mm;
+                            justify-content: flex-start;
+                        }
                         .etiqueta {
-                            width: 5cm;
-                            height: 3cm;
-                            border: 1px solid #000;
-                            padding: 4mm;
-                            margin: 2mm;
-                            display: inline-block;
-                            vertical-align: top;
+                            width: 40mm;
+                            height: 70mm;
+                            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+                            background-image: 
+                                linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%),
+                                linear-gradient(225deg, rgba(255,255,255,0.03) 0%, transparent 50%),
+                                linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+                            color: white;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: space-between;
+                            padding: 3mm 2mm;
+                            position: relative;
                             page-break-inside: avoid;
                         }
-                        .codigo { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 2mm; }
-                        .descricao { font-size: 8pt; text-align: center; margin-bottom: 2mm; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-                        .preco { font-size: 16pt; font-weight: bold; text-align: center; }
-                        .tamanho { font-size: 10pt; text-align: center; margin-top: 1mm; }
+                        .etiqueta::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            width: 8mm;
+                            height: 4mm;
+                            background: #f5f5f5;
+                            border-radius: 0 0 4mm 4mm;
+                        }
+                        .logo-area {
+                            margin-top: 4mm;
+                            text-align: center;
+                        }
+                        .logo {
+                            font-family: 'Dancing Script', cursive;
+                            font-size: 18pt;
+                            font-weight: 700;
+                            color: white;
+                            letter-spacing: 1px;
+                        }
+                        .subtitulo {
+                            font-family: 'Dancing Script', cursive;
+                            font-size: 10pt;
+                            color: rgba(255,255,255,0.7);
+                            margin-top: 1mm;
+                        }
+                        .barcode-area {
+                            background: white;
+                            padding: 2mm;
+                            border-radius: 1mm;
+                            margin: 2mm 0;
+                        }
+                        .barcode-area svg {
+                            display: block;
+                        }
+                        .codigo-text {
+                            font-size: 7pt;
+                            color: white;
+                            text-align: center;
+                            margin-top: 1mm;
+                            font-family: monospace;
+                        }
+                        .preco-area {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            width: 100%;
+                            padding: 0 2mm;
+                            margin-top: 2mm;
+                        }
+                        .preco {
+                            font-size: 14pt;
+                            font-weight: bold;
+                            color: white;
+                        }
+                        .tamanho {
+                            font-size: 14pt;
+                            font-weight: bold;
+                            color: white;
+                        }
+                        .codigo-inferior {
+                            font-size: 6pt;
+                            color: rgba(255,255,255,0.6);
+                            text-align: center;
+                            margin-top: 1mm;
+                            font-family: monospace;
+                        }
                         @media print {
-                            body { margin: 0; }
-                            .etiqueta { border: 1px solid #000; }
+                            body { 
+                                background: white; 
+                                padding: 0;
+                                margin: 0;
+                            }
+                            .etiqueta::before {
+                                background: white;
+                            }
                         }
                     </style>
                 </head>
                 <body>
-                    ${selectedItems.map(item => `
-                        <div class="etiqueta">
-                            <div class="codigo">${item.codigo_etiqueta || 'S/C'}</div>
-                            <div class="descricao">${item.descricao_curta || '-'}</div>
-                            <div class="preco">R$ ${parseFloat(item.preco_venda || 0).toFixed(2)}</div>
-                            <div class="tamanho">${item.tamanho?.nome || item.tamanhoId || '-'}</div>
-                        </div>
-                    `).join('')}
+                    <div class="etiquetas-container">
+                        ${selectedItems.map((item, idx) => {
+                const codigo = item.codigo_etiqueta || 'TAG-' + String(item.id).padStart(4, '0');
+                const codigoCompleto = String(item.id).padStart(8, '0') + ' 01.' + String(Math.floor(Math.random() * 90000000) + 10000000);
+                const codigoInferior = '19.' + String(Math.floor(Math.random() * 90000000) + 10000000) + 'B';
+                return `
+                                <div class="etiqueta">
+                                    <div class="logo-area">
+                                        <div class="logo">Nós</div>
+                                        <div class="subtitulo">Garimpos</div>
+                                    </div>
+                                    <div class="barcode-area">
+                                        <svg id="barcode-${idx}"></svg>
+                                    </div>
+                                    <div class="codigo-text">${codigoCompleto}</div>
+                                    <div class="preco-area">
+                                        <div class="preco">R$ ${parseFloat(item.preco_venda || 0).toFixed(2).replace('.', ',')}</div>
+                                        <div class="tamanho">${item.tamanho?.nome || 'U'}</div>
+                                    </div>
+                                    <div class="codigo-inferior">${codigoInferior}</div>
+                                </div>
+                            `;
+            }).join('')}
+                    </div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            ${selectedItems.map((item, idx) => {
+                const codigo = item.codigo_etiqueta || 'TAG-' + String(item.id).padStart(4, '0');
+                return `
+                                    JsBarcode("#barcode-${idx}", "${codigo}", {
+                                        format: "CODE128",
+                                        width: 1.5,
+                                        height: 30,
+                                        displayValue: false,
+                                        margin: 0
+                                    });
+                                `;
+            }).join('')}
+                            setTimeout(function() {
+                                window.print();
+                            }, 500);
+                        });
+                    </script>
                 </body>
                 </html>
             `);
             printWindow.document.close();
-            printWindow.focus();
-
-            setTimeout(() => {
-                printWindow.print();
-            }, 250);
 
             toast({ title: "Sucesso", description: `${selectedIds.length} etiqueta(s) enviadas para impressão.`, className: "bg-green-600 text-white border-none" });
             setSelectedIds([]);

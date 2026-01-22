@@ -107,6 +107,10 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_FONT_SIZE_TEXT: '5',
                 LABEL_BARCODE_HEIGHT: '28',
                 LABEL_BARCODE_WIDTH: '1.2',
+                LABEL_LOGO_OFFSET_Y: '0',
+                LABEL_BARCODE_OFFSET_Y: '0',
+                LABEL_PRICE_OFFSET_Y: '0',
+                LABEL_CODE_OFFSET_Y: '0',
             };
             try {
                 const configRes = await api.get('/admin/configuracoes');
@@ -173,7 +177,7 @@ export default function ImprimirEtiquetasPage() {
                             border-radius: 0 0 2.5mm 2.5mm;
                         }
                         .logo-area {
-                            margin-top: 1mm;
+                            margin-top: calc(1mm + ${labelConfig.LABEL_LOGO_OFFSET_Y}mm);
                             text-align: center;
                             line-height: 1;
                             width: 100%;
@@ -193,7 +197,8 @@ export default function ImprimirEtiquetasPage() {
                             background: white;
                             padding: 1.5mm 1mm;
                             border-radius: 1mm;
-                            margin: 1.5mm 0;
+                            margin-top: calc(1.5mm + ${labelConfig.LABEL_BARCODE_OFFSET_Y}mm);
+                            margin-bottom: 1.5mm;
                             display: flex;
                             justify-content: center;
                             align-items: center;
@@ -207,7 +212,7 @@ export default function ImprimirEtiquetasPage() {
                             font-size: ${labelConfig.LABEL_FONT_SIZE_TEXT}pt;
                             color: white;
                             text-align: center;
-                            margin-top: 0;
+                            margin-top: ${labelConfig.LABEL_CODE_OFFSET_Y}mm;
                             font-family: monospace;
                         }
                         .preco-area {
@@ -217,6 +222,7 @@ export default function ImprimirEtiquetasPage() {
                             width: 100%;
                             padding: 0;
                             margin-top: auto;
+                            transform: translateY(${labelConfig.LABEL_PRICE_OFFSET_Y}mm);
                         }
                         .preco {
                             font-size: ${labelConfig.LABEL_FONT_SIZE_PRICE}pt;

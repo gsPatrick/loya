@@ -35,6 +35,11 @@ export default function ConfiguracoesPage() {
         LABEL_FONT_SIZE_TEXT: "5",
         LABEL_BARCODE_HEIGHT: "28",
         LABEL_BARCODE_WIDTH: "1.2",
+        // Element offsets (individual positioning)
+        LABEL_LOGO_OFFSET_Y: "0",
+        LABEL_BARCODE_OFFSET_Y: "0",
+        LABEL_PRICE_OFFSET_Y: "0",
+        LABEL_CODE_OFFSET_Y: "0",
     });
 
     useEffect(() => {
@@ -93,7 +98,8 @@ export default function ConfiguracoesPage() {
                 'LABEL_STORE_NAME', 'LABEL_BG_COLOR', 'LABEL_TEXT_COLOR', 'LABEL_WIDTH', 'LABEL_HEIGHT',
                 'LABEL_MARGIN_TOP', 'LABEL_MARGIN_BOTTOM', 'LABEL_MARGIN_LEFT', 'LABEL_MARGIN_RIGHT',
                 'LABEL_FONT_SIZE_LOGO', 'LABEL_FONT_SIZE_PRICE', 'LABEL_FONT_SIZE_TEXT',
-                'LABEL_BARCODE_HEIGHT', 'LABEL_BARCODE_WIDTH'
+                'LABEL_BARCODE_HEIGHT', 'LABEL_BARCODE_WIDTH',
+                'LABEL_LOGO_OFFSET_Y', 'LABEL_BARCODE_OFFSET_Y', 'LABEL_PRICE_OFFSET_Y', 'LABEL_CODE_OFFSET_Y'
             ];
 
             await Promise.all(configsToSave.map(key =>
@@ -352,6 +358,32 @@ export default function ConfiguracoesPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            <Separator />
+
+                            {/* Element Offsets */}
+                            <div className="space-y-2">
+                                <Label>Ajuste de Posição (mm)</Label>
+                                <p className="text-xs text-muted-foreground">Valores negativos sobem, positivos descem.</p>
+                                <div className="grid grid-cols-4 gap-2">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Logo (Y)</Label>
+                                        <Input type="number" name="LABEL_LOGO_OFFSET_Y" value={configs.LABEL_LOGO_OFFSET_Y || 0} onChange={handleChange} step="0.5" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Barcode (Y)</Label>
+                                        <Input type="number" name="LABEL_BARCODE_OFFSET_Y" value={configs.LABEL_BARCODE_OFFSET_Y || 0} onChange={handleChange} step="0.5" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Preço (Y)</Label>
+                                        <Input type="number" name="LABEL_PRICE_OFFSET_Y" value={configs.LABEL_PRICE_OFFSET_Y || 0} onChange={handleChange} step="0.5" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Código (Y)</Label>
+                                        <Input type="number" name="LABEL_CODE_OFFSET_Y" value={configs.LABEL_CODE_OFFSET_Y || 0} onChange={handleChange} step="0.5" />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Right: Live Preview */}
@@ -394,7 +426,7 @@ export default function ConfiguracoesPage() {
 
                                     {/* Logo */}
                                     <div style={{
-                                        marginTop: '1mm',
+                                        marginTop: `calc(1mm + ${configs.LABEL_LOGO_OFFSET_Y || 0}mm)`,
                                         fontFamily: 'cursive',
                                         fontSize: `${configs.LABEL_FONT_SIZE_LOGO}pt`,
                                         fontWeight: 700,
@@ -410,7 +442,8 @@ export default function ConfiguracoesPage() {
                                     <div style={{
                                         background: 'white',
                                         padding: '1.5mm 1mm',
-                                        margin: '1.5mm 0',
+                                        marginTop: `calc(1.5mm + ${configs.LABEL_BARCODE_OFFSET_Y || 0}mm)`,
+                                        marginBottom: '1.5mm',
                                         borderRadius: '1mm',
                                         width: '95%',
                                         display: 'flex',
@@ -429,6 +462,7 @@ export default function ConfiguracoesPage() {
                                         fontSize: `${configs.LABEL_FONT_SIZE_TEXT}pt`,
                                         fontFamily: 'monospace',
                                         color: configs.LABEL_TEXT_COLOR,
+                                        marginTop: `${configs.LABEL_CODE_OFFSET_Y || 0}mm`,
                                         marginBottom: '0.5mm'
                                     }}>
                                         00001234 01.12345678
@@ -440,7 +474,8 @@ export default function ConfiguracoesPage() {
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
                                         width: '100%',
-                                        marginTop: 'auto'
+                                        marginTop: `calc(auto + ${configs.LABEL_PRICE_OFFSET_Y || 0}mm)`,
+                                        transform: `translateY(${configs.LABEL_PRICE_OFFSET_Y || 0}mm)`
                                     }}>
                                         <span style={{ fontSize: `${configs.LABEL_FONT_SIZE_PRICE}pt`, fontWeight: 'bold' }}>R$ 99,00</span>
                                         <span style={{ fontSize: `${configs.LABEL_FONT_SIZE_PRICE}pt`, fontWeight: 'bold' }}>M</span>

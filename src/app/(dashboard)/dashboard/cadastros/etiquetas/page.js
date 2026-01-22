@@ -151,10 +151,11 @@ export default function ImprimirEtiquetasPage() {
                         }
                         .logo {
                             font-family: 'Dancing Script', cursive;
-                            font-size: 16pt;
+                            font-size: 12.5pt;
                             font-weight: 700;
                             color: white;
                             letter-spacing: 0.5px;
+                            white-space: nowrap;
                         }
                         .subtitulo {
                             display: none; /* Removed as requested */

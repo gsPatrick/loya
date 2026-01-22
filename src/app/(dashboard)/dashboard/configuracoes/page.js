@@ -40,6 +40,11 @@ export default function ConfiguracoesPage() {
         LABEL_BARCODE_OFFSET_Y: "0",
         LABEL_PRICE_OFFSET_Y: "0",
         LABEL_CODE_OFFSET_Y: "0",
+        // External margins (print page positioning)
+        LABEL_EXT_MARGIN_TOP: "0",
+        LABEL_EXT_MARGIN_BOTTOM: "0",
+        LABEL_EXT_MARGIN_LEFT: "0",
+        LABEL_EXT_MARGIN_RIGHT: "0",
     });
 
     useEffect(() => {
@@ -99,7 +104,8 @@ export default function ConfiguracoesPage() {
                 'LABEL_MARGIN_TOP', 'LABEL_MARGIN_BOTTOM', 'LABEL_MARGIN_LEFT', 'LABEL_MARGIN_RIGHT',
                 'LABEL_FONT_SIZE_LOGO', 'LABEL_FONT_SIZE_PRICE', 'LABEL_FONT_SIZE_TEXT',
                 'LABEL_BARCODE_HEIGHT', 'LABEL_BARCODE_WIDTH',
-                'LABEL_LOGO_OFFSET_Y', 'LABEL_BARCODE_OFFSET_Y', 'LABEL_PRICE_OFFSET_Y', 'LABEL_CODE_OFFSET_Y'
+                'LABEL_LOGO_OFFSET_Y', 'LABEL_BARCODE_OFFSET_Y', 'LABEL_PRICE_OFFSET_Y', 'LABEL_CODE_OFFSET_Y',
+                'LABEL_EXT_MARGIN_TOP', 'LABEL_EXT_MARGIN_BOTTOM', 'LABEL_EXT_MARGIN_LEFT', 'LABEL_EXT_MARGIN_RIGHT'
             ];
 
             await Promise.all(configsToSave.map(key =>
@@ -293,6 +299,32 @@ export default function ConfiguracoesPage() {
                                         min="30"
                                         max="150"
                                     />
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* External Margins - Print positioning */}
+                            <div className="space-y-2">
+                                <Label>Margens Externas (posição na folha)</Label>
+                                <p className="text-xs text-muted-foreground">Espaçamento ao redor de cada etiqueta na impressão.</p>
+                                <div className="grid grid-cols-4 gap-2">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Topo (mm)</Label>
+                                        <Input type="number" name="LABEL_EXT_MARGIN_TOP" value={configs.LABEL_EXT_MARGIN_TOP || 0} onChange={handleChange} step="0.5" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Base (mm)</Label>
+                                        <Input type="number" name="LABEL_EXT_MARGIN_BOTTOM" value={configs.LABEL_EXT_MARGIN_BOTTOM || 0} onChange={handleChange} step="0.5" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Esq (mm)</Label>
+                                        <Input type="number" name="LABEL_EXT_MARGIN_LEFT" value={configs.LABEL_EXT_MARGIN_LEFT || 0} onChange={handleChange} step="0.5" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Dir (mm)</Label>
+                                        <Input type="number" name="LABEL_EXT_MARGIN_RIGHT" value={configs.LABEL_EXT_MARGIN_RIGHT || 0} onChange={handleChange} step="0.5" />
+                                    </div>
                                 </div>
                             </div>
 

@@ -208,8 +208,18 @@ export default function ImprimirEtiquetasPage() {
                                 padding: 0;
                                 margin: 0;
                             }
+                            .etiqueta {
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                                background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%) !important;
+                                background-image: 
+                                    linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%),
+                                    linear-gradient(225deg, rgba(255,255,255,0.03) 0%, transparent 50%),
+                                    linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%) !important;
+                                color: white !important;
+                            }
                             .etiqueta::before {
-                                background: white;
+                                background: white !important;
                             }
                         }
                     </style>

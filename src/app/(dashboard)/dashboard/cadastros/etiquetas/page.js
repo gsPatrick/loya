@@ -117,8 +117,8 @@ export default function ImprimirEtiquetasPage() {
                             justify-content: flex-start;
                         }
                         .etiqueta {
-                            width: 30mm;
-                            height: 50mm;
+                            width: 35mm;
+                            height: 60mm;
                             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
                             background-image: 
                                 linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%),
@@ -129,7 +129,7 @@ export default function ImprimirEtiquetasPage() {
                             flex-direction: column;
                             align-items: center;
                             justify-content: space-between;
-                            padding: 2mm 1.5mm;
+                            padding: 2.5mm 1.5mm;
                             position: relative;
                             page-break-inside: avoid;
                         }
@@ -145,33 +145,36 @@ export default function ImprimirEtiquetasPage() {
                             border-radius: 0 0 3mm 3mm;
                         }
                         .logo-area {
-                            margin-top: 3mm;
+                            margin-top: 3.5mm;
                             text-align: center;
+                            line-height: 1;
                         }
                         .logo {
                             font-family: 'Dancing Script', cursive;
-                            font-size: 12pt;
+                            font-size: 16pt;
                             font-weight: 700;
                             color: white;
                             letter-spacing: 0.5px;
                         }
                         .subtitulo {
-                            font-family: 'Dancing Script', cursive;
-                            font-size: 7pt;
-                            color: rgba(255,255,255,0.7);
-                            margin-top: 0.5mm;
+                            display: none; /* Removed as requested */
                         }
                         .barcode-area {
                             background: white;
-                            padding: 1.5mm;
+                            padding: 2mm 1.5mm;
                             border-radius: 1mm;
-                            margin: 1.5mm 0;
+                            margin: 2mm 0;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            width: 95%; 
                         }
                         .barcode-area svg {
                             display: block;
+                            max-width: 100%;
                         }
                         .codigo-text {
-                            font-size: 5pt;
+                            font-size: 6pt;
                             color: white;
                             text-align: center;
                             margin-top: 0.5mm;
@@ -182,21 +185,21 @@ export default function ImprimirEtiquetasPage() {
                             justify-content: space-between;
                             align-items: center;
                             width: 100%;
-                            padding: 0 1.5mm;
+                            padding: 0 2mm;
                             margin-top: 1mm;
                         }
                         .preco {
-                            font-size: 10pt;
+                            font-size: 12pt;
                             font-weight: bold;
                             color: white;
                         }
                         .tamanho {
-                            font-size: 10pt;
+                            font-size: 12pt;
                             font-weight: bold;
                             color: white;
                         }
                         .codigo-inferior {
-                            font-size: 4pt;
+                            font-size: 5pt;
                             color: rgba(255,255,255,0.6);
                             text-align: center;
                             margin-top: 0.5mm;
@@ -233,8 +236,7 @@ export default function ImprimirEtiquetasPage() {
                 return `
                                 <div class="etiqueta">
                                     <div class="logo-area">
-                                        <div class="logo">Nós</div>
-                                        <div class="subtitulo">Garimpos</div>
+                                        <div class="logo">GARIMPONOS</div>
                                     </div>
                                     <div class="barcode-area">
                                         <svg id="barcode-${idx}"></svg>
@@ -256,10 +258,10 @@ export default function ImprimirEtiquetasPage() {
                 return `
                                     JsBarcode("#barcode-${idx}", "${codigo}", {
                                         format: "CODE128",
-                                        width: 1,
-                                        height: 20,
+                                        width: 1.5,
+                                        height: 35,
                                         displayValue: false,
-                                        margin: 0
+                                        margin: 5
                                     });
                                 `;
             }).join('')}

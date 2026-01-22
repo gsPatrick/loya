@@ -25,6 +25,16 @@ export default function ConfiguracoesPage() {
         LABEL_TEXT_COLOR: "#ffffff",
         LABEL_WIDTH: "31",
         LABEL_HEIGHT: "53",
+        // Advanced
+        LABEL_MARGIN_TOP: "1.5",
+        LABEL_MARGIN_BOTTOM: "1.5",
+        LABEL_MARGIN_LEFT: "1.0",
+        LABEL_MARGIN_RIGHT: "1.0",
+        LABEL_FONT_SIZE_LOGO: "11",
+        LABEL_FONT_SIZE_PRICE: "10",
+        LABEL_FONT_SIZE_TEXT: "5",
+        LABEL_BARCODE_HEIGHT: "28",
+        LABEL_BARCODE_WIDTH: "1.2",
     });
 
     useEffect(() => {
@@ -77,16 +87,18 @@ export default function ConfiguracoesPage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            // Save system configs
-            await api.put('/admin/configuracoes/SYSTEM_NAME', { valor: configs.SYSTEM_NAME });
-            await api.put('/admin/configuracoes/SYSTEM_LOGO', { valor: configs.SYSTEM_LOGO });
-            await api.put('/admin/configuracoes/SYSTEM_COLOR_PRIMARY', { valor: configs.SYSTEM_COLOR_PRIMARY });
-            // Save label configs
-            await api.put('/admin/configuracoes/LABEL_STORE_NAME', { valor: configs.LABEL_STORE_NAME });
-            await api.put('/admin/configuracoes/LABEL_BG_COLOR', { valor: configs.LABEL_BG_COLOR });
-            await api.put('/admin/configuracoes/LABEL_TEXT_COLOR', { valor: configs.LABEL_TEXT_COLOR });
-            await api.put('/admin/configuracoes/LABEL_WIDTH', { valor: configs.LABEL_WIDTH });
-            await api.put('/admin/configuracoes/LABEL_HEIGHT', { valor: configs.LABEL_HEIGHT });
+            // Save each config
+            const configsToSave = [
+                'SYSTEM_NAME', 'SYSTEM_LOGO', 'SYSTEM_COLOR_PRIMARY',
+                'LABEL_STORE_NAME', 'LABEL_BG_COLOR', 'LABEL_TEXT_COLOR', 'LABEL_WIDTH', 'LABEL_HEIGHT',
+                'LABEL_MARGIN_TOP', 'LABEL_MARGIN_BOTTOM', 'LABEL_MARGIN_LEFT', 'LABEL_MARGIN_RIGHT',
+                'LABEL_FONT_SIZE_LOGO', 'LABEL_FONT_SIZE_PRICE', 'LABEL_FONT_SIZE_TEXT',
+                'LABEL_BARCODE_HEIGHT', 'LABEL_BARCODE_WIDTH'
+            ];
+
+            await Promise.all(configsToSave.map(key =>
+                api.put(`/admin/configuracoes/${key}`, { valor: configs[key] })
+            ));
 
             toast({ title: "Sucesso", description: "Configurações salvas com sucesso!" });
             window.dispatchEvent(new Event('systemConfigUpdated'));
@@ -277,57 +289,173 @@ export default function ConfiguracoesPage() {
                                     />
                                 </div>
                             </div>
+
+                            <Separator />
+
+                            {/* Margins */}
+                            <div className="space-y-2">
+                                <Label>Margens Internas (padding)</Label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Topo (mm)</Label>
+                                        <Input type="number" name="LABEL_MARGIN_TOP" value={configs.LABEL_MARGIN_TOP || 1.5} onChange={handleChange} step="0.1" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Base (mm)</Label>
+                                        <Input type="number" name="LABEL_MARGIN_BOTTOM" value={configs.LABEL_MARGIN_BOTTOM || 1.5} onChange={handleChange} step="0.1" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Esq (mm)</Label>
+                                        <Input type="number" name="LABEL_MARGIN_LEFT" value={configs.LABEL_MARGIN_LEFT || 1.0} onChange={handleChange} step="0.1" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Dir (mm)</Label>
+                                        <Input type="number" name="LABEL_MARGIN_RIGHT" value={configs.LABEL_MARGIN_RIGHT || 1.0} onChange={handleChange} step="0.1" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Font Sizes */}
+                            <div className="space-y-2">
+                                <Label>Tamanho das Fontes (pt)</Label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Logo</Label>
+                                        <Input type="number" name="LABEL_FONT_SIZE_LOGO" value={configs.LABEL_FONT_SIZE_LOGO || 11} onChange={handleChange} step="0.5" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Preço</Label>
+                                        <Input type="number" name="LABEL_FONT_SIZE_PRICE" value={configs.LABEL_FONT_SIZE_PRICE || 10} onChange={handleChange} step="0.5" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Infos</Label>
+                                        <Input type="number" name="LABEL_FONT_SIZE_TEXT" value={configs.LABEL_FONT_SIZE_TEXT || 5} onChange={handleChange} step="0.5" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Barcode */}
+                            <div className="space-y-2">
+                                <Label>Código de Barras</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Altura (px)</Label>
+                                        <Input type="number" name="LABEL_BARCODE_HEIGHT" value={configs.LABEL_BARCODE_HEIGHT || 28} onChange={handleChange} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs text-muted-foreground">Escala</Label>
+                                        <Input type="number" name="LABEL_BARCODE_WIDTH" value={configs.LABEL_BARCODE_WIDTH || 1.2} onChange={handleChange} step="0.1" />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Right: Live Preview */}
-                        <div className="flex flex-col items-center justify-center bg-muted/30 rounded-lg p-4 border">
-                            <span className="text-xs text-muted-foreground mb-3 uppercase font-medium">Pré-visualização</span>
-                            <div
-                                style={{
-                                    width: `${configs.LABEL_WIDTH}mm`,
-                                    height: `${configs.LABEL_HEIGHT}mm`,
-                                    background: configs.LABEL_BG_COLOR,
-                                    color: configs.LABEL_TEXT_COLOR,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'flex-start',
-                                    padding: '1.5mm 1mm',
-                                    position: 'relative',
-                                    borderRadius: '2px',
-                                    fontFamily: 'sans-serif',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                                    overflow: 'hidden',
-                                }}
-                            >
-                                {/* Hole */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    width: '5mm',
-                                    height: '2.5mm',
-                                    background: '#e5e5e5',
-                                    borderRadius: '0 0 2.5mm 2.5mm',
-                                }} />
-                                {/* Logo */}
-                                <div style={{ marginTop: '3mm', fontFamily: 'cursive', fontSize: '11pt', fontWeight: 700 }}>
-                                    {configs.LABEL_STORE_NAME || 'LOJA'}
+                        <div className="flex flex-col items-start gap-2">
+                            <span className="text-sm font-medium self-center">Pré-visualização</span>
+                            <div className="flex flex-col items-center justify-center bg-muted/30 rounded-lg p-8 border w-full h-full min-h-[400px]">
+                                <div
+                                    style={{
+                                        width: `${configs.LABEL_WIDTH}mm`,
+                                        height: `${configs.LABEL_HEIGHT}mm`,
+                                        background: configs.LABEL_BG_COLOR,
+                                        color: configs.LABEL_TEXT_COLOR,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'flex-start',
+                                        paddingTop: `${configs.LABEL_MARGIN_TOP}mm`,
+                                        paddingBottom: `${configs.LABEL_MARGIN_BOTTOM}mm`,
+                                        paddingLeft: `${configs.LABEL_MARGIN_LEFT}mm`,
+                                        paddingRight: `${configs.LABEL_MARGIN_RIGHT}mm`,
+                                        position: 'relative',
+                                        borderRadius: '2px',
+                                        fontFamily: 'sans-serif',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                        overflow: 'hidden',
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                >
+                                    {/* Hole */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        width: '5mm',
+                                        height: '2.5mm',
+                                        background: '#e5e5e5',
+                                        borderRadius: '0 0 2.5mm 2.5mm',
+                                    }} />
+
+                                    {/* Logo */}
+                                    <div style={{
+                                        marginTop: '1mm',
+                                        fontFamily: 'cursive',
+                                        fontSize: `${configs.LABEL_FONT_SIZE_LOGO}pt`,
+                                        fontWeight: 700,
+                                        lineHeight: 1,
+                                        textAlign: 'center',
+                                        width: '100%',
+                                        whiteSpace: 'nowrap'
+                                    }}>
+                                        {configs.LABEL_STORE_NAME || 'LOJA'}
+                                    </div>
+
+                                    {/* Barcode placeholder */}
+                                    <div style={{
+                                        background: 'white',
+                                        padding: '1.5mm 1mm',
+                                        margin: '1.5mm 0',
+                                        borderRadius: '1mm',
+                                        width: '95%',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center'
+                                    }}>
+                                        <div style={{
+                                            height: `${configs.LABEL_BARCODE_HEIGHT}px`,
+                                            background: 'repeating-linear-gradient(90deg, #000 0, #000 2px, #fff 2px, #fff 4px)',
+                                            width: '80%'
+                                        }} />
+                                    </div>
+
+                                    {/* Code */}
+                                    <div style={{
+                                        fontSize: `${configs.LABEL_FONT_SIZE_TEXT}pt`,
+                                        fontFamily: 'monospace',
+                                        color: configs.LABEL_TEXT_COLOR,
+                                        marginBottom: '0.5mm'
+                                    }}>
+                                        00001234 01.12345678
+                                    </div>
+
+                                    {/* Price area */}
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        width: '100%',
+                                        marginTop: 'auto'
+                                    }}>
+                                        <span style={{ fontSize: `${configs.LABEL_FONT_SIZE_PRICE}pt`, fontWeight: 'bold' }}>R$ 99,00</span>
+                                        <span style={{ fontSize: `${configs.LABEL_FONT_SIZE_PRICE}pt`, fontWeight: 'bold' }}>M</span>
+                                    </div>
+
+                                    {/* Bottom code */}
+                                    <div style={{
+                                        fontSize: `${Math.max(4, parseFloat(configs.LABEL_FONT_SIZE_TEXT) - 1)}pt`,
+                                        fontFamily: 'monospace',
+                                        opacity: 0.6,
+                                        marginTop: '0.5mm'
+                                    }}>
+                                        19.12345678B
+                                    </div>
                                 </div>
-                                {/* Barcode placeholder */}
-                                <div style={{ background: 'white', padding: '1.5mm', margin: '1.5mm 0', borderRadius: '1mm', width: '90%' }}>
-                                    <div style={{ height: '20px', background: 'repeating-linear-gradient(90deg, #000 0, #000 2px, #fff 2px, #fff 4px)', width: '100%' }} />
-                                </div>
-                                {/* Code */}
-                                <div style={{ fontSize: '5pt', fontFamily: 'monospace', color: configs.LABEL_TEXT_COLOR }}>00001234 01.12345678</div>
-                                {/* Price area */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 1.5mm', marginTop: '0.5mm' }}>
-                                    <span style={{ fontSize: '10pt', fontWeight: 'bold' }}>R$ 99,00</span>
-                                    <span style={{ fontSize: '10pt', fontWeight: 'bold' }}>M</span>
-                                </div>
-                                {/* Bottom code */}
-                                <div style={{ fontSize: '4pt', fontFamily: 'monospace', opacity: 0.6, marginTop: '0' }}>19.12345678B</div>
                             </div>
                         </div>
                     </div>
@@ -343,4 +471,3 @@ export default function ConfiguracoesPage() {
         </div>
     );
 }
-

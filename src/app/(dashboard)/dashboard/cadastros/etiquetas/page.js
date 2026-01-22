@@ -91,17 +91,36 @@ export default function ImprimirEtiquetasPage() {
 
         setIsPrinting(true);
         try {
+            // Fetch label config from backend
+            let labelConfig = {
+                LABEL_STORE_NAME: 'GARIMPONOS',
+                LABEL_BG_COLOR: '#1a1a1a',
+                LABEL_TEXT_COLOR: '#ffffff',
+                LABEL_WIDTH: '31',
+                LABEL_HEIGHT: '53',
+            };
+            try {
+                const configRes = await api.get('/admin/configuracoes');
+                configRes.data.forEach(c => {
+                    if (labelConfig.hasOwnProperty(c.chave)) {
+                        labelConfig[c.chave] = c.valor;
+                    }
+                });
+            } catch (e) {
+                console.warn('Could not fetch label config, using defaults');
+            }
+
             // Get selected items data
             const selectedItems = items.filter(i => selectedIds.includes(i.id));
 
-            // Generate printable content with design matching reference image
+            // Generate printable content with dynamic config
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>Etiquetas - Impressão</title>
-                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
                     <style>
                         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
                         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -117,21 +136,18 @@ export default function ImprimirEtiquetasPage() {
                             justify-content: flex-start;
                         }
                         .etiqueta {
-                            width: 31mm;
-                            height: 53mm;
-                            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
-                            background-image: 
-                                linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%),
-                                linear-gradient(225deg, rgba(255,255,255,0.03) 0%, transparent 50%),
-                                linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
-                            color: white;
+                            width: ${labelConfig.LABEL_WIDTH}mm;
+                            height: ${labelConfig.LABEL_HEIGHT}mm;
+                            background: ${labelConfig.LABEL_BG_COLOR};
+                            color: ${labelConfig.LABEL_TEXT_COLOR};
                             display: flex;
                             flex-direction: column;
                             align-items: center;
-                            justify-content: space-between;
-                            padding: 2mm 1.5mm;
+                            justify-content: flex-start;
+                            padding: 1.5mm 1mm;
                             position: relative;
                             page-break-inside: avoid;
+                            overflow: hidden;
                         }
                         .etiqueta::before {
                             content: '';
@@ -139,46 +155,46 @@ export default function ImprimirEtiquetasPage() {
                             top: 0;
                             left: 50%;
                             transform: translateX(-50%);
-                            width: 6mm;
-                            height: 3mm;
+                            width: 5mm;
+                            height: 2.5mm;
                             background: #f5f5f5;
-                            border-radius: 0 0 3mm 3mm;
+                            border-radius: 0 0 2.5mm 2.5mm;
                         }
                         .logo-area {
-                            margin-top: 3.5mm;
+                            margin-top: 3mm;
                             text-align: center;
                             line-height: 1;
                         }
                         .logo {
                             font-family: 'Dancing Script', cursive;
-                            font-size: 12.5pt;
+                            font-size: 11pt;
                             font-weight: 700;
                             color: white;
                             letter-spacing: 0.5px;
                             white-space: nowrap;
                         }
                         .subtitulo {
-                            display: none; /* Removed as requested */
+                            display: none;
                         }
                         .barcode-area {
                             background: white;
-                            padding: 2mm 1.5mm;
+                            padding: 1.5mm 1mm;
                             border-radius: 1mm;
-                            margin: 2mm 0;
+                            margin: 1.5mm 0;
                             display: flex;
                             justify-content: center;
                             align-items: center;
-                            width: 95%; 
+                            width: 92%; 
                         }
                         .barcode-area svg {
                             display: block;
                             max-width: 100%;
                         }
                         .codigo-text {
-                            font-size: 6pt;
+                            font-size: 5pt;
                             color: white;
                             text-align: center;
-                            margin-top: 0.5mm;
+                            margin-top: 0;
                             font-family: monospace;
                         }
                         .preco-area {
@@ -186,24 +202,25 @@ export default function ImprimirEtiquetasPage() {
                             justify-content: space-between;
                             align-items: center;
                             width: 100%;
-                            padding: 0 2mm;
-                            margin-top: 1mm;
+                            padding: 0 1.5mm;
+                            margin-top: 0.5mm;
                         }
                         .preco {
-                            font-size: 12pt;
+                            font-size: 10pt;
                             font-weight: bold;
                             color: white;
                         }
                         .tamanho {
-                            font-size: 12pt;
+                            font-size: 10pt;
                             font-weight: bold;
                             color: white;
                         }
                         .codigo-inferior {
-                            font-size: 5pt;
+                            font-size: 4pt;
                             color: rgba(255,255,255,0.6);
                             text-align: center;
-                            margin-top: 0.5mm;
+                            margin-top: 0;
+                            margin-bottom: 0.5mm;
                             font-family: monospace;
                         }
                         @media print {
@@ -215,12 +232,8 @@ export default function ImprimirEtiquetasPage() {
                             .etiqueta {
                                 -webkit-print-color-adjust: exact;
                                 print-color-adjust: exact;
-                                background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%) !important;
-                                background-image: 
-                                    linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%),
-                                    linear-gradient(225deg, rgba(255,255,255,0.03) 0%, transparent 50%),
-                                    linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%) !important;
-                                color: white !important;
+                                background: ${labelConfig.LABEL_BG_COLOR} !important;
+                                color: ${labelConfig.LABEL_TEXT_COLOR} !important;
                             }
                             .etiqueta::before {
                                 background: white !important;
@@ -237,7 +250,7 @@ export default function ImprimirEtiquetasPage() {
                 return `
                                 <div class="etiqueta">
                                     <div class="logo-area">
-                                        <div class="logo">GARIMPONOS</div>
+                                        <div class="logo">${labelConfig.LABEL_STORE_NAME}</div>
                                     </div>
                                     <div class="barcode-area">
                                         <svg id="barcode-${idx}"></svg>

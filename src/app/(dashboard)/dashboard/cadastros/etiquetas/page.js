@@ -111,11 +111,6 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_BARCODE_OFFSET_Y: '0',
                 LABEL_PRICE_OFFSET_Y: '0',
                 LABEL_CODE_OFFSET_Y: '0',
-                // External margins
-                LABEL_EXT_MARGIN_TOP: '0',
-                LABEL_EXT_MARGIN_BOTTOM: '0',
-                LABEL_EXT_MARGIN_LEFT: '0',
-                LABEL_EXT_MARGIN_RIGHT: '0',
             };
             try {
                 const configRes = await api.get('/admin/configuracoes');
@@ -161,15 +156,11 @@ export default function ImprimirEtiquetasPage() {
                             display: flex;
                             flex-direction: column;
                             align-items: center;
-                            justify-content: flex-start;
+                            justify-content: space-between;
                             padding-top: ${labelConfig.LABEL_MARGIN_TOP}mm;
                             padding-bottom: ${labelConfig.LABEL_MARGIN_BOTTOM}mm;
                             padding-left: ${labelConfig.LABEL_MARGIN_LEFT}mm;
                             padding-right: ${labelConfig.LABEL_MARGIN_RIGHT}mm;
-                            margin-top: ${labelConfig.LABEL_EXT_MARGIN_TOP}mm;
-                            margin-bottom: ${labelConfig.LABEL_EXT_MARGIN_BOTTOM}mm;
-                            margin-left: ${labelConfig.LABEL_EXT_MARGIN_LEFT}mm;
-                            margin-right: ${labelConfig.LABEL_EXT_MARGIN_RIGHT}mm;
                             position: relative;
                             page-break-inside: avoid;
                             overflow: hidden;

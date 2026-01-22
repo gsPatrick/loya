@@ -113,12 +113,12 @@ export default function ImprimirEtiquetasPage() {
                         .etiquetas-container {
                             display: flex;
                             flex-wrap: wrap;
-                            gap: 3mm;
+                            gap: 2mm;
                             justify-content: flex-start;
                         }
                         .etiqueta {
-                            width: 35mm;
-                            height: 60mm;
+                            width: 31mm;
+                            height: 53mm;
                             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
                             background-image: 
                                 linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%),
@@ -129,7 +129,7 @@ export default function ImprimirEtiquetasPage() {
                             flex-direction: column;
                             align-items: center;
                             justify-content: space-between;
-                            padding: 2.5mm 1.5mm;
+                            padding: 2mm 1.5mm;
                             position: relative;
                             page-break-inside: avoid;
                         }
@@ -258,10 +258,10 @@ export default function ImprimirEtiquetasPage() {
                 return `
                                     JsBarcode("#barcode-${idx}", "${codigo}", {
                                         format: "CODE128",
-                                        width: 1.5,
-                                        height: 35,
+                                        width: 1.2,
+                                        height: 28,
                                         displayValue: false,
-                                        margin: 5
+                                        margin: 2
                                     });
                                 `;
             }).join('')}

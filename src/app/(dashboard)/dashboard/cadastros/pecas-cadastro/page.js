@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit, RefreshCw } from "lucide-react";
+import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit, RefreshCw, Eye, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,6 +72,16 @@ function CadastroPecasContent() {
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
+    // Filters State
+    const [filterFornecedor, setFilterFornecedor] = useState(fornecedorIdParam || "");
+    const [filterTamanho, setFilterTamanho] = useState("");
+    const [filterMarca, setFilterMarca] = useState("");
+    const [filterCategoria, setFilterCategoria] = useState("");
+    const [filterTipoAquisicao, setFilterTipoAquisicao] = useState("TODOS");
+
+    // Modal Details State
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
     // Form State
     const [form, setForm] = useState({
         descricao_curta: "",
@@ -133,7 +143,7 @@ function CadastroPecasContent() {
     // Load items when page or search changes
     useEffect(() => {
         loadItems();
-    }, [currentPage, debouncedSearch, fornecedorIdParam]);
+    }, [currentPage, debouncedSearch, fornecedorIdParam, filterFornecedor, filterTamanho, filterMarca, filterCategoria, filterTipoAquisicao]);
 
     const loadDropdownData = async () => {
         try {
@@ -167,9 +177,19 @@ function CadastroPecasContent() {
             if (debouncedSearch) {
                 params.append('search', debouncedSearch);
             }
-            if (fornecedorIdParam) {
+            if (fornecedorIdParam && !filterFornecedor) {
+                // If URL param exists but filter state is empty (initial load), use ID param
+                // Effectively handled by initializing state, but let's be safe:
                 params.append('fornecedorId', fornecedorIdParam);
+            } else if (filterFornecedor) {
+                params.append('fornecedorId', filterFornecedor);
             }
+
+            if (filterTamanho) params.append('tamanhoId', filterTamanho);
+            if (filterMarca) params.append('marcaId', filterMarca);
+            if (filterCategoria) params.append('categoriaId', filterCategoria);
+            if (filterTipoAquisicao && filterTipoAquisicao !== 'TODOS') params.append('tipo_aquisicao', filterTipoAquisicao);
+
             const res = await api.get(`/catalogo/pecas?${params.toString()}`);
             // New paginated response format
             if (res.data.data) {
@@ -561,11 +581,100 @@ function CadastroPecasContent() {
             </Card>
 
             <Card className="border-t-4 border-t-primary/50 shadow-sm overflow-hidden">
-                <div className="p-4 bg-white flex items-center gap-4">
-                    <Input placeholder="Buscar peça..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="flex-1" />
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {isLoading ? "Carregando..." : `${totalItems} peças encontradas`}
-                    </span>
+                <div className="p-4 bg-white border-b space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="flex-1 space-y-1 w-full relative">
+                            <Label className="text-xs text-gray-500">Busca Rápida</Label>
+                            <Input
+                                placeholder="Buscar por nome ou código..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="pl-9"
+                            />
+                            <Search className="absolute left-3 bottom-2.5 h-4 w-4 text-gray-400" />
+                        </div>
+                        <div className="hidden md:flex items-center gap-2 pb-1">
+                            {/* Stats or Actions */}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Fornecedor</Label>
+                            <SearchableSelect
+                                options={fornecedores}
+                                value={filterFornecedor}
+                                onValueChange={setFilterFornecedor}
+                                placeholder="Todos"
+                                searchPlaceholder="Buscar..."
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Tamanho</Label>
+                            <SearchableSelect
+                                options={tamanhos}
+                                value={filterTamanho}
+                                onValueChange={setFilterTamanho}
+                                placeholder="Todos"
+                                searchPlaceholder="Buscar..."
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Marca</Label>
+                            <SearchableSelect
+                                options={marcas}
+                                value={filterMarca}
+                                onValueChange={setFilterMarca}
+                                placeholder="Todas"
+                                searchPlaceholder="Buscar..."
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Categoria</Label>
+                            <SearchableSelect
+                                options={categorias}
+                                value={filterCategoria}
+                                onValueChange={setFilterCategoria}
+                                placeholder="Todas"
+                                searchPlaceholder="Buscar..."
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Aquisição</Label>
+                            <Select value={filterTipoAquisicao} onValueChange={setFilterTipoAquisicao}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="TODOS">Todas</SelectItem>
+                                    <SelectItem value="COMPRA">Compra</SelectItem>
+                                    <SelectItem value="CONSIGNACAO">Consignação</SelectItem>
+                                    <SelectItem value="DOACAO">Doação</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2">
+                        <div className="text-sm text-gray-500">
+                            {isLoading ? "Filtrando..." : `${totalItems} itens encontrados`}
+                        </div>
+                        {(filterFornecedor || filterTamanho || filterMarca || filterCategoria || filterTipoAquisicao !== 'TODOS') && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setFilterFornecedor("");
+                                    setFilterTamanho("");
+                                    setFilterMarca("");
+                                    setFilterCategoria("");
+                                    setFilterTipoAquisicao("TODOS");
+                                    setSearchTerm("");
+                                }}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                                <X className="h-4 w-4 mr-1" /> Limpar Filtros
+                            </Button>
+                        )}
+                    </div>
                 </div>
                 <Table>
                     <TableHeader className="bg-white">
@@ -604,6 +713,14 @@ function CadastroPecasContent() {
                                 <TableCell className="text-right font-bold text-primary">R$ {item.preco_venda}</TableCell>
                                 <TableCell className="text-center">
                                     <div className="flex items-center justify-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            onClick={() => { setCurrentItem(item); setIsDetailsOpen(true); }}
+                                            className="bg-purple-500 hover:bg-purple-600 text-white h-7 px-2"
+                                            title="Ver Detalhes"
+                                        >
+                                            <Eye className="h-4 w-4" />
+                                        </Button>
                                         <Button size="sm" onClick={() => handleEdit(item)} className="bg-blue-500 hover:bg-blue-600 text-white h-7 px-2">
                                             <Edit className="h-4 w-4" />
                                         </Button>
@@ -786,6 +903,104 @@ function CadastroPecasContent() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancelar</Button>
                         <Button onClick={saveEdit}>Salvar Alterações</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal Detalhes */}
+            <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Detalhes do Produto {currentItem ? `- #${String(currentItem.id).padStart(6, '0')}` : ''}</DialogTitle>
+                    </DialogHeader>
+                    {currentItem && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Coluna Fotos */}
+                            <div className="space-y-4">
+                                <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border">
+                                    {currentItem.fotos && currentItem.fotos.length > 0 ? (
+                                        <img
+                                            src={currentItem.fotos[0].url.startsWith('http') ? currentItem.fotos[0].url : `https://geral-tiptagapi.r954jc.easypanel.host${currentItem.fotos[0].url}`}
+                                            alt="Principal"
+                                            className="w-full h-full object-contain"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-center h-full text-gray-400">
+                                            <Shirt className="h-24 w-24 opacity-20" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {currentItem.fotos && currentItem.fotos.slice(1).map((f, idx) => (
+                                        <div key={idx} className="aspect-square bg-gray-50 rounded border overflow-hidden">
+                                            <img
+                                                src={f.url.startsWith('http') ? f.url : `https://geral-tiptagapi.r954jc.easypanel.host${f.url}`}
+                                                alt={`Foto ${idx + 2}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Coluna Infos */}
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="font-bold text-lg">{currentItem.descricao_curta}</h3>
+                                    <p className="text-sm text-gray-500">{currentItem.descricao_detalhada || "Sem descrição detalhada."}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-3 bg-gray-50 rounded-lg border">
+                                        <div className="text-xs text-gray-500 uppercase">Preço Venda</div>
+                                        <div className="text-xl font-bold text-green-700">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentItem.preco_venda || 0)}
+                                        </div>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 rounded-lg border">
+                                        <div className="text-xs text-gray-500 uppercase">Status</div>
+                                        <div><Badge variant="secondary">{currentItem.status}</Badge></div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <h4 className="font-semibold text-sm border-b pb-1">Atributos</h4>
+                                    <div className="grid grid-cols-2 gap-y-2 text-sm">
+                                        <div><span className="text-gray-500">Tamanho:</span> {currentItem.tamanho?.nome || '-'}</div>
+                                        <div><span className="text-gray-500">Cor:</span> {currentItem.cor?.nome || '-'}</div>
+                                        <div><span className="text-gray-500">Marca:</span> {currentItem.marca?.nome || '-'}</div>
+                                        <div><span className="text-gray-500">Categoria:</span> {currentItem.categoria?.nome || '-'}</div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <h4 className="font-semibold text-sm border-b pb-1">Aquisição</h4>
+                                    <div className="grid grid-cols-2 gap-y-2 text-sm">
+                                        <div><span className="text-gray-500">Tipo:</span> {currentItem.tipo_aquisicao}</div>
+                                        <div><span className="text-gray-500">Fornecedor:</span> {currentItem.fornecedor?.nome || '-'}</div>
+                                        <div><span className="text-gray-500">Custo:</span> {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentItem.preco_custo || 0)}</div>
+                                        <div><span className="text-gray-500">Data Entrada:</span> {new Date(currentItem.data_entrada).toLocaleDateString('pt-BR')}</div>
+                                    </div>
+                                </div>
+
+                                {currentItem.medidas && currentItem.medidas.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h4 className="font-semibold text-sm border-b pb-1">Medidas Específicas</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {currentItem.medidas.map((m, i) => (
+                                                <div key={i} className="text-sm border p-1 rounded bg-white">
+                                                    <span className="font-medium">{m.nome}:</span> {m.valor}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>Fechar</Button>
+                        <Button onClick={() => { setIsDetailsOpen(false); openEdit(currentItem); }}>Editar Produto</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Printer, Check, X, RefreshCw, Download } from "lucide-react";
+import { Search, Printer, Check, X, RefreshCw, Download, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
 
@@ -19,6 +21,20 @@ export default function ImprimirEtiquetasPage() {
     const [selectedIds, setSelectedIds] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isPrinting, setIsPrinting] = useState(false);
+
+    // Filters State
+    const [filterFornecedor, setFilterFornecedor] = useState("");
+    const [filterTamanho, setFilterTamanho] = useState("");
+    const [filterMarca, setFilterMarca] = useState("");
+    const [filterCategoria, setFilterCategoria] = useState("");
+    const [filterTipoAquisicao, setFilterTipoAquisicao] = useState("TODOS");
+
+    // Data Lists
+    const [tamanhos, setTamanhos] = useState([]);
+    const [cores, setCores] = useState([]);
+    const [marcas, setMarcas] = useState([]);
+    const [categorias, setCategorias] = useState([]);
+    const [fornecedores, setFornecedores] = useState([]);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -36,10 +52,35 @@ export default function ImprimirEtiquetasPage() {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
+    // Load filter data
+    useEffect(() => {
+        loadDropdownData();
+    }, []);
+
     // Load items
     useEffect(() => {
         loadItems();
-    }, [currentPage, debouncedSearch]);
+    }, [currentPage, debouncedSearch, filterFornecedor, filterTamanho, filterMarca, filterCategoria, filterTipoAquisicao]);
+
+    const loadDropdownData = async () => {
+        try {
+            const [tamRes, corRes, marcaRes, catRes, fornRes] = await Promise.all([
+                api.get('/cadastros/tamanhos'),
+                api.get('/cadastros/cores'),
+                api.get('/cadastros/marcas'),
+                api.get('/cadastros/categorias'),
+                api.get('/pessoas?is_fornecedor=true&simple=true')
+            ]);
+            setTamanhos(tamRes.data);
+            setCores(corRes.data);
+            setMarcas(marcaRes.data);
+            setCategorias(catRes.data);
+            setFornecedores(fornRes.data);
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Erro ao carregar filtros.", variant: "destructive" });
+        }
+    };
 
     const loadItems = async () => {
         setIsLoading(true);
@@ -51,6 +92,12 @@ export default function ImprimirEtiquetasPage() {
             if (debouncedSearch) {
                 params.append('search', debouncedSearch);
             }
+            if (filterFornecedor) params.append('fornecedorId', filterFornecedor);
+            if (filterTamanho) params.append('tamanhoId', filterTamanho);
+            if (filterMarca) params.append('marcaId', filterMarca);
+            if (filterCategoria) params.append('categoriaId', filterCategoria);
+            if (filterTipoAquisicao && filterTipoAquisicao !== 'TODOS') params.append('tipo_aquisicao', filterTipoAquisicao);
+
             const res = await api.get(`/catalogo/pecas?${params.toString()}`);
             if (res.data.data) {
                 setItems(res.data.data);
@@ -342,21 +389,103 @@ export default function ImprimirEtiquetasPage() {
             </div>
 
             <Card className="border-t-4 border-t-primary shadow-sm">
-                <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1">
+                <div className="p-4 bg-white border-b space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="flex-1 space-y-1 w-full relative">
+                            <Label className="text-xs text-gray-500">Busca Rápida</Label>
                             <Input
                                 placeholder="Buscar por código ou descrição..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="max-w-md"
+                                className="pl-9"
+                            />
+                            <Search className="absolute left-3 bottom-2.5 h-4 w-4 text-gray-400" />
+                        </div>
+                        <div className="hidden md:flex items-center gap-2 pb-1">
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                {isLoading ? "Carregando..." : `${totalItems} peças • ${selectedIds.length} selecionada(s)`}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Fornecedor</Label>
+                            <SearchableSelect
+                                options={fornecedores}
+                                value={filterFornecedor}
+                                onValueChange={setFilterFornecedor}
+                                placeholder="Todos"
+                                searchPlaceholder="Buscar..."
                             />
                         </div>
-                        <span className="text-sm text-muted-foreground">
-                            {isLoading ? "Carregando..." : `${totalItems} peças • ${selectedIds.length} selecionada(s)`}
-                        </span>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Tamanho</Label>
+                            <SearchableSelect
+                                options={tamanhos}
+                                value={filterTamanho}
+                                onValueChange={setFilterTamanho}
+                                placeholder="Todos"
+                                searchPlaceholder="Buscar..."
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Marca</Label>
+                            <SearchableSelect
+                                options={marcas}
+                                value={filterMarca}
+                                onValueChange={setFilterMarca}
+                                placeholder="Todas"
+                                searchPlaceholder="Buscar..."
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Categoria</Label>
+                            <SearchableSelect
+                                options={categorias}
+                                value={filterCategoria}
+                                onValueChange={setFilterCategoria}
+                                placeholder="Todas"
+                                searchPlaceholder="Buscar..."
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Aquisição</Label>
+                            <Select value={filterTipoAquisicao} onValueChange={setFilterTipoAquisicao}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="TODOS">Todas</SelectItem>
+                                    <SelectItem value="COMPRA">Compra</SelectItem>
+                                    <SelectItem value="CONSIGNACAO">Consignação</SelectItem>
+                                    <SelectItem value="DOACAO">Doação</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
-                </CardHeader>
+
+                    <div className="flex justify-between items-center pt-2">
+                        <div className="flex-1 md:hidden text-sm text-gray-500">
+                            {isLoading ? "Filtrando..." : `${totalItems} itens`}
+                        </div>
+                        {(filterFornecedor || filterTamanho || filterMarca || filterCategoria || filterTipoAquisicao !== 'TODOS') && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setFilterFornecedor("");
+                                    setFilterTamanho("");
+                                    setFilterMarca("");
+                                    setFilterCategoria("");
+                                    setFilterTipoAquisicao("TODOS");
+                                    setSearchTerm("");
+                                }}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-auto"
+                            >
+                                <X className="h-4 w-4 mr-1" /> Limpar Filtros
+                            </Button>
+                        )}
+                    </div>
+                </div>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader className="bg-muted/50">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,7 @@ const MeasurementsInput = ({ value = [], onChange }) => {
     );
 };
 
-export default function CadastroPecasSimplesPage() {
+function CadastroPecasContent() {
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const fornecedorIdParam = searchParams.get('fornecedorId');
@@ -790,5 +790,13 @@ export default function CadastroPecasSimplesPage() {
                 </DialogContent>
             </Dialog>
         </div>
+    );
+}
+
+export default function CadastroPecasSimplesPage() {
+    return (
+        <Suspense fallback={<div>Carregando...</div>}>
+            <CadastroPecasContent />
+        </Suspense>
     );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
-
-// ... existing imports ...
 
 // Helper component for Measurements
 const MeasurementsInput = ({ value = [], onChange }) => {
@@ -67,6 +66,9 @@ const MeasurementsInput = ({ value = [], onChange }) => {
 
 export default function CadastroPecasSimplesPage() {
     const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const fornecedorIdParam = searchParams.get('fornecedorId');
+
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -131,7 +133,7 @@ export default function CadastroPecasSimplesPage() {
     // Load items when page or search changes
     useEffect(() => {
         loadItems();
-    }, [currentPage, debouncedSearch]);
+    }, [currentPage, debouncedSearch, fornecedorIdParam]);
 
     const loadDropdownData = async () => {
         try {
@@ -164,6 +166,9 @@ export default function CadastroPecasSimplesPage() {
             });
             if (debouncedSearch) {
                 params.append('search', debouncedSearch);
+            }
+            if (fornecedorIdParam) {
+                params.append('fornecedorId', fornecedorIdParam);
             }
             const res = await api.get(`/catalogo/pecas?${params.toString()}`);
             // New paginated response format
@@ -566,6 +571,7 @@ export default function CadastroPecasSimplesPage() {
                     <TableHeader className="bg-white">
                         <TableRow>
                             <TableHead>ID</TableHead>
+                            <TableHead>Foto</TableHead>
                             <TableHead>Descrição</TableHead>
                             <TableHead>Tam</TableHead>
                             <TableHead>Cor</TableHead>
@@ -578,6 +584,19 @@ export default function CadastroPecasSimplesPage() {
                         {items.map((item) => (
                             <TableRow key={item.id} className="border-b">
                                 <TableCell>{String(item.id).padStart(6, '0')}</TableCell>
+                                <TableCell>
+                                    <div className="w-12 h-12 rounded overflow-hidden border bg-gray-100 flex items-center justify-center">
+                                        {item.fotos && item.fotos.length > 0 && item.fotos[0].url ? (
+                                            <img
+                                                src={item.fotos[0].url.startsWith('http') ? item.fotos[0].url : `https://geral-tiptagapi.r954jc.easypanel.host${item.fotos[0].url}`}
+                                                alt="Foto"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <Shirt className="h-6 w-6 text-gray-300" />
+                                        )}
+                                    </div>
+                                </TableCell>
                                 <TableCell className="font-medium">{item.descricao_curta}</TableCell>
                                 <TableCell><Badge variant="outline">{item.tamanho ? item.tamanho.nome : getName(tamanhos, item.tamanhoId)}</Badge></TableCell>
                                 <TableCell>{item.cor ? item.cor.nome : getName(cores, item.corId)}</TableCell>

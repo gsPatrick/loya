@@ -1,21 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, AlertTriangle, Users, Save, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import api from "@/services/api";
+import { Search, Plus, AlertTriangle, Users, Save, Trash2, Package } from "lucide-react";
+
+// ... existing imports ...
 
 export default function CadastroPessoasPage() {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
+    const [filterType, setFilterType] = useState("Todos");
 
     // Formulario
     const [form, setForm] = useState({ nome: "", cpf_cnpj: "", email: "", telefone_whatsapp: "", tipo: "Cliente" });
@@ -82,10 +75,16 @@ export default function CadastroPessoasPage() {
             });
     };
 
-    const filtered = people.filter(p =>
-        (p.nome && p.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (p.cpf_cnpj && p.cpf_cnpj.includes(searchTerm))
-    );
+    const filtered = people.filter(p => {
+        const matchesSearch = (p.nome && p.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (p.cpf_cnpj && p.cpf_cnpj.includes(searchTerm));
+
+        let matchesType = true;
+        if (filterType === "Fornecedores") matchesType = p.is_fornecedor;
+        if (filterType === "Clientes") matchesType = p.is_cliente;
+
+        return matchesSearch && matchesType;
+    });
 
     const getTipoLabel = (p) => {
         if (p.is_cliente && p.is_fornecedor) return "Ambos";
@@ -144,8 +143,20 @@ export default function CadastroPessoasPage() {
 
             {/* Listagem */}
             <Card className="border-t-4 border-t-primary/50 shadow-sm overflow-hidden">
-                <div className="p-4 bg-white border-b flex justify-between items-center">
-                    <div className="text-sm text-gray-600">Lista de Cadastros</div>
+                <div className="p-4 bg-white border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="flex gap-2">
+                        {["Todos", "Fornecedores", "Clientes"].map((type) => (
+                            <Button
+                                key={type}
+                                variant={filterType === type ? "default" : "outline"}
+                                onClick={() => setFilterType(type)}
+                                size="sm"
+                                className="h-8"
+                            >
+                                {type}
+                            </Button>
+                        ))}
+                    </div>
                     <div className="relative w-[250px]">
                         <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar..." className="h-9 pl-9" />
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
@@ -175,6 +186,17 @@ export default function CadastroPessoasPage() {
                                     </TableCell>
                                     <TableCell><Badge variant="outline">{getTipoLabel(p)}</Badge></TableCell>
                                     <TableCell className="text-center flex items-center justify-center gap-2">
+                                        {p.is_fornecedor && (
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                title="Ver Produtos"
+                                                onClick={() => window.location.href = `/dashboard/cadastros/pecas-cadastro?fornecedorId=${p.id}`}
+                                                className="h-7 w-7 p-0 bg-orange-100 text-orange-700 hover:bg-orange-200"
+                                            >
+                                                <Package className="h-3 w-3" />
+                                            </Button>
+                                        )}
                                         <Button size="sm" variant="outline" onClick={() => window.location.href = `/dashboard/cadastros/pessoas/${p.id}`} className="h-7 w-7 p-0">
                                             <Search className="h-3 w-3" />
                                         </Button>

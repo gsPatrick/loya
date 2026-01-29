@@ -2,8 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { Search, Plus, AlertTriangle, Users, Save, Trash2, Package } from "lucide-react";
-
-// ... existing imports ...
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import api from "@/services/api";
 
 export default function CadastroPessoasPage() {
     const { toast } = useToast();

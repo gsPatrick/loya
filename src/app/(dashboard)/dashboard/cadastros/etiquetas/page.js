@@ -143,8 +143,8 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_STORE_NAME: 'GARIMPONOS',
                 LABEL_BG_COLOR: '#1a1a1a',
                 LABEL_TEXT_COLOR: '#ffffff',
-                LABEL_WIDTH: '31',
-                LABEL_HEIGHT: '53',
+                LABEL_WIDTH: '35',
+                LABEL_HEIGHT: '60',
                 LABEL_MARGIN_TOP: '1.5',
                 LABEL_MARGIN_BOTTOM: '1.5',
                 LABEL_MARGIN_LEFT: '1.0',
@@ -158,6 +158,7 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_BARCODE_OFFSET_Y: '0',
                 LABEL_PRICE_OFFSET_Y: '0',
                 LABEL_CODE_OFFSET_Y: '0',
+                LABEL_HORIZONTAL_GAP: '0', // Ajuste para 0 se as etiquetas forem coladas (35mm já inclui o passo)
             };
             try {
                 const configRes = await api.get('/admin/configuracoes');
@@ -187,13 +188,17 @@ export default function ImprimirEtiquetasPage() {
                         body { 
                             font-family: Arial, sans-serif; 
                             background: #f5f5f5;
-                            padding: 10px;
+                            padding: 0;
+                            margin: 0;
                         }
                         .etiquetas-container {
-                            display: flex;
-                            flex-wrap: wrap;
-                            gap: 2mm;
-                            justify-content: flex-start;
+                            display: grid;
+                            grid-template-columns: repeat(3, max-content); /* Força 3 colunas */
+                            column-gap: ${labelConfig.LABEL_HORIZONTAL_GAP}mm;
+                            row-gap: 0;
+                            justify-content: start;
+                            width: max-content;
+                            padding-left: 1mm; /* Pequeno ajuste de margem segura */
                         }
                         .etiqueta {
                             width: ${labelConfig.LABEL_WIDTH}mm;
@@ -220,9 +225,13 @@ export default function ImprimirEtiquetasPage() {
                             transform: translateX(-50%);
                             width: 5mm;
                             height: 2.5mm;
-                            background: #f5f5f5;
+                            background: #fff; /* Fundo branco para simular o furo se precisar, ou transparente */
                             border-radius: 0 0 2.5mm 2.5mm;
+                            /* Se a etiqueta for preta, o furo visual ajuda, mas na impressao real o papel já tem furo */
+                            /* visibility: hidden; Vamos esconder pois o papel já tem furo */
+                            visibility: hidden;
                         }
+                        /* ... estilos internos ... */
                         .logo-area {
                             margin-top: calc(1mm + ${labelConfig.LABEL_LOGO_OFFSET_Y}mm);
                             text-align: center;
@@ -289,10 +298,18 @@ export default function ImprimirEtiquetasPage() {
                             font-family: monospace;
                         }
                         @media print {
+                            @page {
+                                margin: 0; /* Remove margens da impressora */
+                                size: auto;
+                            }
                             body { 
                                 background: white; 
-                                padding: 0;
-                                margin: 0;
+                                padding: 0 !important;
+                                margin: 0 !important;
+                            }
+                            .etiquetas-container {
+                                /* Ajuste fino para print */
+                                width: 100%;
                             }
                             .etiqueta {
                                 -webkit-print-color-adjust: exact;

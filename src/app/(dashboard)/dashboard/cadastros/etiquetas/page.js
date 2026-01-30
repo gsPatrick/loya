@@ -196,10 +196,10 @@ export default function ImprimirEtiquetasPage() {
                             grid-template-columns: repeat(3, max-content); /* Força 3 colunas */
                             column-gap: ${labelConfig.LABEL_HORIZONTAL_GAP}mm;
                             row-gap: 0;
-                            justify-content: center; /* Centralizar no papel */
-                            width: 100%;
-                            padding-left: 0; /* Removido padding extra */
-                            margin: 0;
+                            justify-content: start;
+                            width: max-content;
+                            padding-left: 0;
+                            margin: -1mm 0 0 -2.5mm; /* Margem negativa para compensar margem fisica da impressora */
                         }
                         .etiqueta {
                             width: ${labelConfig.LABEL_WIDTH}mm;

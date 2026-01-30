@@ -199,7 +199,7 @@ export default function ImprimirEtiquetasPage() {
                             justify-content: start;
                             width: max-content;
                             padding-left: 0;
-                            margin: -1mm 0 0 -2.5mm; /* Margem negativa para compensar margem fisica da impressora */
+                            margin: -4mm 0 0 -2.5mm; /* Margem negativa agressiva para corrigir deslocamento vertical */
                         }
                         .etiqueta {
                             width: ${labelConfig.LABEL_WIDTH}mm;

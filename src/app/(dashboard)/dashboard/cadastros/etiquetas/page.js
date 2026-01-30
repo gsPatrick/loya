@@ -143,8 +143,8 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_STORE_NAME: 'GARIMPONOS',
                 LABEL_BG_COLOR: '#1a1a1a',
                 LABEL_TEXT_COLOR: '#ffffff',
-                LABEL_WIDTH: '35',
-                LABEL_HEIGHT: '60',
+                LABEL_WIDTH: '34',
+                LABEL_HEIGHT: '62',
                 LABEL_MARGIN_TOP: '0',
                 LABEL_MARGIN_BOTTOM: '0',
                 LABEL_MARGIN_LEFT: '0',
@@ -196,8 +196,8 @@ export default function ImprimirEtiquetasPage() {
                             grid-template-columns: repeat(3, max-content); /* Força 3 colunas */
                             column-gap: ${labelConfig.LABEL_HORIZONTAL_GAP}mm;
                             row-gap: 0;
-                            justify-content: start;
-                            width: max-content;
+                            justify-content: center; /* Centralizar no papel */
+                            width: 100%;
                             padding-left: 0; /* Removido padding extra */
                             margin: 0;
                         }
@@ -300,7 +300,7 @@ export default function ImprimirEtiquetasPage() {
                         @media print {
                             @page {
                                 margin: 0; /* Remove margens da impressora */
-                                size: auto;
+                                size: 105mm 62mm; /* Tamanho exato do papel (3x35mm width) */
                             }
                             html, body { 
                                 background: white; 

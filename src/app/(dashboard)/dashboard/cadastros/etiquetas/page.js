@@ -145,10 +145,10 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_TEXT_COLOR: '#ffffff',
                 LABEL_WIDTH: '35',
                 LABEL_HEIGHT: '60',
-                LABEL_MARGIN_TOP: '1.5',
-                LABEL_MARGIN_BOTTOM: '1.5',
-                LABEL_MARGIN_LEFT: '1.0',
-                LABEL_MARGIN_RIGHT: '1.0',
+                LABEL_MARGIN_TOP: '0.5',
+                LABEL_MARGIN_BOTTOM: '0.5',
+                LABEL_MARGIN_LEFT: '0.5',
+                LABEL_MARGIN_RIGHT: '0.5',
                 LABEL_FONT_SIZE_LOGO: '11',
                 LABEL_FONT_SIZE_PRICE: '10',
                 LABEL_FONT_SIZE_TEXT: '5',
@@ -198,7 +198,7 @@ export default function ImprimirEtiquetasPage() {
                             row-gap: 0;
                             justify-content: start;
                             width: max-content;
-                            padding-left: 1mm; /* Pequeno ajuste de margem segura */
+                            padding-left: 0; /* Removido padding extra */
                         }
                         .etiqueta {
                             width: ${labelConfig.LABEL_WIDTH}mm;

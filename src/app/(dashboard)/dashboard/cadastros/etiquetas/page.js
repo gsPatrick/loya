@@ -145,10 +145,10 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_TEXT_COLOR: '#ffffff',
                 LABEL_WIDTH: '35',
                 LABEL_HEIGHT: '60',
-                LABEL_MARGIN_TOP: '0.5',
-                LABEL_MARGIN_BOTTOM: '0.5',
-                LABEL_MARGIN_LEFT: '0.5',
-                LABEL_MARGIN_RIGHT: '0.5',
+                LABEL_MARGIN_TOP: '0',
+                LABEL_MARGIN_BOTTOM: '0',
+                LABEL_MARGIN_LEFT: '0',
+                LABEL_MARGIN_RIGHT: '0',
                 LABEL_FONT_SIZE_LOGO: '11',
                 LABEL_FONT_SIZE_PRICE: '10',
                 LABEL_FONT_SIZE_TEXT: '5',
@@ -199,6 +199,7 @@ export default function ImprimirEtiquetasPage() {
                             justify-content: start;
                             width: max-content;
                             padding-left: 0; /* Removido padding extra */
+                            margin: 0;
                         }
                         .etiqueta {
                             width: ${labelConfig.LABEL_WIDTH}mm;
@@ -228,7 +229,6 @@ export default function ImprimirEtiquetasPage() {
                             background: #fff; /* Fundo branco para simular o furo se precisar, ou transparente */
                             border-radius: 0 0 2.5mm 2.5mm;
                             /* Se a etiqueta for preta, o furo visual ajuda, mas na impressao real o papel já tem furo */
-                            /* visibility: hidden; Vamos esconder pois o papel já tem furo */
                             visibility: hidden;
                         }
                         /* ... estilos internos ... */
@@ -302,14 +302,18 @@ export default function ImprimirEtiquetasPage() {
                                 margin: 0; /* Remove margens da impressora */
                                 size: auto;
                             }
-                            body { 
+                            html, body { 
                                 background: white; 
                                 padding: 0 !important;
                                 margin: 0 !important;
+                                width: 100%;
+                                height: 100%;
                             }
                             .etiquetas-container {
                                 /* Ajuste fino para print */
                                 width: 100%;
+                                margin: 0 !important;
+                                padding: 0 !important;
                             }
                             .etiqueta {
                                 -webkit-print-color-adjust: exact;

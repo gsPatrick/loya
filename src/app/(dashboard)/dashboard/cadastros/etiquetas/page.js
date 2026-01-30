@@ -144,7 +144,7 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_BG_COLOR: '#1a1a1a',
                 LABEL_TEXT_COLOR: '#ffffff',
                 LABEL_WIDTH: '34',
-                LABEL_HEIGHT: '62',
+                LABEL_HEIGHT: '60',
                 LABEL_MARGIN_TOP: '0',
                 LABEL_MARGIN_BOTTOM: '0',
                 LABEL_MARGIN_LEFT: '0',
@@ -300,7 +300,7 @@ export default function ImprimirEtiquetasPage() {
                         @media print {
                             @page {
                                 margin: 0; /* Remove margens da impressora */
-                                size: 105mm 62mm; /* Tamanho exato do papel (3x35mm width) */
+                                size: auto;
                             }
                             html, body { 
                                 background: white; 

@@ -159,8 +159,8 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_PRICE_OFFSET_Y: '0',
                 LABEL_CODE_OFFSET_Y: '0',
                 LABEL_HORIZONTAL_GAP: '0',
-                LABEL_PRINT_MARGIN_TOP: '-20',
-                LABEL_PRINT_MARGIN_LEFT: '-10',
+                LABEL_PRINT_MARGIN_TOP: '0',
+                LABEL_PRINT_MARGIN_LEFT: '0',
             };
             try {
                 const configRes = await api.get('/admin/configuracoes');

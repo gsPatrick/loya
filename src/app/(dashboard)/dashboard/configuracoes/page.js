@@ -41,8 +41,8 @@ export default function ConfiguracoesPage() {
         LABEL_PRICE_OFFSET_Y: "0",
         LABEL_CODE_OFFSET_Y: "0",
         // External printer offsets
-        LABEL_PRINT_MARGIN_TOP: "-20",
-        LABEL_PRINT_MARGIN_LEFT: "-10",
+        LABEL_PRINT_MARGIN_TOP: "0",
+        LABEL_PRINT_MARGIN_LEFT: "0",
     });
 
     useEffect(() => {

@@ -61,12 +61,12 @@ export default function ConfiguracoesPage() {
                 configMap.LABEL_HEIGHT = '60';
             }
             // Set defaults for print offsets if they don't exist
-            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_TOP')) configMap.LABEL_PRINT_MARGIN_TOP = '-20';
-            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_LEFT')) configMap.LABEL_PRINT_MARGIN_LEFT = '-10';
+            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_TOP')) configMap.LABEL_PRINT_MARGIN_TOP = '0';
+            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_LEFT')) configMap.LABEL_PRINT_MARGIN_LEFT = '0';
 
-            // Forced migration for insufficient offsets
-            if (parseInt(configMap.LABEL_PRINT_MARGIN_TOP) > -15) configMap.LABEL_PRINT_MARGIN_TOP = '-20';
-            if (parseInt(configMap.LABEL_PRINT_MARGIN_LEFT) > -8) configMap.LABEL_PRINT_MARGIN_LEFT = '-10';
+            // Forced migration to ZERO for clean test
+            if (configMap.LABEL_PRINT_MARGIN_TOP !== '0') configMap.LABEL_PRINT_MARGIN_TOP = '0';
+            if (configMap.LABEL_PRINT_MARGIN_LEFT !== '0') configMap.LABEL_PRINT_MARGIN_LEFT = '0';
 
             setConfigs(prev => ({ ...prev, ...configMap }));
         } catch (error) {

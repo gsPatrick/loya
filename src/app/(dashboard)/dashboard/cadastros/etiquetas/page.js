@@ -310,9 +310,10 @@ export default function ImprimirEtiquetasPage() {
                                 height: 100%;
                             }
                             .etiquetas-container {
-                                /* Ajuste fino para print */
+                                /* Ajuste fino para print - Corrigindo margem externa da impressora */
                                 width: 100%;
-                                margin: 0 !important;
+                                margin-top: -6mm !important;
+                                margin-left: -3mm !important;
                                 padding: 0 !important;
                             }
                             .etiqueta {

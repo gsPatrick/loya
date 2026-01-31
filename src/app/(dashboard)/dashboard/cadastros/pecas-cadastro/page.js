@@ -133,7 +133,9 @@ function CadastroPecasContent() {
         ]
     });
 
-    const [lastAddedItem, setLastAddedItem] = useState(null);
+    const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+    const [duplicateSearch, setDuplicateSearch] = useState("");
+    const [duplicateResults, setDuplicateResults] = useState([]);
     const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
     const [isDamageReportOpen, setIsDamageReportOpen] = useState(false);
 
@@ -271,7 +273,6 @@ function CadastroPecasContent() {
             .then(res => {
                 // Reload items from server to get updated list with pagination
                 loadItems();
-                setLastAddedItem(payload);
                 setForm({
                     descricao_curta: "",
                     description: "",
@@ -409,19 +410,53 @@ function CadastroPecasContent() {
         }
     };
 
-    const handleDuplicateLast = () => {
-        if (!lastAddedItem) {
-            toast({ title: "Aviso", description: "Nenhuma peça cadastrada nesta sessão para duplicar." });
-            return;
-        }
+    const handleDuplicateSelect = (item) => {
         setForm(prev => ({
             ...prev,
-            ...lastAddedItem,
-            descricao_curta: `CÓPIA: ${lastAddedItem.descricao_curta}`,
-            fotos: [], // Geralmente fotos são únicas
+            descricao_curta: `CÓPIA: ${item.descricao_curta}`,
+            description: item.descricao_detalhada || "",
+            tamanhoId: item.tamanhoId || "",
+            corId: item.corId || "",
+            marcaId: item.marcaId || "",
+            categoriaId: item.categoriaId || "",
+            fornecedorId: form.fornecedorId || item.fornecedorId || "", // Prefere o atual persistente
+            preco_venda: item.preco_venda || "",
+            tipo_aquisicao: item.tipo_aquisicao || "CONSIGNACAO",
+            quantidade: 1,
+            peso_kg: item.peso_kg || "",
+            altura_cm: item.altura_cm || "",
+            largura_cm: item.largura_cm || "",
+            profundidade_cm: item.profundidade_cm || "",
+            fotos: [], // Fotos não costumam ser duplicadas
+            medidas: item.medidas || [
+                { nome: "Busto", valor: "" },
+                { nome: "Cintura", valor: "" },
+                { nome: "Quadril", valor: "" },
+                { nome: "Comprimento", valor: "" }
+            ]
         }));
-        toast({ title: "Duplicado", description: "Dados preenchidos com os da última peça." });
+        setIsDuplicateDialogOpen(false);
+        toast({ title: "Duplicado", description: "Dados preenchidos com os do produto selecionado." });
     };
+
+    const fetchDuplicateResults = async (search) => {
+        if (!search) return;
+        try {
+            const res = await api.get(`/catalogo/pecas?search=${search}&limit=5`);
+            setDuplicateResults(Array.isArray(res.data) ? res.data : (res.data.data || []));
+        } catch (err) {
+            console.error("Erro ao buscar produtos para duplicar:", err);
+        }
+    };
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (isDuplicateDialogOpen && duplicateSearch) {
+                fetchDuplicateResults(duplicateSearch);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [duplicateSearch, isDuplicateDialogOpen]);
 
     const confirmExitSupplier = () => {
         setIsExitConfirmOpen(false);
@@ -668,11 +703,14 @@ function CadastroPecasContent() {
                         <div className="md:col-span-4 flex items-end justify-between gap-4">
                             <Button
                                 variant="outline"
-                                onClick={handleDuplicateLast}
-                                disabled={!lastAddedItem}
+                                onClick={() => {
+                                    setDuplicateSearch("");
+                                    setDuplicateResults([]);
+                                    setIsDuplicateDialogOpen(true);
+                                }}
                                 className="border-primary text-primary hover:bg-primary/5 h-10 px-6 w-full md:w-auto"
                             >
-                                <RefreshCw className="mr-2 h-4 w-4" /> Duplicar Última Peça
+                                <RefreshCw className="mr-2 h-4 w-4" /> Duplicar Produto Existente
                             </Button>
                             <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10 px-8 w-full md:w-auto">
                                 <Plus className="mr-2 h-4 w-4" /> Adicionar ao Estoque
@@ -713,6 +751,75 @@ function CadastroPecasContent() {
                         <Button variant="outline" onClick={() => handleNotifyAvaria(false)} className="flex-1">Não, sem avaria</Button>
                         <Button onClick={() => handleNotifyAvaria(true)} className="bg-amber-500 hover:bg-amber-600 text-white flex-1 text-xs">Sim, notificar avaria</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDuplicateDialogOpen} onOpenChange={setIsDuplicateDialogOpen}>
+                <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <RefreshCw className="h-5 w-5 text-primary" />
+                            Duplicar Produto Existente
+                        </DialogTitle>
+                        <p className="text-sm text-muted-foreground">
+                            Pesquise um produto para copiar suas informações para o formulário de cadastro.
+                        </p>
+                    </DialogHeader>
+
+                    <div className="py-2 space-y-4 flex-1 flex flex-col min-h-0">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Buscar por código, descrição ou marca..."
+                                value={duplicateSearch}
+                                onChange={(e) => setDuplicateSearch(e.target.value)}
+                                className="pl-10"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                            {duplicateResults.length > 0 ? (
+                                duplicateResults.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="flex items-center justify-between p-3 border rounded-lg hover:border-primary hover:bg-primary/5 cursor-pointer transition-all group"
+                                        onClick={() => handleDuplicateSelect(item)}
+                                    >
+                                        <div className="flex gap-3 items-center">
+                                            <div className="h-10 w-10 bg-muted rounded flex items-center justify-center group-hover:bg-primary/10">
+                                                <Shirt className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm line-clamp-1">{item.descricao_curta}</p>
+                                                <div className="flex gap-2 text-[10px] text-muted-foreground">
+                                                    <span className="font-mono">{item.codigo_etiqueta}</span>
+                                                    <span>•</span>
+                                                    <span>{item.marca?.nome || 'Sem Marca'}</span>
+                                                    <span>•</span>
+                                                    <span>{item.tamanho?.nome || 'U'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold text-primary">R$ {item.preco_venda}</p>
+                                            <Button variant="ghost" size="sm" className="h-6 text-[10px] p-0 hover:bg-transparent text-primary underline">
+                                                Selecionar
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : duplicateSearch ? (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    <p>Nenhum produto encontrado para "{duplicateSearch}"</p>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    <p>Comece a digitar para buscar produtos...</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 

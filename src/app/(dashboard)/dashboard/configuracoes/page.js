@@ -24,7 +24,7 @@ export default function ConfiguracoesPage() {
         LABEL_BG_COLOR: "#1a1a1a",
         LABEL_TEXT_COLOR: "#ffffff",
         LABEL_WIDTH: "31",
-        LABEL_HEIGHT: "53",
+        LABEL_HEIGHT: "75",
         // Advanced
         LABEL_MARGIN_TOP: "1.5",
         LABEL_MARGIN_BOTTOM: "1.5",

@@ -199,7 +199,7 @@ export default function ImprimirEtiquetasPage() {
                             justify-content: start;
                             width: max-content;
                             padding-left: 0;
-                            margin: -4mm 0 0 -2.5mm; /* Margem negativa agressiva para corrigir deslocamento vertical */
+                            margin: -8mm 0 0 -4mm; /* Margem negativa aumentada para remover faixas brancas top/left */
                         }
                         .etiqueta {
                             width: ${labelConfig.LABEL_WIDTH}mm;
@@ -310,10 +310,10 @@ export default function ImprimirEtiquetasPage() {
                                 height: 100%;
                             }
                             .etiquetas-container {
-                                /* Ajuste fino para print - Corrigindo margem externa da impressora */
+                                /* Ajuste fino para print - Corrigindo deslocamento físico da impressora */
                                 width: 100%;
-                                margin-top: -6mm !important;
-                                margin-left: -3mm !important;
+                                margin-top: -10mm !important;
+                                margin-left: -5mm !important;
                                 padding: 0 !important;
                             }
                             .etiqueta {
@@ -350,7 +350,7 @@ export default function ImprimirEtiquetasPage() {
                                         <div class="preco">R$ ${parseFloat(item.preco_venda || 0).toFixed(2).replace('.', ',')}</div>
                                         <div class="tamanho">${item.tamanho?.nome || 'U'}</div>
                                     </div>
-                                    <div class="codigo-inferior">${codigoInferior} | F: ${item.fornecedorId || '-'}</div>
+                                    <div class="codigo-inferior">F: ${item.fornecedorId || '-'} | ${codigoInferior}</div>
                                 </div>
                             `;
             }).join('')}

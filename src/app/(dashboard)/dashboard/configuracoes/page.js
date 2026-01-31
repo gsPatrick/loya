@@ -53,6 +53,10 @@ export default function ConfiguracoesPage() {
             response.data.forEach(conf => {
                 configMap[conf.chave] = conf.valor;
             });
+            // Forced migration to 75mm if it's the old value
+            if (configMap.LABEL_HEIGHT === '53' || configMap.LABEL_HEIGHT === '60') {
+                configMap.LABEL_HEIGHT = '75';
+            }
             setConfigs(prev => ({ ...prev, ...configMap }));
         } catch (error) {
             console.error("Erro ao carregar configurações:", error);
@@ -493,7 +497,7 @@ export default function ConfiguracoesPage() {
                                         opacity: 0.6,
                                         marginTop: '0.5mm'
                                     }}>
-                                        19.12345678B | F: 0001
+                                        F: 0001 | 19.12345678B
                                     </div>
                                 </div>
                             </div>

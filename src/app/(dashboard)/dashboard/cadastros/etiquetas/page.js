@@ -312,10 +312,12 @@ export default function ImprimirEtiquetasPage() {
                                 height: 100%;
                             }
                             .etiquetas-container {
-                                /* Ajuste fino para print - Consumindo deslocamento configurado */
+                                /* Ajuste fino para print - Usando position absolute para garantir movimento total */
+                                position: absolute;
+                                top: ${labelConfig.LABEL_PRINT_MARGIN_TOP}mm !important;
+                                left: ${labelConfig.LABEL_PRINT_MARGIN_LEFT}mm !important;
                                 width: 100%;
-                                margin-top: ${labelConfig.LABEL_PRINT_MARGIN_TOP}mm !important;
-                                margin-left: ${labelConfig.LABEL_PRINT_MARGIN_LEFT}mm !important;
+                                margin: 0 !important;
                                 padding: 0 !important;
                             }
                             .etiqueta {

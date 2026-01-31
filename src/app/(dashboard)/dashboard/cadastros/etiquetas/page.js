@@ -349,7 +349,7 @@ export default function ImprimirEtiquetasPage() {
                                         <div class="preco">R$ ${parseFloat(item.preco_venda || 0).toFixed(2).replace('.', ',')}</div>
                                         <div class="tamanho">${item.tamanho?.nome || 'U'}</div>
                                     </div>
-                                    <div class="codigo-inferior">${codigoInferior}</div>
+                                    <div class="codigo-inferior">${codigoInferior} | F: ${item.fornecedorId || '-'}</div>
                                 </div>
                             `;
             }).join('')}

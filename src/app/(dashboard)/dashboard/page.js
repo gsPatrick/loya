@@ -9,19 +9,20 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import {
-  PlusCircle,
-  Clock,
-  Store,
-  CheckCircle2,
-  RotateCcw,
-  TrendingUp,
-  TrendingDown,
-  ArrowUp,
-  AlertCircle,
-  Package,
   Users,
-  Truck
+  Truck,
+  AlertTriangle,
+  Info
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   BarChart,
   Bar,
@@ -45,10 +46,25 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expiringPecas, setExpiringPecas] = useState([]);
+  const [isReminderOpen, setIsReminderOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
+    fetchExpiringPecas();
   }, []);
+
+  const fetchExpiringPecas = async () => {
+    try {
+      const res = await api.get('/catalogo/pecas/expirando');
+      if (res.data && res.data.length > 0) {
+        setExpiringPecas(res.data);
+        setIsReminderOpen(true);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar peças expirando:", err);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -395,6 +411,48 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      {/* --- 5. MODAL DE LEMBRETE DO DIA --- */}
+      <Dialog open={isReminderOpen} onOpenChange={setIsReminderOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-amber-600 mb-2">
+              <AlertTriangle className="h-6 w-6" />
+              <DialogTitle className="text-xl">Lembrete do Dia: Peças Expirando</DialogTitle>
+            </div>
+            <CardDescription>
+              As seguintes peças em consignação ultrapassaram o prazo de 60 dias e precisam ser devolvidas ou renegociadas.
+            </CardDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            {expiringPecas.map((peca) => (
+              <div key={peca.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex gap-4 items-center">
+                  <div className="h-12 w-12 bg-muted rounded flex items-center justify-center">
+                    <Package className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm">{peca.descricao_curta}</h4>
+                    <div className="flex gap-2 mt-1">
+                      <Badge variant="outline" className="text-[10px]">{peca.codigo_etiqueta}</Badge>
+                      <span className="text-xs text-muted-foreground">Entrada: {new Date(peca.data_entrada).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-medium">{peca.fornecedor?.nome}</p>
+                  <p className="text-[10px] text-muted-foreground">{peca.fornecedor?.telefone_whatsapp}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsReminderOpen(false)}>Lembrar mais tarde</Button>
+            <Button onClick={() => window.location.href = '/dashboard/cadastros/etiquetas'}>Ir para Etiquetas</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

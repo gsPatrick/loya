@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit, RefreshCw, Eye, Filter, X } from "lucide-react";
+import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit, RefreshCw, Eye, Filter, X, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,32 +33,56 @@ const MeasurementsInput = ({ value = [], onChange }) => {
         onChange(newMeasurements);
     };
 
+    const loadStandard = () => {
+        onChange([
+            { nome: "Busto", valor: "" },
+            { nome: "Cintura", valor: "" },
+            { nome: "Quadril", valor: "" },
+            { nome: "Comprimento", valor: "" }
+        ]);
+    };
+
     return (
-        <div className="space-y-2">
-            <Label>Medidas Personalizadas</Label>
+        <div className="space-y-3">
+            <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                    <Shirt className="h-4 w-4 text-primary" /> Medidas do Produto
+                </Label>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={loadStandard}
+                    className="text-xs text-primary hover:bg-primary/10 h-8"
+                >
+                    <Star className="h-3 w-3 mr-1 fill-primary" /> Carregar Favoritos (Padrão)
+                </Button>
+            </div>
             <div className="space-y-2">
                 {value.map((m, idx) => (
-                    <div key={idx} className="flex gap-2 items-center">
+                    <div key={idx} className="flex gap-2 items-center bg-gray-50/50 p-2 rounded-lg border border-dashed border-gray-200">
                         <Input
                             placeholder="Nome (ex: Busto)"
                             value={m.nome}
                             onChange={(e) => updateMeasurement(idx, 'nome', e.target.value)}
-                            className="flex-1"
+                            className="flex-1 bg-white h-9 text-sm"
                         />
                         <Input
-                            placeholder="Valor (ex: 34cm)"
+                            placeholder="Valor"
                             value={m.valor}
                             onChange={(e) => updateMeasurement(idx, 'valor', e.target.value)}
-                            className="flex-1"
+                            className="flex-1 bg-white h-9 text-sm"
                         />
-                        <Button variant="destructive" size="icon" onClick={() => removeMeasurement(idx)}>
+                        <Button variant="ghost" size="icon" onClick={() => removeMeasurement(idx)} className="text-gray-400 hover:text-red-500 h-9 w-9">
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={addMeasurement}>
-                    <Plus className="h-4 w-4 mr-2" /> Adicionar Medida
-                </Button>
+                <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={addMeasurement} className="h-8 text-xs">
+                        <Plus className="h-3 w-3 mr-1" /> Adicionar Medida
+                    </Button>
+                </div>
             </div>
         </div>
     );
@@ -92,7 +116,7 @@ function CadastroPecasContent() {
         categoriaId: "",
         fornecedorId: "",
         preco_venda: "",
-        tipo_aquisicao: "COMPRA",
+        tipo_aquisicao: "CONSIGNACAO",
         quantidade: 1,
         sync_ecommerce: true,
         is_accessory: false,
@@ -101,8 +125,17 @@ function CadastroPecasContent() {
         largura_cm: "",
         profundidade_cm: "",
         fotos: [],
-        medidas: []
+        medidas: [
+            { nome: "Busto", valor: "" },
+            { nome: "Cintura", valor: "" },
+            { nome: "Quadril", valor: "" },
+            { nome: "Comprimento", valor: "" }
+        ]
     });
+
+    const [lastAddedItem, setLastAddedItem] = useState(null);
+    const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
+    const [isDamageReportOpen, setIsDamageReportOpen] = useState(false);
 
     // Data Lists
     const [tamanhos, setTamanhos] = useState([]);
@@ -238,6 +271,7 @@ function CadastroPecasContent() {
             .then(res => {
                 // Reload items from server to get updated list with pagination
                 loadItems();
+                setLastAddedItem(payload);
                 setForm({
                     descricao_curta: "",
                     description: "",
@@ -245,9 +279,9 @@ function CadastroPecasContent() {
                     corId: "",
                     marcaId: "",
                     categoriaId: "",
-                    fornecedorId: "",
+                    fornecedorId: form.fornecedorId, // Persiste o fornecedor
                     preco_venda: "",
-                    tipo_aquisicao: "COMPRA",
+                    tipo_aquisicao: "CONSIGNACAO",
                     quantidade: 1,
                     sync_ecommerce: true,
                     is_accessory: false,
@@ -256,7 +290,12 @@ function CadastroPecasContent() {
                     largura_cm: "",
                     profundidade_cm: "",
                     fotos: [],
-                    medidas: []
+                    medidas: [
+                        { nome: "Busto", valor: "" },
+                        { nome: "Cintura", valor: "" },
+                        { nome: "Quadril", valor: "" },
+                        { nome: "Comprimento", valor: "" }
+                    ]
                 });
                 toast({ title: "Sucesso", description: "Peça cadastrada.", className: "bg-primary text-primary-foreground border-none" });
             })
@@ -370,6 +409,42 @@ function CadastroPecasContent() {
         }
     };
 
+    const handleDuplicateLast = () => {
+        if (!lastAddedItem) {
+            toast({ title: "Aviso", description: "Nenhuma peça cadastrada nesta sessão para duplicar." });
+            return;
+        }
+        setForm(prev => ({
+            ...prev,
+            ...lastAddedItem,
+            descricao_curta: `CÓPIA: ${lastAddedItem.descricao_curta}`,
+            fotos: [], // Geralmente fotos são únicas
+        }));
+        toast({ title: "Duplicado", description: "Dados preenchidos com os da última peça." });
+    };
+
+    const confirmExitSupplier = () => {
+        setIsExitConfirmOpen(false);
+        setIsDamageReportOpen(true);
+    };
+
+    const handleNotifyAvaria = async (hasDamage) => {
+        if (hasDamage && form.fornecedorId) {
+            try {
+                const forn = fornecedores.find(f => String(f.id) === String(form.fornecedorId));
+                await api.post('/cadastros/notificacoes', {
+                    mensagem: `AVARIA: Produto do fornecedor ${forn?.nome || 'desconhecido'} reportado com avaria no cadastro.`,
+                    tipo: 'ALERTA'
+                });
+                toast({ title: "Notificado", description: "Lembrete de avaria criado e fornecedor marcado." });
+            } catch (err) {
+                console.error("Erro ao criar lembrete de avaria:", err);
+            }
+        }
+        setIsDamageReportOpen(false);
+        setForm(prev => ({ ...prev, fornecedorId: "" }));
+    };
+
     const handleDimensionSelect = (dimId, isEdit = false) => {
         const dim = dimensoes.find(d => String(d.id) === dimId);
         if (!dim) return;
@@ -474,15 +549,34 @@ function CadastroPecasContent() {
                             />
                         </div>
 
-                        <div className="space-y-2 md:col-span-2">
+                        <div className="space-y-2 md:col-span-2 relative group">
                             <Label>Fornecedor</Label>
-                            <SearchableSelect
-                                options={fornecedores}
-                                value={form.fornecedorId}
-                                onValueChange={v => setForm({ ...form, fornecedorId: v })}
-                                placeholder="Selecione fornecedor"
-                                searchPlaceholder="Buscar fornecedor..."
-                            />
+                            <div className="flex gap-2">
+                                <SearchableSelect
+                                    options={fornecedores}
+                                    value={form.fornecedorId}
+                                    onValueChange={v => {
+                                        if (!v && form.fornecedorId) {
+                                            setIsExitConfirmOpen(true);
+                                        } else {
+                                            setForm({ ...form, fornecedorId: v });
+                                        }
+                                    }}
+                                    placeholder="Selecione fornecedor"
+                                    searchPlaceholder="Buscar fornecedor..."
+                                />
+                                {form.fornecedorId && (
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => setIsExitConfirmOpen(true)}
+                                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                        title="Trocar/Encerrar Fornecedor"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
 
                         <div className="md:col-span-4 space-y-2">
@@ -571,7 +665,15 @@ function CadastroPecasContent() {
                             </div>
                         </div>
 
-                        <div className="md:col-span-4 flex items-end justify-end">
+                        <div className="md:col-span-4 flex items-end justify-between gap-4">
+                            <Button
+                                variant="outline"
+                                onClick={handleDuplicateLast}
+                                disabled={!lastAddedItem}
+                                className="border-primary text-primary hover:bg-primary/5 h-10 px-6 w-full md:w-auto"
+                            >
+                                <RefreshCw className="mr-2 h-4 w-4" /> Duplicar Última Peça
+                            </Button>
                             <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10 px-8 w-full md:w-auto">
                                 <Plus className="mr-2 h-4 w-4" /> Adicionar ao Estoque
                             </Button>
@@ -579,6 +681,40 @@ function CadastroPecasContent() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Modais de Fluxo de Fornecedor */}
+            <Dialog open={isExitConfirmOpen} onOpenChange={setIsExitConfirmOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Encerrar Sessão?</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p>Deseja encerrar o cadastro para o fornecedor <strong>{fornecedores.find(f => String(f.id) === String(form.fornecedorId))?.nome}</strong>?</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsExitConfirmOpen(false)}>Cancelar</Button>
+                        <Button onClick={confirmExitSupplier}>Sim, encerrar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDamageReportOpen} onOpenChange={setIsDamageReportOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Relatório de Avaria</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <p className="font-medium text-amber-600 flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5" /> Importante
+                        </p>
+                        <p>Este produto tem alguma avaria e você deseja notificar o fornecedor agora?</p>
+                    </div>
+                    <DialogFooter className="flex gap-2 sm:justify-between w-full">
+                        <Button variant="outline" onClick={() => handleNotifyAvaria(false)} className="flex-1">Não, sem avaria</Button>
+                        <Button onClick={() => handleNotifyAvaria(true)} className="bg-amber-500 hover:bg-amber-600 text-white flex-1 text-xs">Sim, notificar avaria</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Card className="border-t-4 border-t-primary/50 shadow-sm overflow-hidden">
                 <div className="p-4 bg-white border-b space-y-4">

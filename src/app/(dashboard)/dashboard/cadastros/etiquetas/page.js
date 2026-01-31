@@ -312,10 +312,9 @@ export default function ImprimirEtiquetasPage() {
                                 height: 100%;
                             }
                             .etiquetas-container {
-                                /* Ajuste fino para print - Usando position absolute para garantir movimento total */
-                                position: absolute;
-                                top: ${labelConfig.LABEL_PRINT_MARGIN_TOP}mm !important;
-                                left: ${labelConfig.LABEL_PRINT_MARGIN_LEFT}mm !important;
+                                /* Ajuste fino para print - Usando transform para garantir movimento relativo ao papel */
+                                transform-origin: top left;
+                                transform: translate(${labelConfig.LABEL_PRINT_MARGIN_LEFT}mm, ${labelConfig.LABEL_PRINT_MARGIN_TOP}mm) !important;
                                 width: 100%;
                                 margin: 0 !important;
                                 padding: 0 !important;
@@ -336,6 +335,10 @@ export default function ImprimirEtiquetasPage() {
                     </style>
                 </head>
                 <body>
+                    <!-- DEBUG INFO: Remover após confirmar funcionamento -->
+                    <div style="position: fixed; top: 0; right: 0; background: black; color: white; padding: 2mm; z-index: 9999; font-size: 10px; font-family: monospace;">
+                        DEBUG: T=${labelConfig.LABEL_PRINT_MARGIN_TOP}mm / L=${labelConfig.LABEL_PRINT_MARGIN_LEFT}mm
+                    </div>
                     <div class="etiquetas-container">
                         ${selectedItems.map((item, idx) => {
                 const codigo = item.codigo_etiqueta || 'TAG-' + String(item.id).padStart(4, '0');

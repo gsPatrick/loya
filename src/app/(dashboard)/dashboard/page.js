@@ -9,6 +9,16 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import {
+  PlusCircle,
+  Clock,
+  Store,
+  CheckCircle2,
+  RotateCcw,
+  TrendingUp,
+  TrendingDown,
+  ArrowUp,
+  AlertCircle,
+  Package,
   Users,
   Truck,
   AlertTriangle,

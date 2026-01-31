@@ -493,7 +493,7 @@ export default function ConfiguracoesPage() {
                                         opacity: 0.6,
                                         marginTop: '0.5mm'
                                     }}>
-                                        19.12345678B
+                                        19.12345678B | F: 0001
                                     </div>
                                 </div>
                             </div>

@@ -158,7 +158,9 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_BARCODE_OFFSET_Y: '0',
                 LABEL_PRICE_OFFSET_Y: '0',
                 LABEL_CODE_OFFSET_Y: '0',
-                LABEL_HORIZONTAL_GAP: '0', // Ajuste para 0 se as etiquetas forem coladas (35mm já inclui o passo)
+                LABEL_HORIZONTAL_GAP: '0',
+                LABEL_PRINT_MARGIN_TOP: '-10',
+                LABEL_PRINT_MARGIN_LEFT: '-5',
             };
             try {
                 const configRes = await api.get('/admin/configuracoes');
@@ -310,10 +312,10 @@ export default function ImprimirEtiquetasPage() {
                                 height: 100%;
                             }
                             .etiquetas-container {
-                                /* Ajuste fino para print - Corrigindo deslocamento físico da impressora */
+                                /* Ajuste fino para print - Consumindo deslocamento configurado */
                                 width: 100%;
-                                margin-top: -10mm !important;
-                                margin-left: -5mm !important;
+                                margin-top: ${labelConfig.LABEL_PRINT_MARGIN_TOP}mm !important;
+                                margin-left: ${labelConfig.LABEL_PRINT_MARGIN_LEFT}mm !important;
                                 padding: 0 !important;
                             }
                             .etiqueta {

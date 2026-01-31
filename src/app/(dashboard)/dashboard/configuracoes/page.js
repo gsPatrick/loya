@@ -40,6 +40,9 @@ export default function ConfiguracoesPage() {
         LABEL_BARCODE_OFFSET_Y: "0",
         LABEL_PRICE_OFFSET_Y: "0",
         LABEL_CODE_OFFSET_Y: "0",
+        // External printer offsets
+        LABEL_PRINT_MARGIN_TOP: "-10",
+        LABEL_PRINT_MARGIN_LEFT: "-5",
     });
 
     useEffect(() => {
@@ -57,6 +60,10 @@ export default function ConfiguracoesPage() {
             if (configMap.LABEL_HEIGHT === '53' || configMap.LABEL_HEIGHT === '60') {
                 configMap.LABEL_HEIGHT = '75';
             }
+            // Set defaults for print offsets if they don't exist
+            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_TOP')) configMap.LABEL_PRINT_MARGIN_TOP = '-10';
+            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_LEFT')) configMap.LABEL_PRINT_MARGIN_LEFT = '-5';
+
             setConfigs(prev => ({ ...prev, ...configMap }));
         } catch (error) {
             console.error("Erro ao carregar configurações:", error);
@@ -103,7 +110,8 @@ export default function ConfiguracoesPage() {
                 'LABEL_MARGIN_TOP', 'LABEL_MARGIN_BOTTOM', 'LABEL_MARGIN_LEFT', 'LABEL_MARGIN_RIGHT',
                 'LABEL_FONT_SIZE_LOGO', 'LABEL_FONT_SIZE_PRICE', 'LABEL_FONT_SIZE_TEXT',
                 'LABEL_BARCODE_HEIGHT', 'LABEL_BARCODE_WIDTH',
-                'LABEL_LOGO_OFFSET_Y', 'LABEL_BARCODE_OFFSET_Y', 'LABEL_PRICE_OFFSET_Y', 'LABEL_CODE_OFFSET_Y'
+                'LABEL_LOGO_OFFSET_Y', 'LABEL_BARCODE_OFFSET_Y', 'LABEL_PRICE_OFFSET_Y', 'LABEL_CODE_OFFSET_Y',
+                'LABEL_PRINT_MARGIN_TOP', 'LABEL_PRINT_MARGIN_LEFT'
             ];
 
             await Promise.all(configsToSave.map(key =>
@@ -390,6 +398,38 @@ export default function ConfiguracoesPage() {
                                     <div className="space-y-1">
                                         <Label className="text-xs text-muted-foreground">Código (Y)</Label>
                                         <Input type="number" name="LABEL_CODE_OFFSET_Y" value={configs.LABEL_CODE_OFFSET_Y || 0} onChange={handleChange} step="0.5" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* External Print Offsets */}
+                            <div className="space-y-4 pt-2">
+                                <Label className="text-base font-bold text-orange-600">Deslocamento da Impressora (Externo)</Label>
+                                <p className="text-xs text-muted-foreground italic">Use estes valores para centralizar a impressão no papel. Valores negativos puxam para cima/esquerda.</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="LABEL_PRINT_MARGIN_TOP">Deslocamento Topo (mm)</Label>
+                                        <Input
+                                            type="number"
+                                            id="LABEL_PRINT_MARGIN_TOP"
+                                            name="LABEL_PRINT_MARGIN_TOP"
+                                            value={configs.LABEL_PRINT_MARGIN_TOP}
+                                            onChange={handleChange}
+                                            step="1"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="LABEL_PRINT_MARGIN_LEFT">Deslocamento Esquerda (mm)</Label>
+                                        <Input
+                                            type="number"
+                                            id="LABEL_PRINT_MARGIN_LEFT"
+                                            name="LABEL_PRINT_MARGIN_LEFT"
+                                            value={configs.LABEL_PRINT_MARGIN_LEFT}
+                                            onChange={handleChange}
+                                            step="1"
+                                        />
                                     </div>
                                 </div>
                             </div>

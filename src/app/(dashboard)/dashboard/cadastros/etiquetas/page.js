@@ -144,7 +144,7 @@ export default function ImprimirEtiquetasPage() {
                 LABEL_BG_COLOR: '#1a1a1a',
                 LABEL_TEXT_COLOR: '#ffffff',
                 LABEL_WIDTH: '34',
-                LABEL_HEIGHT: '75',
+                LABEL_HEIGHT: '60',
                 LABEL_MARGIN_TOP: '0',
                 LABEL_MARGIN_BOTTOM: '0',
                 LABEL_MARGIN_LEFT: '0',

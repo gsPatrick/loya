@@ -24,7 +24,7 @@ export default function ConfiguracoesPage() {
         LABEL_BG_COLOR: "#1a1a1a",
         LABEL_TEXT_COLOR: "#ffffff",
         LABEL_WIDTH: "31",
-        LABEL_HEIGHT: "75",
+        LABEL_HEIGHT: "60",
         // Advanced
         LABEL_MARGIN_TOP: "1.5",
         LABEL_MARGIN_BOTTOM: "1.5",
@@ -56,9 +56,9 @@ export default function ConfiguracoesPage() {
             response.data.forEach(conf => {
                 configMap[conf.chave] = conf.valor;
             });
-            // Forced migration to 75mm if it's the old value
-            if (configMap.LABEL_HEIGHT === '53' || configMap.LABEL_HEIGHT === '60') {
-                configMap.LABEL_HEIGHT = '75';
+            // Forced migration to 60mm (revert)
+            if (configMap.LABEL_HEIGHT === '53' || configMap.LABEL_HEIGHT === '75') {
+                configMap.LABEL_HEIGHT = '60';
             }
             // Set defaults for print offsets if they don't exist
             if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_TOP')) configMap.LABEL_PRINT_MARGIN_TOP = '-20';

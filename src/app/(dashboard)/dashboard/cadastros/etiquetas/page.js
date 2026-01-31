@@ -305,7 +305,9 @@ export default function ImprimirEtiquetasPage() {
                                 size: auto;
                             }
                             html, body { 
-                                background: white; 
+                                background: ${labelConfig.LABEL_BG_COLOR} !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
                                 padding: 0 !important;
                                 margin: 0 !important;
                                 width: 100%;

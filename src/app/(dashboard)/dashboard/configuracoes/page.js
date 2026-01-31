@@ -41,8 +41,8 @@ export default function ConfiguracoesPage() {
         LABEL_PRICE_OFFSET_Y: "0",
         LABEL_CODE_OFFSET_Y: "0",
         // External printer offsets
-        LABEL_PRINT_MARGIN_TOP: "-10",
-        LABEL_PRINT_MARGIN_LEFT: "-5",
+        LABEL_PRINT_MARGIN_TOP: "-20",
+        LABEL_PRINT_MARGIN_LEFT: "-10",
     });
 
     useEffect(() => {
@@ -61,8 +61,12 @@ export default function ConfiguracoesPage() {
                 configMap.LABEL_HEIGHT = '75';
             }
             // Set defaults for print offsets if they don't exist
-            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_TOP')) configMap.LABEL_PRINT_MARGIN_TOP = '-10';
-            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_LEFT')) configMap.LABEL_PRINT_MARGIN_LEFT = '-5';
+            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_TOP')) configMap.LABEL_PRINT_MARGIN_TOP = '-20';
+            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_LEFT')) configMap.LABEL_PRINT_MARGIN_LEFT = '-10';
+
+            // Forced migration for insufficient offsets
+            if (parseInt(configMap.LABEL_PRINT_MARGIN_TOP) > -15) configMap.LABEL_PRINT_MARGIN_TOP = '-20';
+            if (parseInt(configMap.LABEL_PRINT_MARGIN_LEFT) > -8) configMap.LABEL_PRINT_MARGIN_LEFT = '-10';
 
             setConfigs(prev => ({ ...prev, ...configMap }));
         } catch (error) {

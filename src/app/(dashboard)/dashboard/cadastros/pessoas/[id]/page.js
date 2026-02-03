@@ -148,12 +148,17 @@ export default function DetalhesPessoaPage() {
                     <div className="grid gap-6 md:grid-cols-2">
                         {/* Personal Info */}
                         <Card>
-                            <CardHeader className="flex flex-row items-center gap-3">
-                                <Users className="h-5 w-5 text-primary" />
-                                <div>
-                                    <CardTitle>Informações Gerais</CardTitle>
-                                    <CardDescription>Dados básicos e de identificação</CardDescription>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div className="flex flex-row items-center gap-3">
+                                    <Users className="h-5 w-5 text-primary" />
+                                    <div>
+                                        <CardTitle>Informações Gerais</CardTitle>
+                                        <CardDescription>Dados básicos e de identificação</CardDescription>
+                                    </div>
                                 </div>
+                                <Button variant="ghost" size="sm" onClick={openEdit} className="h-8 gap-1 text-primary">
+                                    <Edit className="h-3.5 w-3.5" /> Editar
+                                </Button>
                             </CardHeader>
                             <CardContent className="grid gap-4">
                                 <div className="grid grid-cols-2 gap-4">
@@ -184,12 +189,17 @@ export default function DetalhesPessoaPage() {
                         {/* Financial/Supplier Info */}
                         {pessoa.is_fornecedor && (
                             <Card className="border-orange-100">
-                                <CardHeader className="flex flex-row items-center gap-3">
-                                    <CreditCard className="h-5 w-5 text-orange-500" />
-                                    <div>
-                                        <CardTitle>Dados de Fornecedor</CardTitle>
-                                        <CardDescription>Comissões e pagamentos</CardDescription>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div className="flex flex-row items-center gap-3">
+                                        <CreditCard className="h-5 w-5 text-orange-500" />
+                                        <div>
+                                            <CardTitle>Dados de Fornecedor</CardTitle>
+                                            <CardDescription>Comissões e pagamentos</CardDescription>
+                                        </div>
                                     </div>
+                                    <Button variant="ghost" size="sm" onClick={openEdit} className="h-8 gap-1 text-orange-600 hover:text-orange-700 hover:bg-orange-50">
+                                        <Edit className="h-3.5 w-3.5" /> Editar
+                                    </Button>
                                 </CardHeader>
                                 <CardContent className="grid gap-4">
                                     <div className="grid grid-cols-2 gap-4">
@@ -214,12 +224,17 @@ export default function DetalhesPessoaPage() {
 
                         {/* Address */}
                         <Card className="md:col-span-2">
-                            <CardHeader className="flex flex-row items-center gap-3">
-                                <MapPin className="h-5 w-5 text-primary" />
-                                <div>
-                                    <CardTitle>Endereço</CardTitle>
-                                    <CardDescription>Localização para coletas ou entregas</CardDescription>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div className="flex flex-row items-center gap-3">
+                                    <MapPin className="h-5 w-5 text-primary" />
+                                    <div>
+                                        <CardTitle>Endereço</CardTitle>
+                                        <CardDescription>Localização para coletas ou entregas</CardDescription>
+                                    </div>
                                 </div>
+                                <Button variant="ghost" size="sm" onClick={openEdit} className="h-8 gap-1 text-primary">
+                                    <Edit className="h-3.5 w-3.5" /> Editar
+                                </Button>
                             </CardHeader>
                             <CardContent>
                                 {pessoa.endereco ? (

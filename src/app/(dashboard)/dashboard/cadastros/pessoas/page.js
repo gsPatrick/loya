@@ -22,6 +22,11 @@ function PessoasContent() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterType, setFilterType] = useState(initialType);
 
+    useEffect(() => {
+        const type = searchParams.get("type");
+        if (type) setFilterType(type);
+    }, [searchParams]);
+
     // Formulario
     const [form, setForm] = useState({ nome: "", cpf_cnpj: "", email: "", telefone_whatsapp: "", tipo: "Cliente" });
 

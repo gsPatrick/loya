@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -137,10 +137,19 @@ function SidebarContent({ className, setIsOpen }) {
     // Logic to check if a link is active considering query parameters
     const isLinkActive = (href) => {
         if (href.includes('?')) {
-            return currentFullRoute === href;
+            const [basePath, queryStr] = href.split('?');
+            if (pathname !== basePath) return false;
+
+            const itemParams = new URLSearchParams(queryStr);
+            // Check if all params in the link match current searchParams
+            for (const [key, value] of itemParams.entries()) {
+                if (searchParams.get(key) !== value) return false;
+            }
+            return true;
         }
-        // General link (without ?) only active if pathname matches AND there are no query params active
-        return pathname === href && !searchParams.toString();
+        // General link (without ?) only active if pathname matches 
+        // AND there are no meaningful query params active (like 'type')
+        return pathname === href && !searchParams.get('type');
     };
 
     // Fallback to defaults if context is missing (shouldn't happen)

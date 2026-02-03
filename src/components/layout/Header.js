@@ -71,7 +71,7 @@ export function Header() {
                         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                             <Avatar className="h-9 w-9 border">
                                 {/* Fallback caso não tenha imagem */}
-                                <AvatarImage src="/avatars/admin.png" alt="@admin" />
+                                <AvatarImage src="/usuario.png" alt="@admin" />
                                 <AvatarFallback className="bg-primary/10 text-primary">AD</AvatarFallback>
                             </Avatar>
                         </Button>

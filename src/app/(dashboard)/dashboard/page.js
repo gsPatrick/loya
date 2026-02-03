@@ -1,5 +1,5 @@
 // src/app/dashboard/page.js
-"use client";
+// Build trigger for main branch redeploy
 
 import {
   Card,

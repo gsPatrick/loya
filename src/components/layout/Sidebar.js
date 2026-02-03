@@ -69,6 +69,8 @@ const navItems = [
         title: "Cadastros Gerais",
         icon: FolderPlus,
         children: [
+            { title: "Clientes", href: "/dashboard/cadastros/pessoas?type=Clientes", icon: Users },
+            { title: "Fornecedores", href: "/dashboard/cadastros/pessoas?type=Fornecedores", icon: Users },
             { title: "Pessoas (CRM)", href: "/dashboard/cadastros/pessoas", icon: Users },
             { title: "Peças (Estoque)", href: "/dashboard/cadastros/pecas-cadastro", icon: Shirt },
             { title: "Imprimir Etiqueta", href: "/dashboard/cadastros/etiquetas", icon: Printer },

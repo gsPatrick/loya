@@ -11,12 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "next/navigation";
 import api from "@/services/api";
 
 export default function CadastroPessoasPage() {
     const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const initialType = searchParams.get("type") || "Todos";
+
     const [searchTerm, setSearchTerm] = useState("");
-    const [filterType, setFilterType] = useState("Todos");
+    const [filterType, setFilterType] = useState(initialType);
 
     // Formulario
     const [form, setForm] = useState({ nome: "", cpf_cnpj: "", email: "", telefone_whatsapp: "", tipo: "Cliente" });
@@ -88,8 +92,8 @@ export default function CadastroPessoasPage() {
             (p.cpf_cnpj && p.cpf_cnpj.includes(searchTerm));
 
         let matchesType = true;
-        if (filterType === "Fornecedores") matchesType = p.is_fornecedor && !p.is_cliente;
-        if (filterType === "Clientes") matchesType = p.is_cliente && !p.is_fornecedor;
+        if (filterType === "Fornecedores") matchesType = p.is_fornecedor;
+        if (filterType === "Clientes") matchesType = p.is_cliente;
         if (filterType === "Ambos") matchesType = p.is_fornecedor && p.is_cliente;
 
         return matchesSearch && matchesType;

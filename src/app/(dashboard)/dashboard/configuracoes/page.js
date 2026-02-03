@@ -117,9 +117,12 @@ export default function ConfiguracoesPage() {
                 'LABEL_PRINT_MARGIN_TOP', 'LABEL_PRINT_MARGIN_LEFT'
             ];
 
-            await Promise.all(configsToSave.map(key =>
-                api.put(`/admin/configuracoes/${key}`, { valor: configs[key] })
-            ));
+            const entries = {};
+            configsToSave.forEach(key => {
+                entries[key] = configs[key];
+            });
+
+            await api.post('/admin/configuracoes/bulk', { configs: entries });
 
             toast({ title: "Sucesso", description: "Configurações salvas com sucesso!" });
             window.dispatchEvent(new Event('systemConfigUpdated'));

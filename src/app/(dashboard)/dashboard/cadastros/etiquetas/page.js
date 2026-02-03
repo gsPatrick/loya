@@ -266,6 +266,17 @@ export default function ImprimirEtiquetasPage() {
                             display: block;
                             max-width: 100%;
                         }
+                        .descricao {
+                            font-size: ${Math.max(6, parseFloat(labelConfig.LABEL_FONT_SIZE_TEXT))}pt;
+                            color: white;
+                            text-align: center;
+                            margin-top: 1mm;
+                            font-weight: 500;
+                            width: 100%;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
                         .codigo-text {
                             font-size: ${labelConfig.LABEL_FONT_SIZE_TEXT}pt;
                             color: white;
@@ -331,7 +342,7 @@ export default function ImprimirEtiquetasPage() {
                             .etiqueta::before {
                                 background: white !important;
                             }
-                            .logo, .preco, .tamanho, .codigo-text {
+                            .logo, .preco, .tamanho, .codigo-text, .descricao {
                                 color: ${labelConfig.LABEL_TEXT_COLOR} !important;
                             }
                         }
@@ -340,23 +351,24 @@ export default function ImprimirEtiquetasPage() {
                 <body>
                     <div class="etiquetas-container">
                         ${selectedItems.map((item, idx) => {
-                const codigo = item.codigo_etiqueta || 'TAG-' + String(item.id).padStart(4, '0');
-                const codigoCompleto = String(item.id).padStart(8, '0') + ' 01.' + String(Math.floor(Math.random() * 90000000) + 10000000);
-                const codigoInferior = '19.' + String(Math.floor(Math.random() * 90000000) + 10000000) + 'B';
+                const barcodeValue = String(item.id);
+                const displayCode = barcodeValue.padStart(4, '0');
+                const descricao = item.descricao_curta || item.nome || '';
                 return `
                                 <div class="etiqueta">
                                     <div class="logo-area">
                                         <div class="logo">${labelConfig.LABEL_STORE_NAME}</div>
                                     </div>
+                                    <div class="descricao">${descricao}</div>
                                     <div class="barcode-area">
                                         <svg id="barcode-${idx}"></svg>
                                     </div>
-                                    <div class="codigo-text">${codigoCompleto}</div>
+                                    <div class="codigo-text">ID: ${displayCode}</div>
                                     <div class="preco-area">
                                         <div class="preco">R$ ${parseFloat(item.preco_venda || 0).toFixed(2).replace('.', ',')}</div>
                                         <div class="tamanho">${item.tamanho?.nome || 'U'}</div>
                                     </div>
-                                    <div class="codigo-inferior">F: ${item.fornecedorId || '-'} | ${codigoInferior}</div>
+                                    <div class="codigo-inferior">F: ${item.fornecedorId || '-'} | SKU: ${item.codigo_etiqueta || item.id}</div>
                                 </div>
                             `;
             }).join('')}
@@ -364,9 +376,9 @@ export default function ImprimirEtiquetasPage() {
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             ${selectedItems.map((item, idx) => {
-                const codigo = item.codigo_etiqueta || 'TAG-' + String(item.id).padStart(4, '0');
+                const barcodeValue = String(item.id);
                 return `
-                                    JsBarcode("#barcode-${idx}", "${codigo}", {
+                                    JsBarcode("#barcode-${idx}", "${barcodeValue}", {
                                         format: "CODE128",
                                         width: ${labelConfig.LABEL_BARCODE_WIDTH},
                                         height: ${labelConfig.LABEL_BARCODE_HEIGHT},

@@ -28,7 +28,7 @@ export default async function RootLayout({ children }) {
   try {
     // Fetch public config from backend
     // Note: We use fetch here because axios interceptors in api.js might rely on window/localStorage
-    const res = await fetch('https://geral-tiptagapi.r954jc.easypanel.host/api/v1/public/system-config', {
+    const res = await fetch('https://jackbear-backend-apilojasimples-revestese.r954jc.easypanel.host/api/v1/public/system-config', {
       next: { revalidate: 60 } // Cache for 60 seconds
     });
 

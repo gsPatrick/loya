@@ -221,14 +221,13 @@ export default function PDVPage() {
                 return;
             }
 
-            // Tenta encontrar match exato de código de etiqueta
-            // Isso evita adicionar produto errado se a busca for parcial (ex: buscar "123" e retornar "1234")
-            const exactMatch = foundProducts.find(p =>
-                p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase() === barcodeInput.trim().toLowerCase()
-            );
+            const isNumeric = !isNaN(barcodeInput.trim()) && barcodeInput.trim() !== "";
+            const exactIdMatch = isNumeric ? foundProducts.find(p => String(p.id) === barcodeInput.trim()) : null;
 
-            // Usa o match exato ou o primeiro da lista (fallback)
-            const product = exactMatch || foundProducts[0];
+            // Priority: Exact ID Match > Exact Label Code Match > First product
+            const product = exactIdMatch || foundProducts.find(p =>
+                p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase() === barcodeInput.trim().toLowerCase()
+            ) || foundProducts[0];
 
             // Check if already in cart
             if (items.find(i => i.pecaId === product.id)) {
@@ -550,7 +549,7 @@ export default function PDVPage() {
                                                 >
                                                     <div className="flex flex-col">
                                                         <span className="font-medium text-base">{p.descricao_curta}</span>
-                                                        <span className="text-xs text-muted-foreground">SKU: {p.codigo_etiqueta}</span>
+                                                        <span className="text-xs text-muted-foreground">ID: {String(p.id).padStart(4, '0')} | SKU: {p.codigo_etiqueta}</span>
                                                     </div>
                                                     <div className="flex items-center gap-4">
                                                         <span className="font-bold text-primary">R$ {parseFloat(p.preco_venda).toFixed(2)}</span>

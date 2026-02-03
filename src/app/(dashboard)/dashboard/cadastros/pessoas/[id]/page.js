@@ -130,7 +130,7 @@ export default function DetalhesPessoaPage() {
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-xs font-bold text-muted-foreground uppercase">Dia Fechamento</p>
-                                            <p className="font-medium">Todo dia {pessoa.dia_fechamento_pagamento || 15}</p>
+                                            <p className="font-medium">Último dia do mês</p>
                                         </div>
                                     </div>
                                     <div className="pt-4 border-t">

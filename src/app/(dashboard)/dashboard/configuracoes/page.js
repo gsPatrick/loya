@@ -43,6 +43,7 @@ export default function ConfiguracoesPage() {
         // External printer offsets
         LABEL_PRINT_MARGIN_TOP: "0",
         LABEL_PRINT_MARGIN_LEFT: "0",
+        LABEL_HORIZONTAL_GAP: "0",
     });
 
     useEffect(() => {
@@ -62,6 +63,7 @@ export default function ConfiguracoesPage() {
             // Set defaults for print offsets if they don't exist
             if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_TOP')) configMap.LABEL_PRINT_MARGIN_TOP = '0';
             if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_LEFT')) configMap.LABEL_PRINT_MARGIN_LEFT = '0';
+            if (!configMap.hasOwnProperty('LABEL_HORIZONTAL_GAP')) configMap.LABEL_HORIZONTAL_GAP = '0';
 
             // Forced migration to ZERO for clean test
             if (configMap.LABEL_PRINT_MARGIN_TOP !== '0') configMap.LABEL_PRINT_MARGIN_TOP = '0';
@@ -114,7 +116,7 @@ export default function ConfiguracoesPage() {
                 'LABEL_FONT_SIZE_LOGO', 'LABEL_FONT_SIZE_PRICE', 'LABEL_FONT_SIZE_TEXT',
                 'LABEL_BARCODE_HEIGHT', 'LABEL_BARCODE_WIDTH',
                 'LABEL_LOGO_OFFSET_Y', 'LABEL_BARCODE_OFFSET_Y', 'LABEL_PRICE_OFFSET_Y', 'LABEL_CODE_OFFSET_Y',
-                'LABEL_PRINT_MARGIN_TOP', 'LABEL_PRINT_MARGIN_LEFT'
+                'LABEL_PRINT_MARGIN_TOP', 'LABEL_PRINT_MARGIN_LEFT', 'LABEL_HORIZONTAL_GAP'
             ];
 
             const entries = {};
@@ -435,6 +437,17 @@ export default function ConfiguracoesPage() {
                                             value={configs.LABEL_PRINT_MARGIN_LEFT}
                                             onChange={handleChange}
                                             step="1"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="LABEL_HORIZONTAL_GAP">Espaçamento Entre Colunas (mm)</Label>
+                                        <Input
+                                            type="number"
+                                            id="LABEL_HORIZONTAL_GAP"
+                                            name="LABEL_HORIZONTAL_GAP"
+                                            value={configs.LABEL_HORIZONTAL_GAP}
+                                            onChange={handleChange}
+                                            step="0.5"
                                         />
                                     </div>
                                 </div>

@@ -224,23 +224,37 @@ export default function PDVPage() {
             const isNumeric = !isNaN(barcodeInput.trim()) && barcodeInput.trim() !== "";
             const exactIdMatch = isNumeric ? foundProducts.find(p => String(p.id) === barcodeInput.trim()) : null;
 
-            // Priority: Exact ID Match > Exact Label Code Match > First product
+            // Priority: Exact ID Match > Exact Label Code Match
             const product = exactIdMatch || foundProducts.find(p =>
                 p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase() === barcodeInput.trim().toLowerCase()
-            ) || foundProducts[0];
+            );
 
-            // Check if already in cart
+            if (!product) {
+                if (foundProducts.length === 1) {
+                    // Only one match, even if not exact code, safe to add
+                    addItemToCart(foundProducts[0]);
+                } else {
+                    // Multiple matches but no exact code/ID, force user to pick from list
+                    toast({
+                        title: "Múltiplos produtos encontrados",
+                        description: "Use a lista de sugestões para selecionar o item correto.",
+                        variant: "warning"
+                    });
+                }
+                setBarcodeInput("");
+                return;
+            }
+
+            // Exact match found
             if (items.find(i => i.pecaId === product.id)) {
                 toast({
                     title: "Item já adicionado",
                     description: "Este item já está no carrinho.",
                     variant: "warning"
                 });
-                setBarcodeInput("");
-                return;
+            } else {
+                addItemToCart(product);
             }
-
-            addItemToCart(product);
             setBarcodeInput("");
 
         } catch (err) {

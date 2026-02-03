@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Wallet, History, Calendar, MapPin, CreditCard, Package, Info } from "lucide-react";
+import { ArrowLeft, Wallet, History, Calendar, MapPin, CreditCard, Package, Info, Users } from "lucide-react";
 
 export default function DetalhesPessoaPage() {
     const params = useParams();

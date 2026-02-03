@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
     LayoutDashboard, ShoppingCart, Shirt, Users, Banknote, Megaphone,
@@ -119,9 +119,29 @@ const navItems = [
 
 import { useSystemTheme } from "@/components/providers/SystemThemeProvider";
 
-export function Sidebar({ className, setIsOpen }) {
+export function Sidebar(props) {
+    return (
+        <Suspense fallback={<div className="h-screen w-64 bg-background border-r" />}>
+            <SidebarContent {...props} />
+        </Suspense>
+    );
+}
+
+function SidebarContent({ className, setIsOpen }) {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { themeConfig } = useSystemTheme();
+
+    const currentFullRoute = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : "");
+
+    // Logic to check if a link is active considering query parameters
+    const isLinkActive = (href) => {
+        if (href.includes('?')) {
+            return currentFullRoute === href;
+        }
+        // General link (without ?) only active if pathname matches AND there are no query params active
+        return pathname === href && !searchParams.toString();
+    };
 
     // Fallback to defaults if context is missing (shouldn't happen)
     const config = {
@@ -131,7 +151,7 @@ export function Sidebar({ className, setIsOpen }) {
 
     const renderNavItem = (item) => {
         if (item.children) {
-            const isActiveParent = item.children.some(child => pathname === child.href);
+            const isActiveParent = item.children.some(child => isLinkActive(child.href));
             return (
                 <Collapsible key={item.title} defaultOpen={isActiveParent} className="w-full">
                     <CollapsibleTrigger className={cn(
@@ -152,7 +172,7 @@ export function Sidebar({ className, setIsOpen }) {
                                 onClick={() => setIsOpen?.(false)}
                                 className={cn(
                                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-all",
-                                    pathname === child.href
+                                    isLinkActive(child.href)
                                         ? "bg-primary/10 text-primary font-medium"
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                 )}
@@ -173,12 +193,12 @@ export function Sidebar({ className, setIsOpen }) {
                         onClick={() => setIsOpen?.(false)}
                         className={cn(
                             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group",
-                            pathname === item.href
+                            isLinkActive(item.href)
                                 ? "bg-primary/10 text-primary"
                                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         )}
                     >
-                        <item.icon className={cn("h-4 w-4 shrink-0 group-hover:text-primary", pathname === item.href && "text-primary")} />
+                        <item.icon className={cn("h-4 w-4 shrink-0 group-hover:text-primary", isLinkActive(item.href) && "text-primary")} />
                         {item.title}
                     </Link>
                 </Restricted>
@@ -192,12 +212,12 @@ export function Sidebar({ className, setIsOpen }) {
                 onClick={() => setIsOpen?.(false)}
                 className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group",
-                    pathname === item.href
+                    isLinkActive(item.href)
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
             >
-                <item.icon className={cn("h-4 w-4 shrink-0 group-hover:text-primary", pathname === item.href && "text-primary")} />
+                <item.icon className={cn("h-4 w-4 shrink-0 group-hover:text-primary", isLinkActive(item.href) && "text-primary")} />
                 {item.title}
             </Link>
         );

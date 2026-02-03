@@ -222,19 +222,29 @@ export default function PDVPage() {
             }
 
             const isNumeric = !isNaN(barcodeInput.trim()) && barcodeInput.trim() !== "";
-            const exactIdMatch = isNumeric ? foundProducts.find(p => String(p.id) === barcodeInput.trim()) : null;
+            const searchVal = barcodeInput.trim();
 
-            // Priority: Exact ID Match > Exact Label Code Match
-            const product = exactIdMatch || foundProducts.find(p =>
-                p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase() === barcodeInput.trim().toLowerCase()
-            );
+            // 1. STRATEGIC PRIORITY: Exact ID Match (Absolute priority for barcodes based on ID)
+            let product = null;
+            if (isNumeric) {
+                const numericId = parseInt(searchVal);
+                product = foundProducts.find(p => p.id === numericId);
+            }
 
+            // 2. SECONDARY PRIORITY: Exact Label Code (SKU) Match
+            if (!product) {
+                product = foundProducts.find(p =>
+                    p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase() === searchVal.toLowerCase()
+                );
+            }
+
+            // 3. FALLBACK: Single match logic
             if (!product) {
                 if (foundProducts.length === 1) {
-                    // Only one match, even if not exact code, safe to add
+                    // Only one match (partial description or SKU), safe to add
                     addItemToCart(foundProducts[0]);
-                } else {
-                    // Multiple matches but no exact code/ID, force user to pick from list
+                } else if (foundProducts.length > 1) {
+                    // Multiple matches but no exact ID/SKU, force user to pick from list
                     toast({
                         title: "Múltiplos produtos encontrados",
                         description: "Use a lista de sugestões para selecionar o item correto.",
@@ -245,7 +255,7 @@ export default function PDVPage() {
                 return;
             }
 
-            // Exact match found
+            // Exact match found (either ID or SKU)
             if (items.find(i => i.pecaId === product.id)) {
                 toast({
                     title: "Item já adicionado",

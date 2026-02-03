@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Search, Plus, AlertTriangle, Users, Save, Trash2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "next/navigation";
 import api from "@/services/api";
 
-export default function CadastroPessoasPage() {
+function PessoasContent() {
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const initialType = searchParams.get("type") || "Todos";
@@ -232,5 +232,13 @@ export default function CadastroPessoasPage() {
                 </DialogContent>
             </Dialog>
         </div>
+    );
+}
+
+export default function CadastroPessoasPage() {
+    return (
+        <Suspense fallback={<div className="p-10 flex justify-center text-muted-foreground">Carregando formulário...</div>}>
+            <PessoasContent />
+        </Suspense>
     );
 }

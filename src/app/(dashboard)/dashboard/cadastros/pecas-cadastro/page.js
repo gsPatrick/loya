@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useToast } from "@/hooks/use-toast";
 import api, { API_URL } from "@/services/api";
+import { FileSpreadsheet, Printer } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 // Helper component for Measurements
 const MeasurementsInput = ({ value = [], onChange }) => {
@@ -165,6 +167,7 @@ function CadastroPecasContent() {
     const [currentItem, setCurrentItem] = useState(null);
     const [editForm, setEditForm] = useState({});
     const [syncingId, setSyncingId] = useState(null);
+    const [selectedItems, setSelectedItems] = useState([]);
 
     // Debounce search input
     useEffect(() => {
@@ -524,6 +527,88 @@ function CadastroPecasContent() {
         }
     };
 
+    // Selection/Export Logic
+    const toggleItemSelection = (id) => {
+        setSelectedItems(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleAllItems = () => {
+        if (selectedItems.length === items.length && items.length > 0) {
+            setSelectedItems([]);
+        } else {
+            setSelectedItems(items.map(i => i.id));
+        }
+    };
+
+    const exportToExcel = () => {
+        const dataToExport = items.filter(i => selectedItems.includes(i.id));
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(i => ({
+            ID: i.id,
+            Descricao: i.descricao_curta,
+            Marca: i.marca?.nome,
+            Tamanho: i.tamanho?.nome,
+            Cor: i.cor?.nome,
+            Preco_Venda: i.preco_venda,
+            Comissao: i.comissao_padrao,
+            Fornecedor: i.fornecedor?.nome,
+            Status: i.status
+        })));
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Produtos");
+        XLSX.writeFile(workbook, "relatorio_pecas.xlsx");
+    };
+
+    const handlePrint = () => {
+        const dataToPrint = items.filter(i => selectedItems.includes(i.id));
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Relatório de Produtos</title>
+                    <style>
+                        table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; }
+                        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+                        th { background: #f4f4f4; }
+                        h1 { font-family: sans-serif; text-align: center; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Relatório de Produtos</h1>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Peça</th>
+                                <th>Marca</th>
+                                <th>Tam</th>
+                                <th>Venda</th>
+                                <th>Fornecedor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${dataToPrint.map(i => `
+                                <tr>
+                                    <td>#${i.id}</td>
+                                    <td>${i.descricao_curta}</td>
+                                    <td>${i.marca?.nome || '-'}</td>
+                                    <td>${i.tamanho?.nome || '-'}</td>
+                                    <td>R$ ${parseFloat(i.preco_venda).toFixed(2)}</td>
+                                    <td>${i.fornecedor?.nome || '-'}</td>
+                                    <td>${i.status}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    };
+
     const getName = (list, id) => list.find(i => i.id === id)?.nome || "-";
 
     return (
@@ -843,65 +928,52 @@ function CadastroPecasContent() {
                     </div>
                 </DialogContent>
             </Dialog>
-
+            {/* Listagem */}
             <Card className="border-t-4 border-t-primary/50 shadow-sm overflow-hidden">
                 <div className="p-4 bg-white border-b space-y-4">
-                    <div className="flex flex-col md:flex-row gap-4 items-end">
-                        <div className="flex-1 space-y-1 w-full relative">
-                            <Label className="text-xs text-gray-500">Busca Rápida</Label>
-                            <Input
-                                placeholder="Buscar por nome ou código..."
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                className="pl-9"
-                            />
-                            <Search className="absolute left-3 bottom-2.5 h-4 w-4 text-gray-400" />
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-lg font-bold text-primary flex items-center gap-2">
+                                <Package className="h-5 w-5" /> Estoque de Peças
+                            </h2>
+                            <Badge variant="secondary" className="bg-primary/10 text-primary">
+                                {totalItems} itens no total
+                            </Badge>
                         </div>
-                        <div className="hidden md:flex items-center gap-2 pb-1">
-                            {/* Stats or Actions */}
+                        <div className="flex gap-2">
+                            {selectedItems.length > 0 && (
+                                <>
+                                    <Button variant="outline" size="sm" onClick={exportToExcel} className="gap-2 text-green-600 border-green-200 hover:bg-green-50">
+                                        <FileSpreadsheet className="h-4 w-4" /> Excel
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2">
+                                        <Printer className="h-4 w-4" /> Imprimir
+                                    </Button>
+                                </>
+                            )}
+                            <div className="relative w-[250px]">
+                                <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Busca rápida..." className="h-9 pl-9" />
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
                         <div className="space-y-1">
                             <Label className="text-xs text-gray-500">Fornecedor</Label>
-                            <SearchableSelect
-                                options={fornecedores}
-                                value={filterFornecedor}
-                                onValueChange={setFilterFornecedor}
-                                placeholder="Todos"
-                                searchPlaceholder="Buscar..."
-                            />
+                            <SearchableSelect options={fornecedores} value={filterFornecedor} onValueChange={setFilterFornecedor} placeholder="Todos" searchPlaceholder="Buscar..." />
                         </div>
                         <div className="space-y-1">
                             <Label className="text-xs text-gray-500">Tamanho</Label>
-                            <SearchableSelect
-                                options={tamanhos}
-                                value={filterTamanho}
-                                onValueChange={setFilterTamanho}
-                                placeholder="Todos"
-                                searchPlaceholder="Buscar..."
-                            />
+                            <SearchableSelect options={tamanhos} value={filterTamanho} onValueChange={setFilterTamanho} placeholder="Todos" searchPlaceholder="Buscar..." />
                         </div>
                         <div className="space-y-1">
                             <Label className="text-xs text-gray-500">Marca</Label>
-                            <SearchableSelect
-                                options={marcas}
-                                value={filterMarca}
-                                onValueChange={setFilterMarca}
-                                placeholder="Todas"
-                                searchPlaceholder="Buscar..."
-                            />
+                            <SearchableSelect options={marcas} value={filterMarca} onValueChange={setFilterMarca} placeholder="Todas" searchPlaceholder="Buscar..." />
                         </div>
                         <div className="space-y-1">
                             <Label className="text-xs text-gray-500">Categoria</Label>
-                            <SearchableSelect
-                                options={categorias}
-                                value={filterCategoria}
-                                onValueChange={setFilterCategoria}
-                                placeholder="Todas"
-                                searchPlaceholder="Buscar..."
-                            />
+                            <SearchableSelect options={categorias} value={filterCategoria} onValueChange={setFilterCategoria} placeholder="Todas" searchPlaceholder="Buscar..." />
                         </div>
                         <div className="space-y-1">
                             <Label className="text-xs text-gray-500">Aquisição</Label>
@@ -911,7 +983,6 @@ function CadastroPecasContent() {
                                     <SelectItem value="TODOS">Todas</SelectItem>
                                     <SelectItem value="COMPRA">Compra</SelectItem>
                                     <SelectItem value="CONSIGNACAO">Consignação</SelectItem>
-                                    <SelectItem value="DOACAO">Doação</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -923,7 +994,6 @@ function CadastroPecasContent() {
                                     <SelectItem value="TODOS">Todos</SelectItem>
                                     <SelectItem value="DISPONIVEL">Disponível</SelectItem>
                                     <SelectItem value="VENDIDA">Vendida</SelectItem>
-                                    <SelectItem value="RESERVADA_SACOLINHA">Reservada</SelectItem>
                                     <SelectItem value="DEVOLVIDA">Devolvida</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -934,7 +1004,7 @@ function CadastroPecasContent() {
                         <div className="text-sm text-gray-500">
                             {isLoading ? "Filtrando..." : `${totalItems} itens encontrados`}
                         </div>
-                        {(filterFornecedor || filterTamanho || filterMarca || filterCategoria || filterTipoAquisicao !== 'TODOS') && (
+                        {(filterFornecedor || filterTamanho || filterMarca || filterCategoria || filterTipoAquisicao !== 'TODOS' || filterStatus !== 'TODOS') && (
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -954,90 +1024,78 @@ function CadastroPecasContent() {
                         )}
                     </div>
                 </div>
-                <Table>
-                    <TableHeader className="bg-white">
-                        <TableRow>
-                            <TableHead>ID</TableHead>
-                            <TableHead>Foto</TableHead>
-                            <TableHead>Descrição</TableHead>
-                            <TableHead>Tam</TableHead>
-                            <TableHead>Cor</TableHead>
-                            <TableHead>Marca</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Preço</TableHead>
-                            <TableHead className="text-center">Ação</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {items.map((item) => (
-                            <TableRow key={item.id} className="border-b">
-                                <TableCell>{String(item.id).padStart(6, '0')}</TableCell>
-                                <TableCell>
-                                    <div className="w-12 h-12 rounded overflow-hidden border bg-gray-100 flex items-center justify-center">
-                                        {item.fotos && item.fotos.length > 0 && item.fotos[0].url ? (
-                                            <img
-                                                src={item.fotos[0].url.startsWith('http') ? item.fotos[0].url : `${API_URL.replace('/api/v1', '')}${item.fotos[0].url}`}
-                                                alt="Foto"
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <Shirt className="h-6 w-6 text-gray-300" />
-                                        )}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="font-medium">{item.descricao_curta}</TableCell>
-                                <TableCell><Badge variant="outline">{item.tamanho ? item.tamanho.nome : getName(tamanhos, item.tamanhoId)}</Badge></TableCell>
-                                <TableCell>{item.cor ? item.cor.nome : getName(cores, item.corId)}</TableCell>
-                                <TableCell>{item.marca ? item.marca.nome : getName(marcas, item.marcaId)}</TableCell>
-                                <TableCell>
-                                    <Badge variant={item.status === 'VENDIDA' ? 'destructive' : item.status === 'DISPONIVEL' ? 'default' : 'secondary'}>
-                                        {item.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right font-bold text-primary">R$ {item.preco_venda}</TableCell>
-                                <TableCell className="text-center">
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Button
-                                            size="sm"
-                                            onClick={() => { setCurrentItem(item); setIsDetailsOpen(true); }}
-                                            className="bg-purple-500 hover:bg-purple-600 text-white h-7 px-2"
-                                            title="Ver Detalhes"
-                                        >
-                                            <Eye className="h-4 w-4" />
-                                        </Button>
-                                        <Button size="sm" onClick={() => handleEdit(item)} className="bg-blue-500 hover:bg-blue-600 text-white h-7 px-2">
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            onClick={() => handleSync(item)}
-                                            disabled={syncingId === item.id}
-                                            className="bg-green-500 hover:bg-green-600 text-white h-7 px-2"
-                                            title="Sincronizar com E-commerce"
-                                        >
-                                            <RefreshCw className={`h-4 w-4 ${syncingId === item.id ? 'animate-spin' : ''}`} />
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            onClick={() => loadHistory(item)}
-                                            className="bg-orange-500 hover:bg-orange-600 text-white h-7 px-2"
-                                            title="Histórico de Movimentação"
-                                        >
-                                            <RefreshCw className="h-4 w-4" />
-                                        </Button>
-                                        <Button size="sm" onClick={() => { setCurrentItem(item); setIsDeleteOpen(true); }} className="bg-red-500 hover:bg-red-600 text-white h-7 px-2">
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
+
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader className="bg-white">
+                            <TableRow>
+                                <TableHead className="w-[40px]">
+                                    <Checkbox checked={selectedItems.length === items.length && items.length > 0} onCheckedChange={toggleAllItems} />
+                                </TableHead>
+                                <TableHead className="w-[80px]">ID</TableHead>
+                                <TableHead>Foto</TableHead>
+                                <TableHead>Descrição</TableHead>
+                                <TableHead>Tam</TableHead>
+                                <TableHead>Cor</TableHead>
+                                <TableHead>Marca</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Preço</TableHead>
+                                <TableHead className="text-center">Ação</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                <TableRow><TableCell colSpan={10} className="text-center py-20"><RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary/20" /></TableCell></TableRow>
+                            ) : items.map((p) => (
+                                <TableRow key={p.id} className={`hover:bg-primary/5 border-b ${selectedItems.includes(p.id) ? "bg-primary/5" : ""}`}>
+                                    <TableCell>
+                                        <Checkbox checked={selectedItems.includes(p.id)} onCheckedChange={() => toggleItemSelection(p.id)} />
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs">#{String(p.id).padStart(4, '0')}</TableCell>
+                                    <TableCell>
+                                        <div className="w-10 h-10 rounded overflow-hidden border bg-muted flex items-center justify-center">
+                                            {p.fotos && p.fotos.length > 0 ? (
+                                                <img
+                                                    src={p.fotos[0].url.startsWith('http') ? p.fotos[0].url : `${API_URL.replace('/api/v1', '')}${p.fotos[0].url}`}
+                                                    alt="Foto"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <Shirt className="h-5 w-5 text-muted-foreground" />
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="font-medium">{p.descricao_curta}</TableCell>
+                                    <TableCell><Badge variant="outline">{p.tamanho?.nome || '-'}</Badge></TableCell>
+                                    <TableCell>{p.cor?.nome || '-'}</TableCell>
+                                    <TableCell>{p.marca?.nome || '-'}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={p.status === 'VENDIDA' ? 'destructive' : p.status === 'DISPONIVEL' ? 'default' : 'secondary'}>
+                                            {p.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right font-bold text-primary">R$ {parseFloat(p.preco_venda).toFixed(2)}</TableCell>
+                                    <TableCell className="text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setCurrentItem(p); setIsDetailsOpen(true); }}><Eye className="h-4 w-4 text-purple-600" /></Button>
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleEdit(p)}><Edit className="h-4 w-4 text-blue-600" /></Button>
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Sincronizar" onClick={() => handleSync(p)} disabled={syncingId === p.id}>
+                                                <RefreshCw className={`h-4 w-4 text-green-600 ${syncingId === p.id ? 'animate-spin' : ''}`} />
+                                            </Button>
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Histórico" onClick={() => loadHistory(p)}><RefreshCw className="h-4 w-4 text-orange-600" /></Button>
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setCurrentItem(p); setIsDeleteOpen(true); }}><Trash2 className="h-4 w-4 text-red-600" /></Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+
                 {/* Pagination Controls */}
                 <div className="p-4 bg-white border-t flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
-                        Página {currentPage} de {totalPages}
+                        Página {currentPage} de {totalPages} ({totalItems} itens)
                     </span>
                     <div className="flex gap-2">
                         <Button
@@ -1352,7 +1410,7 @@ function CadastroPecasContent() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }
 

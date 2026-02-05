@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { Search, Plus, AlertTriangle, Users, Save, Trash2, Package } from "lucide-react";
+import { Search, Plus, AlertTriangle, Users, Save, Trash2, Package, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,7 @@ function PessoasContent() {
 
     // Formulario
     const [form, setForm] = useState({ nome: "", cpf_cnpj: "", email: "", telefone_whatsapp: "", tipo: "Cliente" });
+    const [contractFile, setContractFile] = useState(null);
 
     // Modais
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -50,7 +51,7 @@ function PessoasContent() {
             });
     };
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         if (!form.nome) {
             toast({ title: "Erro", description: "Nome é obrigatório.", variant: "destructive" });
             return;
@@ -59,25 +60,37 @@ function PessoasContent() {
         const is_cliente = form.tipo === "Cliente" || form.tipo === "Ambos";
         const is_fornecedor = form.tipo === "Fornecedor" || form.tipo === "Ambos";
 
-        const payload = {
-            nome: form.nome.toUpperCase(),
-            cpf_cnpj: form.cpf_cnpj,
-            email: form.email,
-            telefone_whatsapp: form.telefone_whatsapp,
-            is_cliente,
-            is_fornecedor
-        };
+        try {
+            const payload = {
+                nome: form.nome.toUpperCase(),
+                cpf_cnpj: form.cpf_cnpj,
+                email: form.email,
+                telefone_whatsapp: form.telefone_whatsapp,
+                is_cliente,
+                is_fornecedor
+            };
 
-        api.post('/pessoas', payload)
-            .then(res => {
-                setPeople([...people, res.data]);
-                setForm({ nome: "", cpf_cnpj: "", email: "", telefone_whatsapp: "", tipo: "Cliente" });
-                toast({ title: "Sucesso", description: "Pessoa cadastrada.", className: "bg-primary text-primary-foreground border-none" });
-            })
-            .catch(err => {
-                console.error(err);
-                toast({ title: "Erro", description: "Erro ao cadastrar pessoa.", variant: "destructive" });
-            });
+            const res = await api.post('/pessoas', payload);
+            const newPerson = res.data;
+
+            // If there's a contract file, upload it
+            if (contractFile && newPerson.id) {
+                const formData = new FormData();
+                formData.append('arquivo', contractFile);
+                formData.append('nome_exibicao', 'Contrato Inicial');
+                await api.post(`/pessoas/${newPerson.id}/contratos`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            }
+
+            setPeople([...people, newPerson]);
+            setForm({ nome: "", cpf_cnpj: "", email: "", telefone_whatsapp: "", tipo: "Cliente" });
+            setContractFile(null);
+            toast({ title: "Sucesso", description: "Pessoa cadastrada.", className: "bg-primary text-primary-foreground border-none" });
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Erro ao cadastrar pessoa.", variant: "destructive" });
+        }
     };
 
     const handleDelete = () => {
@@ -150,6 +163,21 @@ function PessoasContent() {
                             <Label>Telefone / WhatsApp</Label>
                             <Input value={form.telefone_whatsapp} onChange={e => setForm({ ...form, telefone_whatsapp: e.target.value })} />
                         </div>
+                        {form.tipo !== "Cliente" && (
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                    <FileText className="h-4 w-4" /> Contrato Social/Acordo (Opcional)
+                                </Label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        type="file"
+                                        className="cursor-pointer text-xs"
+                                        onChange={(e) => setContractFile(e.target.files[0])}
+                                    />
+                                    {contractFile && <Badge variant="secondary" className="whitespace-nowrap">Selecionado</Badge>}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-end mt-4">

@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, Upload } from "lucide-react";
+import { Camera, Upload, FileText, Download, Eye, FilePlus, Printer, FileSpreadsheet, File } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 export default function DetalhesPessoaPage() {
     const { toast } = useToast();
@@ -30,6 +31,12 @@ export default function DetalhesPessoaPage() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [editForm, setEditForm] = useState(null);
+
+    // Selection/Export State
+    const [selectedPecas, setSelectedPecas] = useState([]);
+    const [isRenameOpen, setIsRenameOpen] = useState(false);
+    const [contractToRename, setContractToRename] = useState(null);
+    const [newName, setNewName] = useState("");
 
     useEffect(() => {
         if (params.id) {
@@ -125,6 +132,127 @@ export default function DetalhesPessoaPage() {
         }
     };
 
+    const handleContractUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('contrato', file);
+        formData.append('nome_exibicao', file.name);
+
+        try {
+            await api.post(`/pessoas/${params.id}/contratos`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast({ title: "Sucesso", description: "Contrato enviado!" });
+            loadData(); // Reload to get updated contract list
+        } catch (err) {
+            toast({ title: "Erro", description: "Falha ao enviar contrato.", variant: "destructive" });
+        }
+    };
+
+    const handleDeleteContract = async (id) => {
+        if (!confirm("Deseja realmente excluir este contrato?")) return;
+        try {
+            await api.delete(`/pessoas/contratos/${id}`);
+            toast({ title: "Sucesso", description: "Contrato removido!" });
+            loadData();
+        } catch (err) {
+            toast({ title: "Erro", description: "Falha ao excluir contrato." });
+        }
+    };
+
+    const handleRenameContract = async () => {
+        try {
+            await api.put(`/pessoas/contratos/${contractToRename.id}`, { nome_exibicao: newName });
+            toast({ title: "Sucesso", description: "Contrato renomeado!" });
+            setIsRenameOpen(false);
+            loadData();
+        } catch (err) {
+            toast({ title: "Erro", description: "Falha ao renomear contrato." });
+        }
+    };
+
+    // Selection Logic
+    const togglePecaSelection = (id) => {
+        setSelectedPecas(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleAllPecas = () => {
+        if (selectedPecas.length === pecas.length) {
+            setSelectedPecas([]);
+        } else {
+            setSelectedPecas(pecas.map(p => p.id));
+        }
+    };
+
+    // Export Logic
+    const exportExcel = () => {
+        const dataToExport = pecas.filter(p => selectedPecas.includes(p.id));
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(p => ({
+            ID: p.id,
+            Descricao: p.descricao_curta,
+            Marca: p.marca?.nome,
+            Tamanho: p.tamanho?.nome,
+            Preco_Venda: p.preco_venda,
+            Comissao: p.comissao_padrao,
+            Valor_Liquido: p.valor_liquido_fornecedor,
+            Status: p.status
+        })));
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Peças");
+        XLSX.writeFile(workbook, `pecas_fornecedor_${pessoa.id}.xlsx`);
+    };
+
+    const handlePrintPecas = () => {
+        const dataToPrint = pecas.filter(p => selectedPecas.includes(p.id));
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Impressão de Peças - ${pessoa.nome}</title>
+                    <style>
+                        table { width: 100%; border-collapse: collapse; font-family: sans-serif; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background: #f4f4f4; }
+                        h1 { font-family: sans-serif; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Lista de Peças - ${pessoa.nome}</h1>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Peça</th>
+                                <th>Preço Venda</th>
+                                <th>Comissão</th>
+                                <th>Vlr Líquido</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${dataToPrint.map(p => `
+                                <tr>
+                                    <td>#${p.id}</td>
+                                    <td>${p.descricao_curta} (${p.marca?.nome})</td>
+                                    <td>R$ ${parseFloat(p.preco_venda).toFixed(2)}</td>
+                                    <td>${p.comissao_padrao}%</td>
+                                    <td>R$ ${parseFloat(p.valor_liquido_fornecedor).toFixed(2)}</td>
+                                    <td>${p.status}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    };
+
     if (loading) return <div className="p-10 flex justify-center items-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
     if (!pessoa) return <div className="p-10 text-center">Pessoa não encontrada.</div>;
 
@@ -176,10 +304,13 @@ export default function DetalhesPessoaPage() {
             </div>
 
             <Tabs defaultValue="dados" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-3 md:w-[600px]">
+                <TabsList className="grid w-full grid-cols-2 md:w-[800px] md:grid-cols-4">
                     <TabsTrigger value="dados" className="flex items-center gap-2"><Info className="h-4 w-4" /> Cadastro</TabsTrigger>
                     {pessoa.is_fornecedor && (
                         <TabsTrigger value="pecas" className="flex items-center gap-2"><Package className="h-4 w-4" /> Peças/Estoque</TabsTrigger>
+                    )}
+                    {pessoa.is_fornecedor && (
+                        <TabsTrigger value="contratos" className="flex items-center gap-2"><FileText className="h-4 w-4" /> Contratos</TabsTrigger>
                     )}
                     <TabsTrigger value="permuta" className="flex items-center gap-2"><Wallet className="h-4 w-4" /> Carteira/Saldo</TabsTrigger>
                 </TabsList>
@@ -310,17 +441,32 @@ export default function DetalhesPessoaPage() {
 
                 <TabsContent value="pecas">
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
+                        <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <CardTitle>Peças Consignadas</CardTitle>
                                 <CardDescription>Lista de itens vinculados a este fornecedor</CardDescription>
                             </div>
-                            <Badge className="bg-primary text-primary-foreground">{pecas.length} itens</Badge>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedPecas.length > 0 && (
+                                    <>
+                                        <Button variant="outline" size="sm" onClick={exportExcel} className="gap-2 text-green-600 border-green-200 hover:bg-green-50">
+                                            <FileSpreadsheet className="h-4 w-4" /> Excel
+                                        </Button>
+                                        <Button variant="outline" size="sm" onClick={handlePrintPecas} className="gap-2">
+                                            <Printer className="h-4 w-4" /> Imprimir / PDF
+                                        </Button>
+                                    </>
+                                )}
+                                <Badge className="bg-primary text-primary-foreground">{pecas.length} itens</Badge>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-[50px]">
+                                            <Checkbox checked={selectedPecas.length === pecas.length && pecas.length > 0} onCheckedChange={toggleAllPecas} />
+                                        </TableHead>
                                         <TableHead className="w-[80px]">ID</TableHead>
                                         <TableHead>Peça</TableHead>
                                         <TableHead>Preço Venda</TableHead>
@@ -331,7 +477,10 @@ export default function DetalhesPessoaPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {pecas.length > 0 ? pecas.map((p) => (
-                                        <TableRow key={p.id}>
+                                        <TableRow key={p.id} className={selectedPecas.includes(p.id) ? "bg-primary/5" : ""}>
+                                            <TableCell>
+                                                <Checkbox checked={selectedPecas.includes(p.id)} onCheckedChange={() => togglePecaSelection(p.id)} />
+                                            </TableCell>
                                             <TableCell className="font-mono text-xs">#{String(p.id).padStart(4, '0')}</TableCell>
                                             <TableCell>
                                                 <div className="font-bold">{p.descricao_curta}</div>
@@ -355,6 +504,67 @@ export default function DetalhesPessoaPage() {
                                     )}
                                 </TableBody>
                             </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="contratos">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Contratos e Anexos</CardTitle>
+                                <CardDescription>Documentos digitalizados e contratos firmados</CardDescription>
+                            </div>
+                            <label className="cursor-pointer">
+                                <Button variant="default" className="gap-2" asChild>
+                                    <span><Upload className="h-4 w-4" /> Adicionar Anexo</span>
+                                </Button>
+                                <input type="file" className="hidden" onChange={handleContractUpload} />
+                            </label>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {pessoa.contratos && pessoa.contratos.length > 0 ? (
+                                    pessoa.contratos.map((c) => (
+                                        <Card key={c.id} className="overflow-hidden group hover:shadow-md transition-shadow">
+                                            <div className="p-4 flex items-start gap-4">
+                                                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                                    <FileText className="h-6 w-6" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold truncate text-sm" title={c.nome_exibicao}>{c.nome_exibicao}</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase">{c.mimetype?.split('/')[1] || 'DOC'} • {(c.tamanho / 1024).toFixed(1)} KB</p>
+                                                    <p className="text-[10px] text-muted-foreground">Adicionado em {new Date(c.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+                                            <div className="bg-muted/50 px-2 py-1 flex justify-end gap-1 border-t opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => window.open(c.caminho.startsWith('http') ? c.caminho : `http://localhost:3001/${c.caminho.replace(/\\/g, '/')}`, '_blank')}>
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                                                    setContractToRename(c);
+                                                    setNewName(c.nome_exibicao);
+                                                    setIsRenameOpen(true);
+                                                }}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600" onClick={() => handleDeleteContract(c.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </Card>
+                                    ))
+                                ) : (
+                                    <div className="col-span-full py-10 text-center border-2 border-dashed rounded-lg">
+                                        <FilePlus className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+                                        <p className="text-muted-foreground">Nenhum contrato anexado.</p>
+                                        <label className="text-primary hover:underline cursor-pointer mt-2 block text-sm">
+                                            Clique aqui para enviar o primeiro
+                                            <input type="file" className="hidden" onChange={handleContractUpload} />
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -540,6 +750,23 @@ export default function DetalhesPessoaPage() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancelar</Button>
                         <Button variant="destructive" onClick={handleDelete}>Confirmar Exclusão</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Rename Contract Modal */}
+            <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Renomear Documento</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2">
+                        <Label>Nome do Documento</Label>
+                        <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Ex: Contrato de Consignação 2024" />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsRenameOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleRenameContract}>Salvar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

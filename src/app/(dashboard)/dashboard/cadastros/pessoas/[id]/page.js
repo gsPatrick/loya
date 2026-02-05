@@ -137,6 +137,7 @@ export default function DetalhesPessoaPage() {
             dados_pix: pessoa.dados_pix || "",
             is_cliente: pessoa.is_cliente,
             is_fornecedor: pessoa.is_fornecedor,
+            foto: pessoa.foto || "",
             endereco: {
                 cep: pessoa.endereco?.cep || "",
                 rua: pessoa.endereco?.rua || "",
@@ -798,6 +799,46 @@ export default function DetalhesPessoaPage() {
                     </DialogHeader>
                     {editForm && (
                         <div className="grid gap-4 py-4">
+                            {/* Photo Upload Section in Modal */}
+                            <div className="flex flex-col items-center gap-2 mb-4 p-4 bg-muted/20 rounded-lg">
+                                <div className="relative group">
+                                    <Avatar className="h-24 w-24 border-2 border-primary/20">
+                                        <AvatarImage src={editForm.foto || pessoa.foto} className="object-cover" />
+                                        <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                                            {editForm.nome?.substring(0, 2).toUpperCase() || "UN"}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <label
+                                        htmlFor="modal-photo-upload"
+                                        className="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full cursor-pointer shadow-lg hover:scale-110 transition-transform"
+                                    >
+                                        <Camera className="h-4 w-4" />
+                                        <input
+                                            type="file"
+                                            id="modal-photo-upload"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files[0];
+                                                if (!file) return;
+                                                const formData = new FormData();
+                                                formData.append('foto', file);
+                                                try {
+                                                    const res = await api.post(`/pessoas/${params.id}/foto`, formData, {
+                                                        headers: { 'Content-Type': 'multipart/form-data' }
+                                                    });
+                                                    setEditForm({ ...editForm, foto: res.data.foto });
+                                                    toast({ title: "Sucesso", description: "Foto carregada!" });
+                                                } catch (err) {
+                                                    toast({ title: "Erro", description: "Falha ao enviar foto.", variant: "destructive" });
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                                <span className="text-[10px] text-muted-foreground uppercase font-bold">Alterar Foto de Perfil</span>
+                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Nome Completo</Label>

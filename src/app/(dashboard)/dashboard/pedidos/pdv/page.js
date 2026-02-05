@@ -546,14 +546,19 @@ export default function PDVPage() {
 
                                             // Filter locally
                                             const searchLower = val.toLowerCase();
-                                            const filtered = allProducts.filter(p =>
-                                                // Exclude sold/unavailable items
-                                                !['VENDIDA', 'DEVOLVIDA_FORNECEDOR', 'DOADA', 'EXTRAVIADA'].includes(p.status) &&
-                                                (
+                                            const numericId = parseInt(val, 10);
+                                            const isNumeric = !isNaN(numericId) && /^\d+$/.test(val);
+
+                                            const filtered = allProducts.filter(p => {
+                                                // ID Match (Exact, handling zeros)
+                                                if (isNumeric && p.id === numericId) return true;
+
+                                                // Description or Tag match
+                                                return (
                                                     (p.descricao_curta && p.descricao_curta.toLowerCase().includes(searchLower)) ||
                                                     (p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase().includes(searchLower))
-                                                )
-                                            ).slice(0, 10); // Limit suggestions
+                                                );
+                                            }).slice(0, 10); // Limit suggestions
 
                                             setProductSuggestions(filtered);
                                         }}

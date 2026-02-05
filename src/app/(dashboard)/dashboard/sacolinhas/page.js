@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
     ShoppingBag, Search, Plus, Eye, Edit, Trash2, Send,
-    PackageCheck, Clock, XCircle, MoreHorizontal, Loader2, RefreshCw
+    PackageCheck, Clock, XCircle, MoreHorizontal, Loader2, RefreshCw, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -202,6 +202,7 @@ export default function SacolinhasPage() {
                                 <TableHead>Cliente</TableHead>
                                 <TableHead className="text-center">Itens</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Rastreio</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
                                 <TableHead>Criada em</TableHead>
                                 <TableHead className="text-right">Ações</TableHead>
@@ -229,6 +230,22 @@ export default function SacolinhasPage() {
                                             <Badge variant="secondary">{sac.itens?.length || 0}</Badge>
                                         </TableCell>
                                         <TableCell>{getStatusBadge(sac.status)}</TableCell>
+                                        <TableCell>
+                                            {sac.codigo_rastreio ? (
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="font-mono cursor-pointer hover:bg-secondary/80 gap-1"
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(sac.codigo_rastreio);
+                                                        toast({ title: "Copiado!", description: "Código de rastreio copiado para a área de transferência." });
+                                                    }}
+                                                >
+                                                    <Copy className="h-3 w-3" /> {sac.codigo_rastreio}
+                                                </Badge>
+                                            ) : (
+                                                <span className="text-gray-300 text-xs">-</span>
+                                            )}
+                                        </TableCell>
                                         <TableCell className="text-right font-medium">
                                             {formatCurrency(sac.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda || 0), 0))}
                                         </TableCell>

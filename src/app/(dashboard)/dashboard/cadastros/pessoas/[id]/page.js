@@ -17,7 +17,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Camera, Upload, FileText, Download, Eye, FilePlus, Printer, FileSpreadsheet, File, Search, X, RefreshCw } from "lucide-react";
 import * as XLSX from 'xlsx';
-import SearchableSelect from "@/components/ui/searchable-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 export default function DetalhesPessoaPage() {
     const { toast } = useToast();

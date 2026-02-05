@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     ShoppingBag, ArrowLeft, Search, Plus, Trash2, Loader2,
-    User, Clock, Send, PackageCheck, XCircle, Package, Shirt, Barcode, Save, Eye, AlertTriangle, RefreshCw
+    User, Clock, Send, PackageCheck, XCircle, Package, Shirt, Barcode, Save, Eye, AlertTriangle, RefreshCw, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,10 @@ export default function DetalheSacolinhaPage() {
     // Restock Modal State
     const [restockModalOpen, setRestockModalOpen] = useState(false);
     const [productToRestock, setProductToRestock] = useState(null);
+
+    // Tracking Code State
+    const [trackingDialogOpen, setTrackingDialogOpen] = useState(false);
+    const [trackingCodeInput, setTrackingCodeInput] = useState("");
 
     // Beep sound
     const playBeep = () => {
@@ -265,11 +269,16 @@ export default function DetalheSacolinhaPage() {
         }
     };
 
-    const handleUpdateStatus = async (novoStatus) => {
+    const handleUpdateStatus = async (novoStatus, codigo_rastreio = null) => {
         try {
-            await api.put(`/vendas/sacolinhas/${id}/status`, { status: novoStatus });
+            await api.put(`/vendas/sacolinhas/${id}/status`, {
+                status: novoStatus,
+                codigo_rastreio: codigo_rastreio
+            });
             toast({ title: "Sucesso", description: `Status atualizado para ${novoStatus}.` });
             loadSacolinha();
+            setTrackingDialogOpen(false);
+            setTrackingCodeInput("");
         } catch (err) {
             toast({ title: "Erro", description: err.response?.data?.error || "Erro ao atualizar status.", variant: "destructive" });
         }
@@ -327,7 +336,7 @@ export default function DetalheSacolinhaPage() {
                 <div className="flex gap-2">
                     {sacolinha.status === 'ABERTA' && (
                         <>
-                            <Button onClick={() => handleUpdateStatus('PRONTA')} className="bg-amber-500 hover:bg-amber-600">
+                            <Button onClick={() => setTrackingDialogOpen(true)} className="bg-amber-500 hover:bg-amber-600">
                                 <Clock className="mr-2 h-4 w-4" /> Marcar Pronta
                             </Button>
                             <Button onClick={() => handleUpdateStatus('CANCELADA')} variant="outline" className="text-red-500 border-red-200">
@@ -397,6 +406,32 @@ export default function DetalheSacolinhaPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {sacolinha.codigo_rastreio && (
+                    <Card className="md:col-span-3 border-amber-200 bg-amber-50">
+                        <CardContent className="p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-amber-200 flex items-center justify-center text-amber-700">
+                                    <Send className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-amber-600 font-bold uppercase tracking-wider">Código de Rastreio</p>
+                                    <p className="text-xl font-mono font-bold text-amber-900">{sacolinha.codigo_rastreio}</p>
+                                </div>
+                            </div>
+                            <Button
+                                variant="outline"
+                                className="border-amber-300 text-amber-700 hover:bg-amber-100 gap-2"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(sacolinha.codigo_rastreio);
+                                    toast({ title: "Copiado!", description: "Código de rastreio copiado." });
+                                }}
+                            >
+                                <Copy className="h-4 w-4" /> Copiar Código
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             {/* PDV-style Add Items Section (only if ABERTA) */}
@@ -582,6 +617,36 @@ export default function DetalheSacolinhaPage() {
                                 <Eye className="mr-2 h-4 w-4" /> Ver Produto
                             </Button>
                         </Link>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Tracking Code Dialog */}
+            <Dialog open={trackingDialogOpen} onOpenChange={setTrackingDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Informar Código de Rastreio</DialogTitle>
+                        <DialogDescription>
+                            A sacolinha será marcada como <strong>PRONTA</strong>. Opcionalmente, informe o código de rastreio para o cliente.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2">
+                        <Label htmlFor="tracking-code">Código de Rastreio</Label>
+                        <Input
+                            id="tracking-code"
+                            placeholder="Ex: BR123456789BR"
+                            value={trackingCodeInput}
+                            onChange={(e) => setTrackingCodeInput(e.target.value.toUpperCase())}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleUpdateStatus('PRONTA', trackingCodeInput);
+                            }}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setTrackingDialogOpen(false)}>Cancelar</Button>
+                        <Button onClick={() => handleUpdateStatus('PRONTA', trackingCodeInput)} className="bg-amber-500 hover:bg-amber-600">
+                            Confirmar e Marcar Pronta
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

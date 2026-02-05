@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import api from "@/services/api";
+import api, { API_URL } from "@/services/api";
 
 export default function InclusaoMarcasPage() {
     const { toast } = useToast();
@@ -103,7 +103,7 @@ export default function InclusaoMarcasPage() {
             const res = await api.post('/catalogo/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            const fullUrl = `https://jackbear-backend-apilojasimples-revestese.r954jc.easypanel.host${res.data.url}`;
+            const fullUrl = `${API_URL.replace('/api/v1', '')}${res.data.url}`;
 
             if (isEdit) {
                 setEditImage(fullUrl);

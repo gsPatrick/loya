@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+export const API_URL = 'https://geral-tiptagapi.r954jc.easypanel.host/api/v1';
+
 const api = axios.create({
-    baseURL: 'https://geral-tiptagapi.r954jc.easypanel.host/api/v1',
+    baseURL: API_URL,
 });
 
 // Interceptor para adicionar Token (se houver auth no futuro)

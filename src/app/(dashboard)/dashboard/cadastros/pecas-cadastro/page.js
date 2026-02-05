@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useToast } from "@/hooks/use-toast";
-import api from "@/services/api";
+import api, { API_URL } from "@/services/api";
 
 // Helper component for Measurements
 const MeasurementsInput = ({ value = [], onChange }) => {
@@ -326,7 +326,7 @@ function CadastroPecasContent() {
                 const res = await api.post('/catalogo/upload', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                const fullUrl = `https://jackbear-backend-apilojasimples-revestese.r954jc.easypanel.host${res.data.url}`;
+                const fullUrl = `${API_URL.replace('/api/v1', '')}${res.data.url}`;
                 newFotos.push(fullUrl);
             } catch (err) {
                 console.error(err);
@@ -703,7 +703,7 @@ function CadastroPecasContent() {
                                 {form.fotos && form.fotos.map((url, idx) => (
                                     <div key={idx} className="relative w-20 h-20 border rounded overflow-hidden group">
                                         <img
-                                            src={url.startsWith('http') ? url : `https://jackbear-backend-apilojasimples-revestese.r954jc.easypanel.host${url}`}
+                                            src={url.startsWith('http') ? url : `${API_URL.replace('/api/v1', '')}${url}`}
                                             alt="Foto"
                                             className="w-full h-full object-cover"
                                         />
@@ -975,7 +975,7 @@ function CadastroPecasContent() {
                                     <div className="w-12 h-12 rounded overflow-hidden border bg-gray-100 flex items-center justify-center">
                                         {item.fotos && item.fotos.length > 0 && item.fotos[0].url ? (
                                             <img
-                                                src={item.fotos[0].url.startsWith('http') ? item.fotos[0].url : `https://geral-tiptagapi.r954jc.easypanel.host${item.fotos[0].url}`}
+                                                src={item.fotos[0].url.startsWith('http') ? item.fotos[0].url : `${API_URL.replace('/api/v1', '')}${item.fotos[0].url}`}
                                                 alt="Foto"
                                                 className="w-full h-full object-cover"
                                             />
@@ -1174,7 +1174,7 @@ function CadastroPecasContent() {
                                 {editForm.fotos && editForm.fotos.map((url, idx) => (
                                     <div key={idx} className="relative w-20 h-20 border rounded overflow-hidden group">
                                         <img
-                                            src={url.startsWith('http') ? url : `https://jackbear-backend-apilojasimples-revestese.r954jc.easypanel.host${url}`}
+                                            src={url.startsWith('http') ? url : `${API_URL.replace('/api/v1', '')}${url}`}
                                             alt="Foto"
                                             className="w-full h-full object-cover"
                                         />
@@ -1211,7 +1211,7 @@ function CadastroPecasContent() {
                                 <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border">
                                     {currentItem.fotos && currentItem.fotos.length > 0 ? (
                                         <img
-                                            src={currentItem.fotos[0].url.startsWith('http') ? currentItem.fotos[0].url : `https://geral-tiptagapi.r954jc.easypanel.host${currentItem.fotos[0].url}`}
+                                            src={currentItem.fotos[0].url.startsWith('http') ? currentItem.fotos[0].url : `${API_URL.replace('/api/v1', '')}${currentItem.fotos[0].url}`}
                                             alt="Principal"
                                             className="w-full h-full object-contain"
                                         />
@@ -1225,7 +1225,7 @@ function CadastroPecasContent() {
                                     {currentItem.fotos && currentItem.fotos.slice(1).map((f, idx) => (
                                         <div key={idx} className="aspect-square bg-gray-50 rounded border overflow-hidden">
                                             <img
-                                                src={f.url.startsWith('http') ? f.url : `https://geral-tiptagapi.r954jc.easypanel.host${f.url}`}
+                                                src={f.url.startsWith('http') ? f.url : `${API_URL.replace('/api/v1', '')}${f.url}`}
                                                 alt={`Foto ${idx + 2}`}
                                                 className="w-full h-full object-cover"
                                             />

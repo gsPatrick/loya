@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
     LayoutDashboard, ShoppingCart, Shirt, Users, Banknote, Megaphone,
@@ -252,7 +252,14 @@ function SidebarContent({ className, setIsOpen }) {
                 </nav>
             </div>
             <div className="p-4 border-t mt-auto bg-muted/10">
-                <button className="flex items-center gap-2 text-sm font-medium text-red-500 hover:text-red-600 transition-colors w-full p-2 hover:bg-red-50 rounded-md">
+                <button
+                    onClick={() => {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login';
+                    }}
+                    className="flex items-center gap-2 text-sm font-medium text-red-500 hover:text-red-600 transition-colors w-full p-2 hover:bg-red-50 rounded-md"
+                >
                     <LogOut className="h-4 w-4" />
                     Sair do Sistema
                 </button>

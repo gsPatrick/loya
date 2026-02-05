@@ -89,7 +89,14 @@ export function Header() {
                         <DropdownMenuItem>Meu Perfil</DropdownMenuItem>
                         <DropdownMenuItem>Configurações da Loja</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-500 focus:text-red-500 cursor-pointer">
+                        <DropdownMenuItem
+                            onClick={() => {
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('user');
+                                window.location.href = '/login';
+                            }}
+                            className="text-red-500 focus:text-red-500 cursor-pointer"
+                        >
                             Sair
                         </DropdownMenuItem>
                     </DropdownMenuContent>

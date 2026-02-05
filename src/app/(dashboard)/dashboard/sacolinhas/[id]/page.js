@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     ShoppingBag, ArrowLeft, Search, Plus, Trash2, Loader2,
-    User, Clock, Send, PackageCheck, XCircle, Package, Shirt, Barcode, Save, Eye, AlertTriangle
+    User, Clock, Send, PackageCheck, XCircle, Package, Shirt, Barcode, Save, Eye, AlertTriangle, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -343,6 +343,11 @@ export default function DetalheSacolinhaPage() {
                     {sacolinha.status === 'ENVIADA' && (
                         <Button onClick={() => handleUpdateStatus('FECHADA')} className="bg-green-500 hover:bg-green-600">
                             <PackageCheck className="mr-2 h-4 w-4" /> Fechar Sacolinha
+                        </Button>
+                    )}
+                    {sacolinha.status !== 'ABERTA' && (
+                        <Button onClick={() => handleUpdateStatus('ABERTA')} variant="outline" className="text-cyan-600 border-cyan-200">
+                            <RefreshCw className="mr-2 h-4 w-4" /> Reabrir
                         </Button>
                     )}
                 </div>

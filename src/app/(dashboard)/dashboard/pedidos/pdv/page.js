@@ -204,14 +204,13 @@ export default function PDVPage() {
 
         setIsSearchingProduct(true);
         try {
-            // Search with broader criteria (fetch all matches, filter locally)
+            // Search with broader criteria (fetch all matches)
             const res = await api.get('/catalogo/pecas', {
                 params: { search: barcodeInput }
             });
 
-            // Filter out items that cannot be sold
-            const invalidStatuses = ['VENDIDA', 'DEVOLVIDA', 'DEVOLVIDA_FORNECEDOR', 'DOADA', 'EXTRAVIADA'];
-            const foundProducts = res.data.filter(p => !invalidStatuses.includes(p.status));
+            // Allow ANY status to be selected as per user request
+            const foundProducts = res.data;
 
             if (foundProducts.length === 0) {
                 toast({

@@ -211,7 +211,7 @@ export default function PDVPage() {
 
     const handleCreateSacolinha = async () => {
         try {
-            const res = await api.post('/vendas/sacolinhas', { clienteId: selectedClient });
+            const res = await api.post('/vendas/sacolinhas/abrir', { clienteId: selectedClient });
             setActiveSacolinha(res.data);
             setItems([]); // New sacolinha starts empty
             setSacolinhaModalOpen(false);
@@ -684,13 +684,26 @@ export default function PDVPage() {
                             )}
                         </div>
                     )}
-                    {activeSacolinha && (
-                        <div className="mt-2 animate-bounce flex items-center gap-2">
+                    {activeSacolinha ? (
+                        <div className="mt-2 flex items-center gap-2">
+                            <div className="animate-pulse h-2 w-2 rounded-full bg-cyan-500" />
                             <Badge className="bg-cyan-600 text-white border-none gap-2 px-3 py-1">
-                                <ShoppingBag className="h-4 w-4" /> Editando Sacolinha #{activeSacolinha.id}
+                                <ShoppingBag className="h-4 w-4" /> Sacolinha #{activeSacolinha.id}
                             </Badge>
-                            <Button variant="ghost" size="sm" className="text-xs text-red-500 h-6 px-2" onClick={() => setActiveSacolinha(null)}>
-                                Sair do Modo Sacolinha
+                            <Button variant="outline" size="sm" className="h-7 text-[10px] border-cyan-200 text-cyan-700 hover:bg-cyan-50" onClick={() => handleClientSelection(selectedClient)}>
+                                Trocar
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-[10px] text-red-500 h-7 px-2" onClick={() => setActiveSacolinha(null)}>
+                                Sair e Venda Direta
+                            </Button>
+                        </div>
+                    ) : selectedClient && (
+                        <div className="mt-2 flex items-center gap-2">
+                            <Badge variant="outline" className="text-slate-500 gap-1 border-dashed">
+                                Modo Venda Direta
+                            </Badge>
+                            <Button variant="link" size="sm" className="h-6 text-[10px] text-cyan-600 p-0" onClick={() => handleClientSelection(selectedClient)}>
+                                Criar/Selecionar Sacolinha
                             </Button>
                         </div>
                     )}

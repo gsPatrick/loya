@@ -15,8 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, Upload, FileText, Download, Eye, FilePlus, Printer, FileSpreadsheet, File } from "lucide-react";
+import { Camera, Upload, FileText, Download, Eye, FilePlus, Printer, FileSpreadsheet, File, Search, X, RefreshCw } from "lucide-react";
 import * as XLSX from 'xlsx';
+import SearchableSelect from "@/components/ui/searchable-select";
 
 export default function DetalhesPessoaPage() {
     const { toast } = useToast();
@@ -38,6 +39,21 @@ export default function DetalhesPessoaPage() {
     const [contractToRename, setContractToRename] = useState(null);
     const [newName, setNewName] = useState("");
 
+    // Filter State
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterTamanho, setFilterTamanho] = useState("");
+    const [filterMarca, setFilterMarca] = useState("");
+    const [filterCategoria, setFilterCategoria] = useState("");
+    const [filterStatus, setFilterStatus] = useState("TODOS");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+
+    // Options for filters
+    const [marcas, setMarcas] = useState([]);
+    const [tamanhos, setTamanhos] = useState([]);
+    const [categorias, setCategorias] = useState([]);
+    const [isPecasLoading, setIsPecasLoading] = useState(false);
+
     useEffect(() => {
         if (params.id) {
             loadData();
@@ -47,20 +63,67 @@ export default function DetalhesPessoaPage() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [resPessoa, resPermuta, resPecas] = await Promise.all([
+            const [resPessoa, resPermuta] = await Promise.all([
                 api.get(`/pessoas/${params.id}`),
-                api.get(`/pessoas/${params.id}/saldo-permuta`),
-                api.get(`/catalogo/pecas?fornecedorId=${params.id}`)
+                api.get(`/pessoas/${params.id}/saldo-permuta`)
             ]);
             setPessoa(resPessoa.data);
             setPermuta(resPermuta.data);
-            setPecas(Array.isArray(resPecas.data) ? resPecas.data : (resPecas.data?.data || []));
+            loadPecas();
+            loadFilters();
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
     };
+
+    const loadFilters = async () => {
+        try {
+            const [resM, resT, resC] = await Promise.all([
+                api.get('/marcas'),
+                api.get('/tamanhos'),
+                api.get('/categorias')
+            ]);
+            setMarcas(resM.data.map(m => ({ value: m.id.toString(), label: m.nome })));
+            setTamanhos(resT.data.map(t => ({ value: t.id.toString(), label: t.nome })));
+            setCategorias(resC.data.map(c => ({ value: c.id.toString(), label: c.nome })));
+        } catch (err) {
+            console.error("Erro ao carregar filtros", err);
+        }
+    };
+
+    const loadPecas = async () => {
+        try {
+            setIsPecasLoading(true);
+            const paramsObj = {
+                fornecedorId: params.id,
+                status: filterStatus !== 'TODOS' ? filterStatus : undefined,
+                marcaId: filterMarca || undefined,
+                tamanhoId: filterTamanho || undefined,
+                categoriaId: filterCategoria || undefined,
+                search: searchTerm || undefined,
+                dataInicio: startDate || undefined,
+                dataFim: endDate || undefined
+            };
+
+            const res = await api.get('/catalogo/pecas', { params: paramsObj });
+            setPecas(Array.isArray(res.data) ? res.data : (res.data?.data || []));
+        } catch (err) {
+            console.error("Erro ao carregar peças", err);
+        } finally {
+            setIsPecasLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (params.id) {
+            const delayDebounce = setTimeout(() => {
+                loadPecas();
+            }, 500);
+            return () => clearTimeout(delayDebounce);
+        }
+    }, [searchTerm, filterStatus, filterMarca, filterTamanho, filterCategoria, startDate, endDate]);
 
     const openEdit = () => {
         setEditForm({
@@ -193,11 +256,12 @@ export default function DetalhesPessoaPage() {
         const dataToExport = pecas.filter(p => selectedPecas.includes(p.id));
         const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(p => ({
             ID: p.id,
+            Data_Entrada: p.data_entrada ? new Date(p.data_entrada).toLocaleDateString('pt-BR') : '-',
             Descricao: p.descricao_curta,
             Marca: p.marca?.nome,
             Tamanho: p.tamanho?.nome,
             Preco_Venda: p.preco_venda,
-            Comissao: p.comissao_padrao,
+            Comissao: (p.comissao_padrao || 50) + "%",
             Valor_Liquido: p.valor_liquido_fornecedor,
             Status: p.status
         })));
@@ -225,23 +289,28 @@ export default function DetalhesPessoaPage() {
                     <table>
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Peça</th>
-                                <th>Preço Venda</th>
-                                <th>Comissão</th>
-                                <th>Vlr Líquido</th>
-                                <th>Status</th>
+                                <th style="width: 80px;">ID</th>
+                                <th style="width: 100px;">Data Ent.</th>
+                                <th>Peça / Descrição</th>
+                                <th style="width: 100px;">Preço Venda</th>
+                                <th style="width: 80px;">Comissão</th>
+                                <th style="width: 100px;">Vlr Líquido</th>
+                                <th style="width: 100px;">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${dataToPrint.map(p => `
                                 <tr>
-                                    <td>#${p.id}</td>
-                                    <td>${p.descricao_curta} (${p.marca?.nome})</td>
-                                    <td>R$ ${parseFloat(p.preco_venda).toFixed(2)}</td>
-                                    <td>${p.comissao_padrao}%</td>
-                                    <td>R$ ${parseFloat(p.valor_liquido_fornecedor).toFixed(2)}</td>
-                                    <td>${p.status}</td>
+                                    <td style="font-family: monospace;">#${String(p.id).padStart(4, '0')}</td>
+                                    <td>${p.data_entrada ? new Date(p.data_entrada).toLocaleDateString('pt-BR') : '-'}</td>
+                                    <td>
+                                        <div style="font-weight: bold;">${p.descricao_curta}</div>
+                                        <div style="font-size: 10px; color: #666;">${p.marca?.nome || '-'} | ${p.tamanho?.nome || '-'}</div>
+                                    </td>
+                                    <td>R$ ${parseFloat(p.preco_venda || 0).toFixed(2)}</td>
+                                    <td>${p.comissao_padrao || 50}%</td>
+                                    <td style="font-weight: bold; color: green;">R$ ${parseFloat(p.valor_liquido_fornecedor || 0).toFixed(2)}</td>
+                                    <td><span style="font-size: 10px; background: #eee; padding: 2px 5px; border-radius: 4px;">${p.status}</span></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -460,7 +529,100 @@ export default function DetalhesPessoaPage() {
                                 <Badge className="bg-primary text-primary-foreground">{pecas.length} itens</Badge>
                             </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="space-y-4">
+                            {/* Filtros */}
+                            <div className="bg-gray-50/50 p-4 rounded-lg border space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                                    <div className="lg:col-span-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Busca</Label>
+                                        <div className="relative mt-1">
+                                            <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                                            <Input
+                                                placeholder="Buscar por nome..."
+                                                className="pl-8 h-9 text-sm"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Status</Label>
+                                        <Select value={filterStatus} onValueChange={setFilterStatus}>
+                                            <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="Status" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="TODOS">Todos</SelectItem>
+                                                <SelectItem value="DISPONIVEL">Disponível</SelectItem>
+                                                <SelectItem value="VENDIDA">Vendida</SelectItem>
+                                                <SelectItem value="DEVOLVIDA">Devolvida</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Marca</Label>
+                                        <div className="mt-1">
+                                            <SearchableSelect
+                                                options={marcas}
+                                                value={filterMarca}
+                                                onValueChange={setFilterMarca}
+                                                placeholder="Todas"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Tam.</Label>
+                                        <div className="mt-1">
+                                            <SearchableSelect
+                                                options={tamanhos}
+                                                value={filterTamanho}
+                                                onValueChange={setFilterTamanho}
+                                                placeholder="Todos"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">De:</Label>
+                                        <Input
+                                            type="date"
+                                            className="h-9 mt-1 text-xs"
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Até:</Label>
+                                        <Input
+                                            type="date"
+                                            className="h-9 mt-1 text-xs"
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                {(searchTerm || filterStatus !== 'TODOS' || filterMarca || filterTamanho || startDate || endDate) && (
+                                    <div className="flex justify-between items-center bg-white p-2 rounded border border-dashed">
+                                        <div className="text-[10px] text-muted-foreground italic flex items-center gap-2">
+                                            {isPecasLoading ? <RefreshCw className="h-3 w-3 animate-spin" /> : "Filtros ativos"}
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 text-[10px] text-red-500 hover:text-red-600 p-0"
+                                            onClick={() => {
+                                                setSearchTerm("");
+                                                setFilterStatus("TODOS");
+                                                setFilterMarca("");
+                                                setFilterTamanho("");
+                                                setFilterCategoria("");
+                                                setStartDate("");
+                                                setEndDate("");
+                                            }}
+                                        >
+                                            <X className="h-3 w-3 mr-1" /> Limpar Filtros
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -468,6 +630,7 @@ export default function DetalhesPessoaPage() {
                                             <Checkbox checked={selectedPecas.length === pecas.length && pecas.length > 0} onCheckedChange={toggleAllPecas} />
                                         </TableHead>
                                         <TableHead className="w-[80px]">ID</TableHead>
+                                        <TableHead className="w-[100px]">Data Ent.</TableHead>
                                         <TableHead>Peça</TableHead>
                                         <TableHead>Preço Venda</TableHead>
                                         <TableHead>Comissão</TableHead>
@@ -476,19 +639,22 @@ export default function DetalhesPessoaPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {pecas.length > 0 ? pecas.map((p) => (
+                                    {isPecasLoading ? (
+                                        <TableRow><TableCell colSpan={7} className="text-center py-20"><RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary/20" /></TableCell></TableRow>
+                                    ) : pecas.length > 0 ? pecas.map((p) => (
                                         <TableRow key={p.id} className={selectedPecas.includes(p.id) ? "bg-primary/5" : ""}>
                                             <TableCell>
                                                 <Checkbox checked={selectedPecas.includes(p.id)} onCheckedChange={() => togglePecaSelection(p.id)} />
                                             </TableCell>
-                                            <TableCell className="font-mono text-xs">#{String(p.id).padStart(4, '0')}</TableCell>
+                                            <TableCell className="font-mono text-[10px] text-muted-foreground">#{String(p.id).padStart(4, '0')}</TableCell>
+                                            <TableCell className="text-xs">{p.data_entrada ? new Date(p.data_entrada).toLocaleDateString('pt-BR') : '-'}</TableCell>
                                             <TableCell>
-                                                <div className="font-bold">{p.descricao_curta}</div>
-                                                <div className="text-[10px] text-muted-foreground uppercase">{p.marca?.nome} • {p.tamanho?.nome}</div>
+                                                <div className="font-bold text-sm">{p.descricao_curta}</div>
+                                                <div className="text-[10px] text-muted-foreground uppercase">{p.marca?.nome || '-'} • {p.tamanho?.nome || '-'}</div>
                                             </TableCell>
-                                            <TableCell>R$ {parseFloat(p.preco_venda || 0).toFixed(2)}</TableCell>
-                                            <TableCell>{p.comissao_padrao || 50}%</TableCell>
-                                            <TableCell className="font-bold text-green-600">R$ {parseFloat(p.valor_liquido_fornecedor || 0).toFixed(2)}</TableCell>
+                                            <TableCell className="text-sm">R$ {parseFloat(p.preco_venda || 0).toFixed(2)}</TableCell>
+                                            <TableCell className="text-sm">{p.comissao_padrao || 50}%</TableCell>
+                                            <TableCell className="font-bold text-green-600 text-sm">R$ {parseFloat(p.valor_liquido_fornecedor || 0).toFixed(2)}</TableCell>
                                             <TableCell>
                                                 <Badge variant={p.status === 'DISPONIVEL' ? 'default' : 'secondary'} className="text-[10px]">
                                                     {p.status}

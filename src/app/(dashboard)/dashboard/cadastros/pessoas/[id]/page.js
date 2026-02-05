@@ -12,7 +12,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { Camera, Upload } from "lucide-react";
 
 export default function DetalhesPessoaPage() {
     const { toast } = useToast();
@@ -62,6 +65,8 @@ export default function DetalhesPessoaPage() {
             data_nascimento: pessoa.data_nascimento || "",
             comissao_padrao: pessoa.comissao_padrao || 50,
             dados_pix: pessoa.dados_pix || "",
+            is_cliente: pessoa.is_cliente,
+            is_fornecedor: pessoa.is_fornecedor,
             endereco: {
                 cep: pessoa.endereco?.cep || "",
                 rua: pessoa.endereco?.rua || "",
@@ -102,6 +107,24 @@ export default function DetalhesPessoaPage() {
         }
     };
 
+    const handlePhotoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('foto', file);
+
+        try {
+            const res = await api.post(`/pessoas/${params.id}/foto`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setPessoa(res.data);
+            toast({ title: "Sucesso", description: "Foto atualizada!" });
+        } catch (err) {
+            toast({ title: "Erro", description: "Falha ao enviar foto.", variant: "destructive" });
+        }
+    };
+
     if (loading) return <div className="p-10 flex justify-center items-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
     if (!pessoa) return <div className="p-10 text-center">Pessoa não encontrada.</div>;
 
@@ -111,6 +134,23 @@ export default function DetalhesPessoaPage() {
                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
+
+                <div className="relative group">
+                    <Avatar className="h-16 w-16 border-2 border-primary/20">
+                        <AvatarImage src={pessoa.foto} className="object-cover" />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                            {pessoa.nome.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                    </Avatar>
+                    <label
+                        htmlFor="photo-upload"
+                        className="absolute bottom-0 right-0 bg-primary text-white p-1 rounded-full cursor-pointer shadow-lg hover:scale-110 transition-transform opacity-0 group-hover:opacity-100"
+                    >
+                        <Camera className="h-3 w-3" />
+                        <input type="file" id="photo-upload" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                    </label>
+                </div>
+
                 <div className="flex-1">
                     <div className="flex items-center gap-3">
                         <h1 className="text-2xl font-bold tracking-tight text-primary">{pessoa.nome}</h1>
@@ -406,6 +446,28 @@ export default function DetalhesPessoaPage() {
                                 <div className="space-y-2">
                                     <Label>Data Nascimento</Label>
                                     <Input type="date" value={editForm.data_nascimento} onChange={e => setEditForm({ ...editForm, data_nascimento: e.target.value })} />
+                                </div>
+                            </div>
+
+                            <div className="space-y-3 p-4 bg-muted/30 rounded-lg mt-2">
+                                <Label>Tipo de Cadastro</Label>
+                                <div className="flex gap-6">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="is_cliente"
+                                            checked={editForm.is_cliente}
+                                            onCheckedChange={(checked) => setEditForm({ ...editForm, is_cliente: !!checked })}
+                                        />
+                                        <Label htmlFor="is_cliente" className="font-normal cursor-pointer">Cliente</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="is_fornecedor"
+                                            checked={editForm.is_fornecedor}
+                                            onCheckedChange={(checked) => setEditForm({ ...editForm, is_fornecedor: !!checked })}
+                                        />
+                                        <Label htmlFor="is_fornecedor" className="font-normal cursor-pointer">Fornecedor</Label>
+                                    </div>
                                 </div>
                             </div>
 

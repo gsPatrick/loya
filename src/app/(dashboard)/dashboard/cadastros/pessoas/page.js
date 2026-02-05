@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "next/navigation";
 import api from "@/services/api";
@@ -196,7 +197,17 @@ function PessoasContent() {
                             {filtered.map((p) => (
                                 <TableRow key={p.id} className="hover:bg-primary/5 border-b">
                                     <TableCell className="text-gray-500">{String(p.id).padStart(4, '0')}</TableCell>
-                                    <TableCell className="font-bold text-gray-700">{p.nome}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-8 w-8 border border-primary/10">
+                                                <AvatarImage src={p.foto} className="object-cover" />
+                                                <AvatarFallback className="bg-primary/5 text-primary text-[10px]">
+                                                    {p.nome.substring(0, 2).toUpperCase()}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <span className="font-bold text-gray-700">{p.nome}</span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell>{p.cpf_cnpj}</TableCell>
                                     <TableCell className="text-xs">
                                         <div>{p.telefone_whatsapp}</div>

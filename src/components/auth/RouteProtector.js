@@ -11,8 +11,8 @@ export function RouteProtector({ children }) {
     const [hasAccess, setHasAccess] = useState(true);
 
     useEffect(() => {
-        // Skip check for sem-permissao page
-        if (pathname === '/dashboard/sem-permissao') {
+        // Skip check for sem-permissao and vendedor pages
+        if (pathname === '/dashboard/sem-permissao' || pathname === '/dashboard/vendedor') {
             setChecking(false);
             setHasAccess(true);
             return;
@@ -27,6 +27,14 @@ export function RouteProtector({ children }) {
 
             const user = JSON.parse(userStr);
             const role = user.role || 'CAIXA';
+
+            // Redirect CAIXA from main dashboard to their homepage
+            if (role === 'CAIXA' && pathname === '/dashboard') {
+                router.push('/dashboard/vendedor');
+                setHasAccess(false);
+                setChecking(false);
+                return;
+            }
 
             if (!canAccessRoute(role, pathname)) {
                 // Redirect to no-permission page

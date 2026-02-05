@@ -3,6 +3,7 @@ export const rolePermissions = {
     ADMIN: '*', // All routes
     GERENTE: '*', // All routes except /dashboard/equipe
     CAIXA: [
+        '/dashboard/vendedor',
         '/dashboard/pedidos',
         '/dashboard/pedidos/pdv',
         '/dashboard/pedidos/revisao',

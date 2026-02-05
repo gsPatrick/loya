@@ -38,9 +38,9 @@ export default function NovaSacolinhaPage() {
     const loadClientes = async (search) => {
         setLoadingClientes(true);
         try {
-            // Use /pessoas endpoint with tipo_pessoa filter for clients
+            // Use /pessoas endpoint with tipo filter for clients
             const { data } = await api.get('/pessoas', {
-                params: { search, tipo_pessoa: 'CLIENTE' }
+                params: { search, tipo: 'CLIENTE' }
             });
             setClientes(data.rows || data || []);
         } catch (err) {

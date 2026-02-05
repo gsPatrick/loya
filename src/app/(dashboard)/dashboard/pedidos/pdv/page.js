@@ -221,20 +221,23 @@ export default function PDVPage() {
                 return;
             }
 
-            const isNumeric = !isNaN(barcodeInput.trim()) && barcodeInput.trim() !== "";
-            const searchVal = barcodeInput.trim();
+            // Normalize: If numeric, consider stripping leading zeros for ID match
+            const rawInput = barcodeInput.trim();
+            const numericId = parseInt(rawInput, 10);
+            const isNumeric = !isNaN(numericId) && /^\d+$/.test(rawInput); // Strict numeric check
 
-            // 1. STRATEGIC PRIORITY: Exact ID Match (Absolute priority for barcodes based on ID)
+            // Prioritize Exact ID Match (handling leading zeros: 007629 -> 7629)
             let product = null;
             if (isNumeric) {
-                const numericId = parseInt(searchVal);
+                // Try finding by strict ID first (e.g. input 7629 or 007629 -> matches ID 7629)
                 product = foundProducts.find(p => p.id === numericId);
             }
 
-            // 2. SECONDARY PRIORITY: Exact Label Code (SKU) Match
+            // If not found by ID, try Tag Code or Description
             if (!product) {
                 product = foundProducts.find(p =>
-                    p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase() === searchVal.toLowerCase()
+                    (p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase() === rawInput.toLowerCase()) ||
+                    (p.sku_ecommerce && p.sku_ecommerce.toLowerCase() === rawInput.toLowerCase())
                 );
             }
 

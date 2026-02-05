@@ -14,7 +14,11 @@ import {
     Save,
     Truck,
     MoreHorizontal,
-    Loader2
+    Loader2,
+    ShoppingBag,
+    History,
+    UserPlus,
+    ArrowRight
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -82,6 +86,12 @@ export default function PDVPage() {
     const [paymentMethod, setPaymentMethod] = useState("DINHEIRO"); // Default
     const [voucherAmount, setVoucherAmount] = useState(0); // Amount to pay with voucher
     const [isProcessing, setIsProcessing] = useState(false);
+
+    // Sacolinha Integration
+    const [activeSacolinha, setActiveSacolinha] = useState(null); // The current active sacolinha object
+    const [sacolinhaModalOpen, setSacolinhaModalOpen] = useState(false);
+    const [existingSacolinhas, setExistingSacolinhas] = useState([]);
+    const [isLoadingSacolinhas, setIsLoadingSacolinhas] = useState(false);
 
     const barcodeInputRef = useRef(null);
 
@@ -175,10 +185,73 @@ export default function PDVPage() {
     useEffect(() => {
         if (selectedClient) {
             fetchSaldoPermuta(selectedClient);
+            // Trigger Sacolinha Options
+            handleClientSelection(selectedClient);
         } else {
             setSaldoPermuta(null);
+            setActiveSacolinha(null);
+            setItems([]);
         }
     }, [selectedClient]);
+
+    const handleClientSelection = async (clientId) => {
+        setIsLoadingSacolinhas(true);
+        try {
+            const res = await api.get('/vendas/sacolinhas', {
+                params: { clienteId: clientId, status: 'ABERTA' }
+            });
+            setExistingSacolinhas(res.data);
+            setSacolinhaModalOpen(true);
+        } catch (err) {
+            console.error("Erro ao buscar sacolinhas", err);
+        } finally {
+            setIsLoadingSacolinhas(false);
+        }
+    };
+
+    const handleCreateSacolinha = async () => {
+        try {
+            const res = await api.post('/vendas/sacolinhas', { clienteId: selectedClient });
+            setActiveSacolinha(res.data);
+            setItems([]); // New sacolinha starts empty
+            setSacolinhaModalOpen(false);
+            toast({
+                title: "Nova Sacolinha",
+                description: "Sacolinha aberta! Os itens adicionados agora serão salvos nela.",
+                className: "bg-cyan-600 text-white border-none"
+            });
+        } catch (err) {
+            toast({ title: "Erro", description: "Não foi possível criar sacolinha.", variant: "destructive" });
+        }
+    };
+
+    const handleSelectExistingSacolinha = (sacolinha) => {
+        setActiveSacolinha(sacolinha);
+        // Load items from sacolinha into PDV
+        const formattedItems = (sacolinha.itens || []).map(i => ({
+            pecaId: i.id,
+            codigo: i.codigo_etiqueta,
+            descricao: i.descricao_curta || i.nome,
+            preco: parseFloat(i.preco_venda),
+            qtd: 1
+        }));
+        setItems(formattedItems);
+        setSacolinhaModalOpen(false);
+        toast({
+            title: "Sacolinha Selecionada",
+            description: `Retomando sacolinha #${sacolinha.id}.`,
+            className: "bg-blue-600 text-white border-none"
+        });
+    };
+
+    const handleProceedNormalSale = () => {
+        setActiveSacolinha(null);
+        setSacolinhaModalOpen(false);
+        toast({
+            title: "Venda Direta",
+            description: "Modo de venda normal ativado.",
+        });
+    };
 
     const fetchSaldoPermuta = async (clientId) => {
         setLoadingSaldo(true);
@@ -285,7 +358,7 @@ export default function PDVPage() {
         }
     };
 
-    const checkAndAddItem = (product) => {
+    const checkAndAddItem = async (product) => {
         // CHECK STOCK Rule
         if (product.quantidade <= 0 || product.status === 'VENDIDA') {
             setProductToRestock(product);
@@ -304,7 +377,22 @@ export default function PDVPage() {
             return;
         }
 
-        addItemToCart(product);
+        if (activeSacolinha) {
+            try {
+                await api.post(`/vendas/sacolinhas/${activeSacolinha.id}/itens`, { pecaId: product.id });
+                addItemToCart(product); // Also update locally
+                playBeep();
+            } catch (err) {
+                toast({
+                    title: "Erro ao adicionar",
+                    description: err.response?.data?.error || "Erro ao salvar na sacolinha.",
+                    variant: "destructive"
+                });
+            }
+        } else {
+            addItemToCart(product);
+            playBeep();
+        }
     };
 
     const handleConfirmRestock = async () => {
@@ -362,15 +450,39 @@ export default function PDVPage() {
         });
     };
 
-    const handleRemoveItem = (index) => {
-        const newItems = [...items];
-        newItems.splice(index, 1);
-        setItems(newItems);
+    const handleRemoveItem = async (index) => {
+        const itemToRemove = items[index];
+
+        if (activeSacolinha) {
+            try {
+                await api.delete(`/vendas/sacolinhas/${activeSacolinha.id}/itens/${itemToRemove.pecaId}`);
+                const newItems = [...items];
+                newItems.splice(index, 1);
+                setItems(newItems);
+                toast({ title: "Item Removido", description: "Removido da sacolinha com sucesso." });
+            } catch (err) {
+                toast({ title: "Erro", description: "Não foi possível remover da sacolinha.", variant: "destructive" });
+            }
+        } else {
+            const newItems = [...items];
+            newItems.splice(index, 1);
+            setItems(newItems);
+        }
     };
 
     const handleFinishSale = async () => {
         if (items.length === 0) {
             toast({ title: "Carrinho vazio", description: "Adicione itens antes de finalizar.", variant: "destructive" });
+            return;
+        }
+
+        if (activeSacolinha) {
+            toast({
+                title: "Sacolinha Salva!",
+                description: "Itens sincronizados. Voltando para a página de sacolinhas.",
+                className: "bg-blue-600 text-white border-none"
+            });
+            router.push(`/dashboard/sacolinhas/${activeSacolinha.id}`);
             return;
         }
 
@@ -565,6 +677,16 @@ export default function PDVPage() {
                                     Vence em {new Date(saldoPermuta.proximoVencimento).toLocaleDateString()}
                                 </span>
                             )}
+                        </div>
+                    )}
+                    {activeSacolinha && (
+                        <div className="mt-2 animate-bounce flex items-center gap-2">
+                            <Badge className="bg-cyan-600 text-white border-none gap-2 px-3 py-1">
+                                <ShoppingBag className="h-4 w-4" /> Editando Sacolinha #{activeSacolinha.id}
+                            </Badge>
+                            <Button variant="ghost" size="sm" className="text-xs text-red-500 h-6 px-2" onClick={() => setActiveSacolinha(null)}>
+                                Sair do Modo Sacolinha
+                            </Button>
                         </div>
                     )}
                 </div>
@@ -941,7 +1063,7 @@ export default function PDVPage() {
                                 disabled={isProcessing || isSaldoInsuficiente}
                                 className={`w-full h-12 font-bold text-base shadow-lg ${isSaldoInsuficiente ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white shadow-green-200'}`}
                             >
-                                {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : (isSaldoInsuficiente ? "SALDO INSUFICIENTE" : "CONCLUIR VENDA (F5)")}
+                                {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : (isSaldoInsuficiente ? "SALDO INSUFICIENTE" : (activeSacolinha ? "CONCLUIR EDICÃO SAC." : "CONCLUIR VENDA (F5)"))}
                             </Button>
 
                             <div className="grid grid-cols-2 gap-3 w-full">
@@ -1099,6 +1221,87 @@ export default function PDVPage() {
                 </DialogContent>
             </Dialog>
 
+            {/* Modal de Escolha da Sacolinha */}
+            <Dialog open={sacolinhaModalOpen} onOpenChange={setSacolinhaModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+                            <ShoppingBag className="h-6 w-6 text-cyan-600" /> Opções de Sacolinha
+                        </DialogTitle>
+                        <DialogDescription>
+                            O que deseja fazer com esta venda?
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {isLoadingSacolinhas ? (
+                        <div className="flex justify-center py-10">
+                            <Loader2 className="h-10 w-10 animate-spin text-cyan-600" />
+                        </div>
+                    ) : (
+                        <div className="grid gap-4 py-4">
+                            <Button
+                                className="h-16 flex justify-between px-6 bg-cyan-600 hover:bg-cyan-700 shadow-md transform active:scale-95 transition-all"
+                                onClick={handleCreateSacolinha}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-white/20 p-2 rounded-lg">
+                                        <UserPlus className="h-6 w-6" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-bold text-lg text-white">Criar Sacolinha</div>
+                                        <div className="text-xs text-white/70">Iniciar novo rascunho de venda</div>
+                                    </div>
+                                </div>
+                                <ArrowRight className="h-5 w-5 text-white" />
+                            </Button>
+
+                            {existingSacolinhas.length > 0 && (
+                                <div className="space-y-2">
+                                    <Label className="text-[11px] uppercase font-bold text-muted-foreground tracking-widest pl-1">Ou continuar existente:</Label>
+                                    <div className="grid gap-2 max-h-[200px] overflow-y-auto pr-1">
+                                        {existingSacolinhas.map(s => (
+                                            <Button
+                                                key={s.id}
+                                                variant="outline"
+                                                className="h-14 justify-between border-cyan-100 hover:border-cyan-200 hover:bg-cyan-50"
+                                                onClick={() => handleSelectExistingSacolinha(s)}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <History className="h-5 w-5 text-cyan-600" />
+                                                    <div className="text-left">
+                                                        <div className="font-semibold">Sacolinha #{s.id}</div>
+                                                        <div className="text-[10px] text-muted-foreground">
+                                                            {s.itens?.length || 0} itens • {new Date(s.createdAt).toLocaleDateString()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <ArrowRight className="h-4 w-4 text-cyan-600" />
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <Separator />
+
+                            <Button
+                                variant="ghost"
+                                className="h-14 justify-between hover:bg-slate-100 hover:text-slate-900 border"
+                                onClick={handleProceedNormalSale}
+                            >
+                                <div className="flex items-center gap-3 text-slate-600">
+                                    <Plus className="h-5 w-5" />
+                                    <div className="text-left">
+                                        <div className="font-semibold">Venda Direta (Sem Sacolinha)</div>
+                                        <div className="text-[10px]">Seguir para o checkout da loja agora</div>
+                                    </div>
+                                </div>
+                                <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

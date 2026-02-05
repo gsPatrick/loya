@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     ShoppingBag, ArrowLeft, Search, Plus, Trash2, Loader2,
-    User, Clock, Send, PackageCheck, XCircle, Package, Shirt, Barcode
+    User, Clock, Send, PackageCheck, XCircle, Package, Shirt, Barcode, Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,10 @@ import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -38,6 +42,12 @@ export default function DetalheSacolinhaPage() {
     const [addingPeca, setAddingPeca] = useState(null);
     const [removingPeca, setRemovingPeca] = useState(null);
     const [confirmRemove, setConfirmRemove] = useState(null);
+
+    // Restock Modal State
+    const [restockModalOpen, setRestockModalOpen] = useState(false);
+    const [productToRestock, setProductToRestock] = useState(null);
+    const [restockQuantity, setRestockQuantity] = useState(1);
+    const [isRestocking, setIsRestocking] = useState(false);
 
     // Beep sound
     const playBeep = () => {
@@ -62,7 +72,6 @@ export default function DetalheSacolinhaPage() {
         loadAllProducts();
     }, [id]);
 
-    // Focus barcode input when sacolinha is open
     useEffect(() => {
         if (sacolinha?.status === 'ABERTA' && barcodeInputRef.current) {
             barcodeInputRef.current.focus();
@@ -93,7 +102,6 @@ export default function DetalheSacolinhaPage() {
         }
     };
 
-    // PDV-style search on Enter
     const handleSearchProduct = async () => {
         if (!barcodeInput.trim()) return;
 
@@ -118,19 +126,15 @@ export default function DetalheSacolinhaPage() {
             const upperInput = rawInput.toUpperCase();
             let product = null;
 
-            // STRICT SEARCH LOGIC (same as PDV)
             if (upperInput.startsWith("TAG-")) {
                 product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase() === upperInput);
             } else {
                 const numericId = parseInt(rawInput, 10);
                 const isNumeric = !isNaN(numericId) && /^\d+$/.test(rawInput);
-
                 if (isNumeric) {
                     product = foundProducts.find(p => p.id === numericId);
-                } else {
-                    if (foundProducts.length === 1) {
-                        product = foundProducts[0];
-                    }
+                } else if (foundProducts.length === 1) {
+                    product = foundProducts[0];
                 }
             }
 
@@ -151,18 +155,13 @@ export default function DetalheSacolinhaPage() {
                 return;
             }
 
-            // Validate product
-            if (product.status !== 'DISPONIVEL') {
-                toast({
-                    title: "Peça indisponível",
-                    description: `Esta peça está com status ${product.status}.`,
-                    variant: "destructive"
-                });
-                setBarcodeInput("");
+            if (product.status !== 'DISPONIVEL' || product.quantidade <= 0) {
+                setProductToRestock(product);
+                setRestockQuantity(1);
+                setRestockModalOpen(true);
                 return;
             }
 
-            // Check if already in sacolinha
             if (sacolinha.itens?.find(i => i.id === product.id)) {
                 toast({
                     title: "Item já adicionado",
@@ -173,7 +172,6 @@ export default function DetalheSacolinhaPage() {
                 return;
             }
 
-            // Add item
             await handleAddItem(product.id);
             playBeep();
             setBarcodeInput("");
@@ -192,7 +190,42 @@ export default function DetalheSacolinhaPage() {
         }
     };
 
-    // Real-time suggestions filtering
+    const handleConfirmRestock = async () => {
+        if (!productToRestock) return;
+        setIsRestocking(true);
+        try {
+            const newStock = (productToRestock.quantidade || 0) + parseInt(restockQuantity);
+            await api.put(`/catalogo/pecas/${productToRestock.id}`, {
+                quantidade: newStock
+            });
+
+            toast({
+                title: "Estoque Atualizado",
+                description: `Produto agora tem ${newStock} itens e está DISPONÍVEL.`,
+                className: "bg-green-600 text-white border-none"
+            });
+
+            await handleAddItem(productToRestock.id);
+            playBeep();
+
+            setRestockModalOpen(false);
+            setProductToRestock(null);
+            setBarcodeInput("");
+            setProductSuggestions([]);
+            loadAllProducts();
+
+        } catch (err) {
+            console.error(err);
+            toast({
+                title: "Erro ao atualizar estoque",
+                description: "Tente novamente.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsRestocking(false);
+        }
+    };
+
     const handleInputChange = (e) => {
         const value = e.target.value;
         setBarcodeInput(value);
@@ -209,29 +242,18 @@ export default function DetalheSacolinhaPage() {
         const isNumeric = !isNaN(numericId) && /^\d+$/.test(value);
 
         const filtered = allProducts.filter(p => {
-            // Only show DISPONIVEL items
-            if (p.status !== 'DISPONIVEL') return false;
-            // Exclude items already in sacolinha
             if (sacolinha?.itens?.find(i => i.id === p.id)) return false;
 
-            // ID Match
             if (isNumeric) {
                 const idString = String(p.id);
-                const paddedId = idString.padStart(4, '0');
-                if (idString.includes(value) || paddedId.includes(value)) {
-                    return true;
-                }
+                if (idString.includes(value) || idString.padStart(4, '0').includes(value)) return true;
             }
 
-            // TAG Match
             if (isTagSearch) {
-                return (
-                    (p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase().includes(searchLower)) ||
-                    (p.sku_ecommerce && p.sku_ecommerce.toLowerCase().includes(searchLower))
-                );
+                return (p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase().includes(searchLower)) ||
+                    (p.sku_ecommerce && p.sku_ecommerce.toLowerCase().includes(searchLower));
             }
 
-            // Description match
             return p.descricao_curta && p.descricao_curta.toLowerCase().includes(searchLower);
         }).slice(0, 10);
 
@@ -256,6 +278,12 @@ export default function DetalheSacolinhaPage() {
     };
 
     const handleSuggestionClick = async (product) => {
+        if (product.status !== 'DISPONIVEL' || product.quantidade <= 0) {
+            setProductToRestock(product);
+            setRestockQuantity(1);
+            setRestockModalOpen(true);
+            return;
+        }
         await handleAddItem(product.id);
         playBeep();
         setBarcodeInput("");
@@ -414,7 +442,7 @@ export default function DetalheSacolinhaPage() {
                             <Barcode className="h-5 w-5" /> Adicionar Peças
                         </CardTitle>
                         <CardDescription>
-                            Digite o código, ID ou TAG e pressione Enter. Use o leitor de código de barras para adicionar rapidamente.
+                            Digite o código, ID ou TAG e pressione Enter. Peças sem estoque aparecerão em vermelho e podem ser repostas.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4">
@@ -446,17 +474,26 @@ export default function DetalheSacolinhaPage() {
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center">
-                                                    <Shirt className="h-5 w-5 text-gray-400" />
+                                                    <Shirt className={`h-5 w-5 ${p.status !== 'DISPONIVEL' || p.quantidade <= 0 ? 'text-red-400' : 'text-gray-400'}`} />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="font-medium text-base">{p.descricao_curta}</span>
+                                                    <span className={`font-medium text-base ${p.status !== 'DISPONIVEL' || p.quantidade <= 0 ? 'text-red-600' : ''}`}>
+                                                        {p.descricao_curta}
+                                                        {(p.status !== 'DISPONIVEL' || p.quantidade <= 0) && (
+                                                            <span className="ml-2 text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full uppercase font-bold">
+                                                                Sem Estoque
+                                                            </span>
+                                                        )}
+                                                    </span>
                                                     <span className="text-xs text-muted-foreground">
                                                         ID: {String(p.id).padStart(4, '0')} | TAG: {p.codigo_etiqueta || '-'}
                                                     </span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <span className="font-bold text-primary">{formatCurrency(p.preco_venda)}</span>
+                                                <span className={`font-bold ${p.status !== 'DISPONIVEL' || p.quantidade <= 0 ? 'text-red-600' : 'text-primary'}`}>
+                                                    {formatCurrency(p.preco_venda)}
+                                                </span>
                                                 {p.tamanho && <Badge variant="outline">{p.tamanho.nome || p.tamanho}</Badge>}
                                             </div>
                                         </div>
@@ -491,7 +528,7 @@ export default function DetalheSacolinhaPage() {
                             {!sacolinha.itens?.length ? (
                                 <TableRow>
                                     <TableCell colSpan={sacolinha.status === 'ABERTA' ? 6 : 5} className="h-32 text-center text-gray-500">
-                                        Nenhum item adicionado ainda. Use a busca acima para adicionar peças.
+                                        Nenhum item adicionado ainda.
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -524,8 +561,6 @@ export default function DetalheSacolinhaPage() {
                             )}
                         </TableBody>
                     </Table>
-
-                    {/* Total Footer */}
                     <div className="border-t p-4 bg-muted/30 flex justify-between items-center">
                         <span className="text-gray-500">{sacolinha.itens?.length || 0} itens</span>
                         <div className="text-right">
@@ -543,7 +578,6 @@ export default function DetalheSacolinhaPage() {
                         <AlertDialogTitle>Remover item?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Deseja remover a peça <strong>{confirmRemove?.codigo_etiqueta}</strong> da sacolinha?
-                            A peça voltará a ficar disponível para venda.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -557,6 +591,41 @@ export default function DetalheSacolinhaPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Restock Modal */}
+            <Dialog open={restockModalOpen} onOpenChange={setRestockModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-red-600 flex items-center gap-2">
+                            <XCircle className="h-5 w-5" /> Produto sem Estoque
+                        </DialogTitle>
+                        <DialogDescription>
+                            O produto <strong>{productToRestock?.descricao_curta}</strong> está sem estoque ou marcado como {productToRestock?.status}.
+                            Deseja repor unidades agora para adicioná-lo à sacolinha?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Quantidade a Adicionar</Label>
+                            <Input
+                                type="number"
+                                min="1"
+                                value={restockQuantity}
+                                onChange={(e) => setRestockQuantity(e.target.value)}
+                                className="h-12 text-lg"
+                                autoFocus
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRestockModalOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleConfirmRestock} disabled={isRestocking} className="bg-primary hover:bg-primary/90">
+                            {isRestocking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Repor e Adicionar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -92,9 +92,10 @@ function CadastroPecasContent() {
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const fornecedorIdParam = searchParams.get('fornecedorId');
+    const searchTermParam = searchParams.get('search') || "";
 
-    const [searchTerm, setSearchTerm] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [searchTerm, setSearchTerm] = useState(searchTermParam);
+    const [debouncedSearch, setDebouncedSearch] = useState(searchTermParam);
 
     // Filters State
     const [filterFornecedor, setFilterFornecedor] = useState(fornecedorIdParam || "");
@@ -1241,26 +1242,48 @@ function CadastroPecasContent() {
                                     <p className="text-sm text-gray-500">{currentItem.descricao_detalhada || "Sem descrição detalhada."}</p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     <div className="p-3 bg-gray-50 rounded-lg border">
-                                        <div className="text-xs text-gray-500 uppercase">Preço Venda</div>
+                                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Preço Venda</div>
                                         <div className="text-xl font-bold text-green-700">
                                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentItem.preco_venda || 0)}
                                         </div>
                                     </div>
                                     <div className="p-3 bg-gray-50 rounded-lg border">
-                                        <div className="text-xs text-gray-500 uppercase">Status</div>
-                                        <div><Badge variant="secondary">{currentItem.status}</Badge></div>
+                                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Estoque Atual</div>
+                                        <div className={`text-xl font-bold ${currentItem.quantidade <= 0 ? 'text-red-600' : 'text-blue-700'}`}>
+                                            {currentItem.quantidade || 0} unid.
+                                        </div>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 rounded-lg border">
+                                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status Atual</div>
+                                        <div className="mt-1">
+                                            <Badge className={currentItem.status === 'DISPONIVEL' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                                                {currentItem.status}
+                                            </Badge>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <h4 className="font-semibold text-sm border-b pb-1">Atributos</h4>
-                                    <div className="grid grid-cols-2 gap-y-2 text-sm">
-                                        <div><span className="text-gray-500">Tamanho:</span> {currentItem.tamanho?.nome || '-'}</div>
-                                        <div><span className="text-gray-500">Cor:</span> {currentItem.cor?.nome || '-'}</div>
-                                        <div><span className="text-gray-500">Marca:</span> {currentItem.marca?.nome || '-'}</div>
-                                        <div><span className="text-gray-500">Categoria:</span> {currentItem.categoria?.nome || '-'}</div>
+                                <div className="space-y-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                    <h4 className="font-bold text-xs uppercase text-gray-400 tracking-widest border-b pb-2 flex items-center gap-2">
+                                        <Shirt className="h-3 w-3" /> Atributos e Identificação
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div className="space-y-1">
+                                            <span className="text-gray-400 block text-[11px] uppercase">Código TAG:</span>
+                                            <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{currentItem.codigo_etiqueta || '-'}</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-gray-400 block text-[11px] uppercase">E-commerce Sync:</span>
+                                            <Badge variant="outline" className={currentItem.sync_ecommerce ? "border-green-200 text-green-600 bg-green-50" : "border-gray-200 text-gray-400"}>
+                                                {currentItem.sync_ecommerce ? "Sincronizado" : "Inativo"}
+                                            </Badge>
+                                        </div>
+                                        <div><span className="text-gray-400">Tamanho:</span> <span className="font-medium">{currentItem.tamanho?.nome || '-'}</span></div>
+                                        <div><span className="text-gray-400">Cor:</span> <span className="font-medium">{currentItem.cor?.nome || '-'}</span></div>
+                                        <div><span className="text-gray-400">Marca:</span> <span className="font-medium">{currentItem.marca?.nome || '-'}</span></div>
+                                        <div><span className="text-gray-400">Categoria:</span> <span className="font-medium">{currentItem.categoria?.nome || '-'}</span></div>
                                     </div>
                                 </div>
 

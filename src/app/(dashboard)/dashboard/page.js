@@ -1,3 +1,5 @@
+"use client";
+
 // src/app/dashboard/page.js
 // Build trigger for main branch redeploy
 

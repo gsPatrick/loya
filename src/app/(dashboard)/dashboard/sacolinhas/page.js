@@ -113,48 +113,47 @@ export default function SacolinhasPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="border-l-4 border-l-cyan-500">
-                    <CardContent className="pt-4">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Abertas</p>
-                                <p className="text-2xl font-bold">{stats.abertas}</p>
-                            </div>
-                            <ShoppingBag className="h-8 w-8 text-cyan-500" />
-                        </div>
+                <Card className="bg-cyan-500 text-white border-none shadow-md">
+                    <CardHeader className="p-4 pb-2">
+                        <CardTitle className="text-xs font-medium opacity-90 uppercase tracking-wider flex items-center gap-2">
+                            <ShoppingBag className="h-4 w-4" /> Abertas
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <div className="text-3xl font-bold">{stats.abertas}</div>
                     </CardContent>
                 </Card>
-                <Card className="border-l-4 border-l-amber-500">
-                    <CardContent className="pt-4">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Prontas</p>
-                                <p className="text-2xl font-bold">{stats.prontas}</p>
-                            </div>
-                            <Clock className="h-8 w-8 text-amber-500" />
-                        </div>
+
+                <Card className="bg-amber-500 text-white border-none shadow-md">
+                    <CardHeader className="p-4 pb-2">
+                        <CardTitle className="text-xs font-medium opacity-90 uppercase tracking-wider flex items-center gap-2">
+                            <Clock className="h-4 w-4" /> Prontas
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <div className="text-3xl font-bold">{stats.prontas}</div>
                     </CardContent>
                 </Card>
-                <Card className="border-l-4 border-l-blue-500">
-                    <CardContent className="pt-4">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Enviadas</p>
-                                <p className="text-2xl font-bold">{stats.enviadas}</p>
-                            </div>
-                            <Send className="h-8 w-8 text-blue-500" />
-                        </div>
+
+                <Card className="bg-blue-600 text-white border-none shadow-md">
+                    <CardHeader className="p-4 pb-2">
+                        <CardTitle className="text-xs font-medium opacity-90 uppercase tracking-wider flex items-center gap-2">
+                            <Send className="h-4 w-4" /> Enviadas
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <div className="text-3xl font-bold">{stats.enviadas}</div>
                     </CardContent>
                 </Card>
-                <Card className="border-l-4 border-l-green-500">
-                    <CardContent className="pt-4">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Fechadas</p>
-                                <p className="text-2xl font-bold">{stats.fechadas}</p>
-                            </div>
-                            <PackageCheck className="h-8 w-8 text-green-500" />
-                        </div>
+
+                <Card className="bg-green-600 text-white border-none shadow-md">
+                    <CardHeader className="p-4 pb-2">
+                        <CardTitle className="text-xs font-medium opacity-90 uppercase tracking-wider flex items-center gap-2">
+                            <PackageCheck className="h-4 w-4" /> Fechadas
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <div className="text-3xl font-bold">{stats.fechadas}</div>
                     </CardContent>
                 </Card>
             </div>

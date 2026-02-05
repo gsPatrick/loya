@@ -57,18 +57,6 @@ export default function ConfiguracoesPage() {
             response.data.forEach(conf => {
                 configMap[conf.chave] = conf.valor;
             });
-            // Forced migration to compact dimensions (31x55)
-            if (configMap.LABEL_WIDTH !== '31') configMap.LABEL_WIDTH = '31';
-            if (configMap.LABEL_HEIGHT !== '55') configMap.LABEL_HEIGHT = '55';
-            // Set defaults for print offsets if they don't exist
-            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_TOP')) configMap.LABEL_PRINT_MARGIN_TOP = '0';
-            if (!configMap.hasOwnProperty('LABEL_PRINT_MARGIN_LEFT')) configMap.LABEL_PRINT_MARGIN_LEFT = '0';
-            if (!configMap.hasOwnProperty('LABEL_HORIZONTAL_GAP')) configMap.LABEL_HORIZONTAL_GAP = '0';
-
-            // Forced migration to ZERO for clean test
-            if (configMap.LABEL_PRINT_MARGIN_TOP !== '0') configMap.LABEL_PRINT_MARGIN_TOP = '0';
-            if (configMap.LABEL_PRINT_MARGIN_LEFT !== '0') configMap.LABEL_PRINT_MARGIN_LEFT = '0';
-
             setConfigs(prev => ({ ...prev, ...configMap }));
         } catch (error) {
             console.error("Erro ao carregar configurações:", error);

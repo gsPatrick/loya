@@ -610,16 +610,25 @@ export default function PDVPage() {
                                             const searchLower = val.toLowerCase();
                                             const numericId = parseInt(val, 10);
                                             const isNumeric = !isNaN(numericId) && /^\d+$/.test(val);
+                                            const searchUpper = val.toUpperCase();
+                                            const isTagSearch = searchUpper.startsWith("TAG-");
 
                                             const filtered = allProducts.filter(p => {
-                                                // ID Match (Exact, handling zeros)
-                                                if (isNumeric && p.id === numericId) return true;
+                                                // 1. Strict ID Match (Numeric Input)
+                                                if (isNumeric) {
+                                                    return p.id === numericId;
+                                                }
 
-                                                // Description or Tag match
-                                                return (
-                                                    (p.descricao_curta && p.descricao_curta.toLowerCase().includes(searchLower)) ||
-                                                    (p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase().includes(searchLower))
-                                                );
+                                                // 2. Strict TAG Match (Starts with TAG-)
+                                                if (isTagSearch) {
+                                                    return (
+                                                        (p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase().includes(searchLower)) ||
+                                                        (p.sku_ecommerce && p.sku_ecommerce.toLowerCase().includes(searchLower))
+                                                    );
+                                                }
+
+                                                // 3. Fallback: Description Only
+                                                return p.descricao_curta && p.descricao_curta.toLowerCase().includes(searchLower);
                                             }).slice(0, 10); // Limit suggestions
 
                                             setProductSuggestions(filtered);

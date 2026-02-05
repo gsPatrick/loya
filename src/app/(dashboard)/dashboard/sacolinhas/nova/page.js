@@ -148,9 +148,9 @@ export default function NovaSacolinhaPage() {
                                                             />
                                                             <div>
                                                                 <p className="font-medium">{cliente.nome}</p>
-                                                                {cliente.telefone && (
-                                                                    <p className="text-xs text-gray-500">{cliente.telefone}</p>
-                                                                )}
+                                                                <p className="text-xs text-gray-500">
+                                                                    {cliente.telefone_whatsapp || cliente.cpf_cnpj || 'Sem dados'}
+                                                                </p>
                                                             </div>
                                                         </CommandItem>
                                                     ))}
@@ -175,7 +175,10 @@ export default function NovaSacolinhaPage() {
                                     </div>
                                     <div>
                                         <p className="font-semibold text-primary">{selectedCliente.nome}</p>
-                                        <p className="text-sm text-gray-500">{selectedCliente.telefone || 'Sem telefone'}</p>
+                                        <p className="text-sm text-gray-500">{selectedCliente.telefone_whatsapp || 'Sem telefone'}</p>
+                                        {selectedCliente.cpf_cnpj && (
+                                            <p className="text-xs text-gray-400">CPF/CNPJ: {selectedCliente.cpf_cnpj}</p>
+                                        )}
                                         {selectedCliente.email && (
                                             <p className="text-xs text-gray-400">{selectedCliente.email}</p>
                                         )}

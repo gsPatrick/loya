@@ -478,11 +478,16 @@ export default function PDVPage() {
 
         if (activeSacolinha) {
             toast({
-                title: "Sacolinha Salva!",
-                description: "Itens sincronizados. Voltando para a página de sacolinhas.",
-                className: "bg-blue-600 text-white border-none"
+                title: "Sacolinha Atualizada!",
+                description: `Itens salvos na sacolinha do cliente.`,
+                className: "bg-cyan-600 text-white border-none"
             });
-            router.push(`/dashboard/sacolinhas/${activeSacolinha.id}`);
+            // Reset PDV for next customer
+            setItems([]);
+            setClientSearch("");
+            setSelectedClient("");
+            setActiveSacolinha(null);
+            setBarcodeInput("");
             return;
         }
 

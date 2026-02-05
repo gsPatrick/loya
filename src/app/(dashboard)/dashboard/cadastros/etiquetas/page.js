@@ -283,6 +283,7 @@ export default function ImprimirEtiquetasPage() {
                             text-align: center;
                             margin-top: ${labelConfig.LABEL_CODE_OFFSET_Y}mm;
                             font-family: monospace;
+                            font-weight: bold; /* ID em negrito */
                         }
                         .preco-area {
                             display: flex;
@@ -305,10 +306,11 @@ export default function ImprimirEtiquetasPage() {
                         }
                         .codigo-inferior {
                             font-size: ${Math.max(4, parseFloat(labelConfig.LABEL_FONT_SIZE_TEXT) - 1)}pt;
-                            color: rgba(255,255,255,0.6);
+                            color: rgba(255,255,255,0.9); /* Aumentada opacidade para visibilidade */
                             text-align: center;
                             margin-top: 0.5mm;
                             font-family: monospace;
+                            font-weight: bold; /* SKU e Fornecedor em negrito */
                         }
                         @media print {
                             @page {
@@ -383,7 +385,8 @@ export default function ImprimirEtiquetasPage() {
                                         width: ${labelConfig.LABEL_BARCODE_WIDTH},
                                         height: ${labelConfig.LABEL_BARCODE_HEIGHT},
                                         displayValue: false,
-                                        margin: 2
+                                        margin: 2,
+                                        lineColor: "#000000"
                                     });
                                 `;
             }).join('')}

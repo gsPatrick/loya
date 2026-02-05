@@ -102,6 +102,7 @@ function CadastroPecasContent() {
     const [filterMarca, setFilterMarca] = useState("");
     const [filterCategoria, setFilterCategoria] = useState("");
     const [filterTipoAquisicao, setFilterTipoAquisicao] = useState("TODOS");
+    const [filterStatus, setFilterStatus] = useState("TODOS");
 
     // Modal Details State
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -138,6 +139,9 @@ function CadastroPecasContent() {
     const [duplicateResults, setDuplicateResults] = useState([]);
     const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
     const [isDamageReportOpen, setIsDamageReportOpen] = useState(false);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [history, setHistory] = useState([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
     // Data Lists
     const [tamanhos, setTamanhos] = useState([]);
@@ -178,7 +182,7 @@ function CadastroPecasContent() {
     // Load items when page or search changes
     useEffect(() => {
         loadItems();
-    }, [currentPage, debouncedSearch, fornecedorIdParam, filterFornecedor, filterTamanho, filterMarca, filterCategoria, filterTipoAquisicao]);
+    }, [currentPage, debouncedSearch, fornecedorIdParam, filterFornecedor, filterTamanho, filterMarca, filterCategoria, filterTipoAquisicao, filterStatus]);
 
     const loadDropdownData = async () => {
         try {
@@ -224,6 +228,7 @@ function CadastroPecasContent() {
             if (filterMarca) params.append('marcaId', filterMarca);
             if (filterCategoria) params.append('categoriaId', filterCategoria);
             if (filterTipoAquisicao && filterTipoAquisicao !== 'TODOS') params.append('tipo_aquisicao', filterTipoAquisicao);
+            if (filterStatus && filterStatus !== 'TODOS') params.append('status', filterStatus);
 
             const res = await api.get(`/catalogo/pecas?${params.toString()}`);
             // New paginated response format
@@ -407,6 +412,21 @@ function CadastroPecasContent() {
             toast({ title: "Erro", description: "Falha na sincronização.", variant: "destructive" });
         } finally {
             setSyncingId(null);
+        }
+    };
+
+    const loadHistory = async (item) => {
+        setCurrentItem(item);
+        setIsHistoryOpen(true);
+        setIsLoadingHistory(true);
+        try {
+            const res = await api.get(`/estoque/historico/${item.id}`);
+            setHistory(res.data);
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Erro ao carregar histórico.", variant: "destructive" });
+        } finally {
+            setIsLoadingHistory(false);
         }
     };
 
@@ -894,6 +914,19 @@ function CadastroPecasContent() {
                                 </SelectContent>
                             </Select>
                         </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Status</Label>
+                            <Select value={filterStatus} onValueChange={setFilterStatus}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="TODOS">Todos</SelectItem>
+                                    <SelectItem value="DISPONIVEL">Disponível</SelectItem>
+                                    <SelectItem value="VENDIDA">Vendida</SelectItem>
+                                    <SelectItem value="RESERVADA_SACOLINHA">Reservada</SelectItem>
+                                    <SelectItem value="DEVOLVIDA">Devolvida</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     <div className="flex justify-between items-center pt-2">
@@ -910,6 +943,7 @@ function CadastroPecasContent() {
                                     setFilterMarca("");
                                     setFilterCategoria("");
                                     setFilterTipoAquisicao("TODOS");
+                                    setFilterStatus("TODOS");
                                     setSearchTerm("");
                                 }}
                                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
@@ -928,6 +962,7 @@ function CadastroPecasContent() {
                             <TableHead>Tam</TableHead>
                             <TableHead>Cor</TableHead>
                             <TableHead>Marca</TableHead>
+                            <TableHead>Status</TableHead>
                             <TableHead className="text-right">Preço</TableHead>
                             <TableHead className="text-center">Ação</TableHead>
                         </TableRow>
@@ -953,6 +988,11 @@ function CadastroPecasContent() {
                                 <TableCell><Badge variant="outline">{item.tamanho ? item.tamanho.nome : getName(tamanhos, item.tamanhoId)}</Badge></TableCell>
                                 <TableCell>{item.cor ? item.cor.nome : getName(cores, item.corId)}</TableCell>
                                 <TableCell>{item.marca ? item.marca.nome : getName(marcas, item.marcaId)}</TableCell>
+                                <TableCell>
+                                    <Badge variant={item.status === 'VENDIDA' ? 'destructive' : item.status === 'DISPONIVEL' ? 'default' : 'secondary'}>
+                                        {item.status}
+                                    </Badge>
+                                </TableCell>
                                 <TableCell className="text-right font-bold text-primary">R$ {item.preco_venda}</TableCell>
                                 <TableCell className="text-center">
                                     <div className="flex items-center justify-center gap-2">
@@ -975,6 +1015,14 @@ function CadastroPecasContent() {
                                             title="Sincronizar com E-commerce"
                                         >
                                             <RefreshCw className={`h-4 w-4 ${syncingId === item.id ? 'animate-spin' : ''}`} />
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => loadHistory(item)}
+                                            className="bg-orange-500 hover:bg-orange-600 text-white h-7 px-2"
+                                            title="Histórico de Movimentação"
+                                        >
+                                            <RefreshCw className="h-4 w-4" />
                                         </Button>
                                         <Button size="sm" onClick={() => { setCurrentItem(item); setIsDeleteOpen(true); }} className="bg-red-500 hover:bg-red-600 text-white h-7 px-2">
                                             <Trash2 className="h-4 w-4" />
@@ -1244,6 +1292,40 @@ function CadastroPecasContent() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>Fechar</Button>
                         <Button onClick={() => { setIsDetailsOpen(false); openEdit(currentItem); }}>Editar Produto</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal Histórico */}
+            <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Histórico de Movimentação - {currentItem?.descricao_curta}</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {isLoadingHistory ? (
+                            <div className="flex justify-center py-10"><RefreshCw className="h-8 w-8 animate-spin text-primary" /></div>
+                        ) : history.length === 0 ? (
+                            <div className="text-center py-10 text-muted-foreground">Nenhuma movimentação registrada.</div>
+                        ) : (
+                            <div className="space-y-4">
+                                {history.map((h, i) => (
+                                    <div key={i} className="flex items-start gap-4 p-3 border rounded-lg bg-gray-50">
+                                        <div className={`mt-1 h-2 w-2 rounded-full ${h.tipo.includes('ENTRADA') ? 'bg-green-500' : 'bg-red-500'}`} />
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-bold text-sm">{h.tipo.replace(/_/g, ' ')}</span>
+                                                <span className="text-xs text-muted-foreground">{new Date(h.createdAt || h.data_movimento).toLocaleString('pt-BR')}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mt-1">{h.motivo}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsHistoryOpen(false)}>Fechar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

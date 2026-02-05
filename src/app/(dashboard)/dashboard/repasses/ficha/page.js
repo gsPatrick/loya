@@ -13,8 +13,10 @@ import {
     FileText,
     MessageCircle,
     Printer,
-    Link as LinkIcon
+    Link as LinkIcon,
+    ArrowUpRight
 } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -163,28 +165,44 @@ export default function FichaContaCorrentePage() {
                                 <div className="w-3 h-3 rounded-full bg-green-500" />
                                 <span className="text-xs font-bold text-gray-600">Vendas de Peças</span>
                             </div>
-                            <span className="text-lg font-bold text-green-600">R$ 0,00</span>
+                            <span className="text-lg font-bold text-green-600">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                    transactions.reduce((acc, tx) => acc + (tx.categoria === 'VENDA_PECA' ? (tx.credito || 0) : 0), 0)
+                                )}
+                            </span>
                         </div>
                         <div className="bg-gray-50 p-3 rounded border border-gray-100">
                             <div className="flex items-center gap-2 mb-1">
                                 <div className="w-3 h-3 rounded-full bg-red-500" />
                                 <span className="text-xs font-bold text-gray-600">Devoluções</span>
                             </div>
-                            <span className="text-lg font-bold text-red-600">R$ 0,00</span>
+                            <span className="text-lg font-bold text-red-600">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                    transactions.reduce((acc, tx) => acc + (tx.categoria === 'DEVOLUCAO' ? (tx.credito || 0) : 0), 0)
+                                )}
+                            </span>
                         </div>
                         <div className="bg-gray-50 p-3 rounded border border-gray-100">
                             <div className="flex items-center gap-2 mb-1">
                                 <div className="w-3 h-3 rounded-full bg-blue-500" />
-                                <span className="text-xs font-bold text-gray-600">Cashback</span>
+                                <span className="text-xs font-bold text-gray-600">Utilizações</span>
                             </div>
-                            <span className="text-lg font-bold text-blue-600">R$ 0,00</span>
+                            <span className="text-lg font-bold text-blue-600">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                    transactions.reduce((acc, tx) => acc + (tx.debito || 0), 0)
+                                )}
+                            </span>
                         </div>
                         <div className="bg-gray-50 p-3 rounded border border-gray-100">
                             <div className="flex items-center gap-2 mb-1">
                                 <div className="w-3 h-3 rounded-full bg-orange-500" />
-                                <span className="text-xs font-bold text-gray-600">Créditos Diversos</span>
+                                <span className="text-xs font-bold text-gray-600">Outros Créditos</span>
                             </div>
-                            <span className="text-lg font-bold text-orange-600">R$ 0,00</span>
+                            <span className="text-lg font-bold text-orange-600">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                    transactions.reduce((acc, tx) => acc + (tx.categoria !== 'VENDA_PECA' && tx.categoria !== 'DEVOLUCAO' ? (tx.credito || 0) : 0), 0)
+                                )}
+                            </span>
                         </div>
                     </div>
 
@@ -263,9 +281,16 @@ export default function FichaContaCorrentePage() {
 
             {/* --- 4. EXTRATO (Tabela Completa) --- */}
             <Card className="border border-purple-200 shadow-sm overflow-hidden">
-                <div className="p-4 bg-white border-b flex justify-between items-center">
+                <div className="p-4 bg-white border-b flex flex-col md:flex-row justify-between items-center gap-4">
                     <h3 className="text-lg text-purple-600 font-medium">Extrato de Conta-Corrente</h3>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                        {selectedPerson && (
+                            <Link href={`/dashboard/cadastros/pecas-cadastro?fornecedorId=${selectedPerson}`}>
+                                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-9">
+                                    <ArrowUpRight className="mr-2 h-4 w-4" /> VISUALIZAR PEÇAS
+                                </Button>
+                            </Link>
+                        )}
                         <Button variant="outline" size="icon" className="text-gray-500"><Printer className="h-5 w-5" /></Button>
                         <Button variant="outline" size="icon" className="text-gray-500"><FileText className="h-5 w-5" /></Button>
                         <Button variant="outline" size="icon" className="text-green-600"><MessageCircle className="h-5 w-5" /></Button>

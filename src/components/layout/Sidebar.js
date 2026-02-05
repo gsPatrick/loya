@@ -38,10 +38,13 @@ const navItems = [
         ]
     },
     {
-        title: "Logística",
-        href: "/dashboard/pedidos/sacolinhas",
+        title: "Sacolinhas",
         icon: ShoppingBag,
-        roles: ['ADMIN', 'GERENTE']
+        roles: ['ADMIN', 'GERENTE'],
+        children: [
+            { title: "Painel de Sacolinhas", href: "/dashboard/sacolinhas", icon: ShoppingBag },
+            { title: "Nova Sacolinha", href: "/dashboard/sacolinhas/nova", icon: FolderPlus },
+        ]
     },
     {
         title: "Consultas & BI",

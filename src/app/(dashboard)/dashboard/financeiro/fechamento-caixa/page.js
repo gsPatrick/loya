@@ -152,8 +152,8 @@ export default function FechamentoCaixaPage() {
                                     key={caixa.id}
                                     onClick={() => handleSelectCaixa(caixa)}
                                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${selectedCaixa?.id === caixa.id
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-gray-200 hover:border-primary/50'
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-gray-200 hover:border-primary/50'
                                         }`}
                                 >
                                     <div className="flex justify-between items-start mb-2">
@@ -247,6 +247,7 @@ export default function FechamentoCaixaPage() {
                                                 <TableHead className="text-xs">Código</TableHead>
                                                 <TableHead className="text-xs">Data</TableHead>
                                                 <TableHead className="text-xs">Cliente</TableHead>
+                                                <TableHead className="text-xs">Vendedor(a)</TableHead>
                                                 <TableHead className="text-xs">Pagamento</TableHead>
                                                 <TableHead className="text-xs text-right">Total</TableHead>
                                             </TableRow>
@@ -257,6 +258,7 @@ export default function FechamentoCaixaPage() {
                                                     <TableCell className="font-mono">{venda.codigo}</TableCell>
                                                     <TableCell>{venda.data}</TableCell>
                                                     <TableCell>{venda.cliente}</TableCell>
+                                                    <TableCell className="font-medium text-primary">{venda.vendedor}</TableCell>
                                                     <TableCell>
                                                         {venda.pagamentos?.map(p => p.metodo).join(', ') || '-'}
                                                     </TableCell>

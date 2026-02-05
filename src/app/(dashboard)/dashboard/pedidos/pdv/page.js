@@ -376,12 +376,32 @@ export default function PDVPage() {
 
         setIsProcessing(true);
         try {
+            // 1. Calculate Discount Ratio
+            // We need to calculate subtotal locally because the state variable 'subtotal'
+            // might not be accessible or relies on render cycle.
+            const localSubtotal = items.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
+
+            let discountAmount = 0;
+            if (descontoTipo === 'percent') {
+                discountAmount = (localSubtotal * parseFloat(descontoValor || 0)) / 100;
+            } else {
+                discountAmount = parseFloat(descontoValor || 0);
+            }
+
+            // Ratio of Pay / Subtotal (e.g. 90 / 100 = 0.9)
+            // If discount > subtotal, ratio is 0 (free)
+            const payRatio = localSubtotal > 0 ? Math.max(0, localSubtotal - discountAmount) / localSubtotal : 1;
+
             const payload = {
                 clienteId: selectedClient || null,
-                itens: items.map(i => ({
-                    pecaId: i.pecaId,
-                    valor_unitario_venda: i.preco
-                })),
+                itens: items.map(i => {
+                    // Apply discount proportionally
+                    const netPrice = i.preco * payRatio;
+                    return {
+                        pecaId: i.pecaId,
+                        valor_unitario_venda: parseFloat(netPrice.toFixed(2)) // Send NET price
+                    };
+                }),
                 pagamentos: [], // Will be populated below
                 origemVendaId: null, // Optional
                 canal: "LOJA_FISICA"

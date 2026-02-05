@@ -199,76 +199,77 @@ export default function PDVPage() {
 
     // --- ACTIONS ---
 
+    // --- RESTOCK MODAL STATE ---
+    const [restockModalOpen, setRestockModalOpen] = useState(false);
+    const [productToRestock, setProductToRestock] = useState(null);
+    const [restockQuantity, setRestockQuantity] = useState(1);
+    const [isRestocking, setIsRestocking] = useState(false);
+
     const handleSearchProduct = async () => {
         if (!barcodeInput.trim()) return;
 
         setIsSearchingProduct(true);
         try {
-            // Search with broader criteria (fetch all matches)
+            // Fetch all matches first
             const res = await api.get('/catalogo/pecas', {
                 params: { search: barcodeInput }
             });
-
-            // Allow ANY status to be selected as per user request
             const foundProducts = res.data;
 
             if (foundProducts.length === 0) {
                 toast({
                     title: "Produto não encontrado",
-                    description: "Nenhum produto disponível com este código ou nome.",
+                    description: "Nenhum produto encontrado com este código ou nome.",
                     variant: "destructive"
                 });
                 setBarcodeInput("");
                 return;
             }
 
-            // Normalize: If numeric, consider stripping leading zeros for ID match
             const rawInput = barcodeInput.trim();
-            const numericId = parseInt(rawInput, 10);
-            const isNumeric = !isNaN(numericId) && /^\d+$/.test(rawInput); // Strict numeric check
-
-            // Prioritize Exact ID Match (handling leading zeros: 007629 -> 7629)
+            const upperInput = rawInput.toUpperCase();
             let product = null;
-            if (isNumeric) {
-                // Try finding by strict ID first (e.g. input 7629 or 007629 -> matches ID 7629)
-                product = foundProducts.find(p => p.id === numericId);
+
+            // STRICT SEARCH LOGIC
+            if (upperInput.startsWith("TAG-")) {
+                // Case: User specifically typed/scanned a TAG
+                product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase() === upperInput);
+            } else {
+                // Case: Not a TAG (ID or Description)
+                const numericId = parseInt(rawInput, 10);
+                const isNumeric = !isNaN(numericId) && /^\d+$/.test(rawInput);
+
+                if (isNumeric) {
+                    // Strict ID Match (123 or 00123 -> ID 123) - IGNORE TAGS
+                    product = foundProducts.find(p => p.id === numericId);
+                } else {
+                    // Text Search (Name/Description) - Fallback for non-numeric, non-tag inputs
+                    // Only match if it's NOT a numeric-looking string to avoid ID confusion
+                    if (foundProducts.length === 1) {
+                        product = foundProducts[0];
+                    }
+                }
             }
 
-            // If not found by ID, try Tag Code or Description
             if (!product) {
-                product = foundProducts.find(p =>
-                    (p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase() === rawInput.toLowerCase()) ||
-                    (p.sku_ecommerce && p.sku_ecommerce.toLowerCase() === rawInput.toLowerCase())
-                );
-            }
-
-            // 3. FALLBACK: Single match logic
-            if (!product) {
-                if (foundProducts.length === 1) {
-                    // Only one match (partial description or SKU), safe to add
-                    addItemToCart(foundProducts[0]);
-                } else if (foundProducts.length > 1) {
-                    // Multiple matches but no exact ID/SKU, force user to pick from list
+                if (foundProducts.length > 1) {
                     toast({
                         title: "Múltiplos produtos encontrados",
                         description: "Use a lista de sugestões para selecionar o item correto.",
                         variant: "warning"
                     });
+                } else {
+                    toast({
+                        title: "Produto não identificado",
+                        description: "Verifique se digitou o ID ou TAG corretamente.",
+                        variant: "destructive"
+                    });
                 }
-                setBarcodeInput("");
                 return;
             }
 
-            // Exact match found (either ID or SKU)
-            if (items.find(i => i.pecaId === product.id)) {
-                toast({
-                    title: "Item já adicionado",
-                    description: "Este item já está no carrinho.",
-                    variant: "warning"
-                });
-            } else {
-                addItemToCart(product);
-            }
+            // Item Found - Proceed to Add
+            checkAndAddItem(product);
             setBarcodeInput("");
 
         } catch (err) {
@@ -284,7 +285,68 @@ export default function PDVPage() {
         }
     };
 
+    const checkAndAddItem = (product) => {
+        // CHECK STOCK Rule
+        if (product.quantidade <= 0 || product.status === 'VENDIDA') {
+            setProductToRestock(product);
+            setRestockQuantity(1);
+            setRestockModalOpen(true);
+            return;
+        }
+
+        // Check if already in cart
+        if (items.find(i => i.pecaId === product.id)) {
+            toast({
+                title: "Item já adicionado",
+                description: "Este item já está no carrinho.",
+                variant: "warning"
+            });
+            return;
+        }
+
+        addItemToCart(product);
+    };
+
+    const handleConfirmRestock = async () => {
+        if (!productToRestock) return;
+        setIsRestocking(true);
+        try {
+            // Update stock in backend (this triggers status -> DISPONIVEL)
+            const newStock = (productToRestock.quantidade || 0) + parseInt(restockQuantity);
+
+            await api.put(`/catalogo/pecas/${productToRestock.id}`, {
+                quantidade: newStock
+            });
+
+            toast({
+                title: "Estoque Atualizado",
+                description: `Produto agora tem ${newStock} itens e está DISPONÍVEL.`,
+                className: "bg-green-600 text-white border-none"
+            });
+
+            // Update local object to reflect change immediately for adding to cart
+            const updatedProduct = { ...productToRestock, quantidade: newStock, status: 'DISPONIVEL' };
+
+            // Add to cart immediately
+            addItemToCart(updatedProduct);
+
+            setRestockModalOpen(false);
+            setProductToRestock(null);
+
+        } catch (err) {
+            console.error(err);
+            toast({
+                title: "Erro ao atualizar estoque",
+                description: "Tente novamente.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsRestocking(false);
+        }
+    };
+
     const addItemToCart = (product) => {
+        // ... existing implementation ...
         const newItem = {
             pecaId: product.id,
             codigo: product.codigo_etiqueta,
@@ -976,6 +1038,38 @@ export default function PDVPage() {
                 </DialogContent>
             </Dialog>
 
-        </div >
+            {/* --- MODAL RESTOCK --- */}
+            <Dialog open={restockModalOpen} onOpenChange={setRestockModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Repor Estoque</DialogTitle>
+                        <DialogDescription>
+                            O produto <strong>{productToRestock?.descricao_curta}</strong> está sem estoque ou marcado como VENDIDA.
+                            <br />
+                            Adicione unidades para torná-lo disponível e prosseguir com a venda.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Quantidade a Adicionar</Label>
+                            <Input
+                                type="number"
+                                min="1"
+                                value={restockQuantity}
+                                onChange={(e) => setRestockQuantity(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRestockModalOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleConfirmRestock} disabled={isRestocking}>
+                            {isRestocking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Salvar e Adicionar à Venda
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+        </div>
     );
 }

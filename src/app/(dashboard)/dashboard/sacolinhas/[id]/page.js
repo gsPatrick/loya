@@ -407,28 +407,60 @@ export default function DetalheSacolinhaPage() {
                     </CardContent>
                 </Card>
 
-                {sacolinha.codigo_rastreio && (
-                    <Card className="md:col-span-3 border-amber-200 bg-amber-50">
+                {sacolinha.status !== 'ABERTA' && (
+                    <Card className={`md:col-span-3 border-amber-200 ${sacolinha.codigo_rastreio ? 'bg-amber-50' : 'bg-white border-dashed'}`}>
                         <CardContent className="p-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-amber-200 flex items-center justify-center text-amber-700">
+                                <div className={`h-10 w-10 rounded-full flex items-center justify-center ${sacolinha.codigo_rastreio ? 'bg-amber-200 text-amber-700' : 'bg-gray-100 text-gray-400'}`}>
                                     <Send className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-amber-600 font-bold uppercase tracking-wider">Código de Rastreio</p>
-                                    <p className="text-xl font-mono font-bold text-amber-900">{sacolinha.codigo_rastreio}</p>
+                                    {sacolinha.codigo_rastreio ? (
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-xl font-mono font-bold text-amber-900">{sacolinha.codigo_rastreio}</p>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 text-amber-600 hover:text-amber-700 hover:bg-amber-200/50"
+                                                onClick={() => {
+                                                    setTrackingCodeInput(sacolinha.codigo_rastreio);
+                                                    setTrackingDialogOpen(true);
+                                                }}
+                                            >
+                                                <Edit className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic">Não informado</p>
+                                    )}
                                 </div>
                             </div>
-                            <Button
-                                variant="outline"
-                                className="border-amber-300 text-amber-700 hover:bg-amber-100 gap-2"
-                                onClick={() => {
-                                    navigator.clipboard.writeText(sacolinha.codigo_rastreio);
-                                    toast({ title: "Copiado!", description: "Código de rastreio copiado." });
-                                }}
-                            >
-                                <Copy className="h-4 w-4" /> Copiar Código
-                            </Button>
+                            <div className="flex gap-2">
+                                {sacolinha.codigo_rastreio ? (
+                                    <Button
+                                        variant="outline"
+                                        className="border-amber-300 text-amber-700 hover:bg-amber-100 gap-2"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(sacolinha.codigo_rastreio);
+                                            toast({ title: "Copiado!", description: "Código de rastreio copiado." });
+                                        }}
+                                    >
+                                        <Copy className="h-4 w-4" /> Copiar Código
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        className="border-amber-300 text-amber-700 hover:bg-amber-50 gap-2"
+                                        onClick={() => {
+                                            setTrackingCodeInput("");
+                                            setTrackingDialogOpen(true);
+                                        }}
+                                    >
+                                        <Plus className="h-4 w-4" /> Adicionar Rastreio
+                                    </Button>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
                 )}
@@ -644,8 +676,8 @@ export default function DetalheSacolinhaPage() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setTrackingDialogOpen(false)}>Cancelar</Button>
-                        <Button onClick={() => handleUpdateStatus('PRONTA', trackingCodeInput)} className="bg-amber-500 hover:bg-amber-600">
-                            Confirmar e Marcar Pronta
+                        <Button onClick={() => handleUpdateStatus(sacolinha.status, trackingCodeInput)} className="bg-amber-500 hover:bg-amber-600">
+                            Salvar Rastreio
                         </Button>
                     </DialogFooter>
                 </DialogContent>

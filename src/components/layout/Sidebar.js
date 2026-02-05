@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,17 +16,20 @@ import {
 import {
     Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import Restricted from "@/components/auth/Restricted";
 
+// Roles: ADMIN, GERENTE, CAIXA (Vendedor), ESTOQUISTA
+// CAIXA só pode ver Pedidos & Vendas
 const navItems = [
     {
         title: "Visão Geral",
         href: "/dashboard",
         icon: LayoutDashboard,
+        roles: ['ADMIN', 'GERENTE'] // Vendedor não vê
     },
     {
         title: "Pedidos & Vendas",
         icon: ShoppingCart,
+        roles: ['ADMIN', 'GERENTE', 'CAIXA'], // Todos podem ver
         children: [
             { title: "PDV (Nova Venda)", href: "/dashboard/pedidos/pdv", icon: ShoppingCart },
             { title: "Histórico de Pedidos", href: "/dashboard/pedidos/revisao", icon: History },
@@ -38,10 +41,12 @@ const navItems = [
         title: "Logística",
         href: "/dashboard/pedidos/sacolinhas",
         icon: ShoppingBag,
+        roles: ['ADMIN', 'GERENTE']
     },
     {
         title: "Consultas & BI",
         icon: ClipboardList,
+        roles: ['ADMIN', 'GERENTE'],
         children: [
             { title: "Grade de Estoque", href: "/dashboard/consultas/grade", icon: Grid3X3 },
             { title: "Análise de Estoque", href: "/dashboard/consultas/analise-estoque", icon: LineChart },
@@ -55,6 +60,7 @@ const navItems = [
     {
         title: "Gestão Financeira",
         icon: Landmark,
+        roles: ['ADMIN', 'GERENTE'],
         children: [
             { title: "Controle Financeiro", href: "/dashboard/financeiro/controle", icon: Wallet },
             { title: "Comissões", href: "/dashboard/financeiro/comissoes", icon: Users },
@@ -68,13 +74,14 @@ const navItems = [
     {
         title: "Cadastros Gerais",
         icon: FolderPlus,
+        roles: ['ADMIN', 'GERENTE'],
         children: [
             { title: "Clientes", href: "/dashboard/cadastros/pessoas?type=Clientes", icon: Users },
             { title: "Fornecedores", href: "/dashboard/cadastros/pessoas?type=Fornecedores", icon: Users },
             { title: "Pessoas (CRM)", href: "/dashboard/cadastros/pessoas", icon: Users },
             { title: "Peças (Estoque)", href: "/dashboard/cadastros/pecas-cadastro", icon: Shirt },
             { title: "Imprimir Etiqueta", href: "/dashboard/cadastros/etiquetas", icon: Printer },
-            { title: "Importação de Dados", href: "/dashboard/cadastros/importacao", icon: FolderPlus }, // Novo
+            { title: "Importação de Dados", href: "/dashboard/cadastros/importacao", icon: FolderPlus },
             { title: "Tamanhos", href: "/dashboard/cadastros/tamanhos", icon: Ruler },
             { title: "Cores", href: "/dashboard/cadastros/cores", icon: Palette },
             { title: "Categorias", href: "/dashboard/cadastros/categorias", icon: Layers },
@@ -88,8 +95,9 @@ const navItems = [
         ]
     },
     {
-        title: "Cadastros Financeiros", // Nova Categoria Solicitada
+        title: "Cadastros Financeiros",
         icon: Wallet,
+        roles: ['ADMIN', 'GERENTE'],
         children: [
             { title: "Contas Financeiras", href: "/dashboard/financeiro-cadastro/contas", icon: Landmark },
             { title: "Formas de Pagamento", href: "/dashboard/financeiro-cadastro/formas-pagamento", icon: CreditCard },
@@ -97,8 +105,20 @@ const navItems = [
         ]
     },
     {
+        title: "Repasses",
+        icon: HandCoins,
+        roles: ['ADMIN', 'GERENTE'],
+        children: [
+            { title: "Ficha do Fornecedor", href: "/dashboard/repasses/ficha", icon: Users },
+            { title: "Relação de Peças", href: "/dashboard/repasses/relacao-pecas", icon: Shirt },
+            { title: "Contas Bancárias", href: "/dashboard/repasses/contas", icon: Landmark },
+            { title: "Ranking Fornecedores", href: "/dashboard/consultas/ranking-fornecedores", icon: TrendingUp },
+        ]
+    },
+    {
         title: "Marketing",
         icon: Megaphone,
+        roles: ['ADMIN', 'GERENTE'],
         children: [
             { title: "Campanhas Promo", href: "/dashboard/marketing/campanhas", icon: TicketPercent },
         ]
@@ -107,13 +127,13 @@ const navItems = [
         title: "Equipe",
         href: "/dashboard/equipe",
         icon: Users,
-        restricted: true, // Marker for custom rendering
-        roles: ['ADMIN']
+        roles: ['ADMIN'] // Somente admin
     },
     {
         title: "Configurações",
         href: "/dashboard/configuracoes",
         icon: Settings,
+        roles: ['ADMIN', 'GERENTE']
     },
 ];
 
@@ -131,111 +151,113 @@ function SidebarContent({ className, setIsOpen }) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const { themeConfig } = useSystemTheme();
+    const [userRole, setUserRole] = useState('ADMIN');
+
+    useEffect(() => {
+        // Get user role from localStorage
+        try {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                setUserRole(user.role || 'CAIXA');
+            }
+        } catch (e) {
+            console.error('Error parsing user:', e);
+        }
+    }, []);
 
     const currentFullRoute = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : "");
+
+    // Filter nav items based on user role
+    const filteredNavItems = navItems.filter(item => {
+        if (!item.roles) return true; // No role restriction
+        return item.roles.includes(userRole);
+    });
 
     // Logic to check if a link is active considering query parameters
     const isLinkActive = (href) => {
         if (href.includes('?')) {
             const [basePath, queryStr] = href.split('?');
-            if (pathname !== basePath) return false;
-
-            const itemParams = new URLSearchParams(queryStr);
-            // Check if all params in the link match current searchParams
-            for (const [key, value] of itemParams.entries()) {
+            if (!pathname.startsWith(basePath)) return false;
+            const params = new URLSearchParams(queryStr);
+            for (const [key, value] of params) {
                 if (searchParams.get(key) !== value) return false;
             }
             return true;
         }
-        // General link (without ?) only active if pathname matches 
-        // AND there are no meaningful query params active (like 'type')
-        return pathname === href && !searchParams.get('type');
+        return pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
     };
 
-    // Fallback to defaults if context is missing (shouldn't happen)
-    const config = {
-        SYSTEM_NAME: themeConfig?.SYSTEM_NAME || "Loja Simples",
-        SYSTEM_LOGO: themeConfig?.SYSTEM_LOGO || null
-    };
+    const config = themeConfig || {};
 
     const renderNavItem = (item) => {
+        const Icon = item.icon;
+
         if (item.children) {
-            const isActiveParent = item.children.some(child => isLinkActive(child.href));
+            const hasActiveChild = item.children.some(child => isLinkActive(child.href));
             return (
-                <Collapsible key={item.title} defaultOpen={isActiveParent} className="w-full">
-                    <CollapsibleTrigger className={cn(
-                        "flex items-center w-full justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all hover:bg-muted text-muted-foreground hover:text-foreground group",
-                        isActiveParent && "text-primary font-semibold bg-primary/5"
-                    )}>
-                        <div className="flex items-center gap-3">
-                            <item.icon className={cn("h-4 w-4 shrink-0 group-hover:text-primary", isActiveParent && "text-primary")} />
-                            {item.title}
-                        </div>
-                        <ChevronDown className="h-3 w-3 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                <Collapsible key={item.title} defaultOpen={hasActiveChild}>
+                    <CollapsibleTrigger asChild>
+                        <button className={cn(
+                            "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                            hasActiveChild ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-muted"
+                        )}>
+                            <span className="flex items-center gap-3">
+                                <Icon className="h-4 w-4" />
+                                {item.title}
+                            </span>
+                            <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
+                        </button>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="pl-4 space-y-1 mt-1 data-[state=open]:animate-slideDown border-l border-muted ml-2">
-                        {item.children.map(child => (
-                            <Link
-                                key={child.href}
-                                href={child.href}
-                                onClick={() => setIsOpen?.(false)}
-                                className={cn(
-                                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-all",
-                                    isLinkActive(child.href)
-                                        ? "bg-primary/10 text-primary font-medium"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                )}
-                            >
-                                {child.icon && <child.icon className="h-3.5 w-3.5 opacity-70" />}
-                                {child.title}
-                            </Link>
-                        ))}
+                    <CollapsibleContent className="ml-4 pl-3 border-l border-muted mt-1 space-y-1">
+                        {item.children.map(child => {
+                            const ChildIcon = child.icon;
+                            const isActive = isLinkActive(child.href);
+                            return (
+                                <Link
+                                    key={child.href}
+                                    href={child.href}
+                                    onClick={() => setIsOpen && setIsOpen(false)}
+                                    className={cn(
+                                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                                        isActive
+                                            ? "text-primary font-semibold bg-primary/10"
+                                            : "text-muted-foreground hover:text-primary hover:bg-muted"
+                                    )}
+                                >
+                                    <ChildIcon className="h-4 w-4" />
+                                    {child.title}
+                                </Link>
+                            );
+                        })}
                     </CollapsibleContent>
                 </Collapsible>
             );
         }
-        if (item.restricted) {
-            return (
-                <Restricted roles={item.roles} fallback={null} key={item.href}>
-                    <Link
-                        href={item.href}
-                        onClick={() => setIsOpen?.(false)}
-                        className={cn(
-                            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group",
-                            isLinkActive(item.href)
-                                ? "bg-primary/10 text-primary"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                    >
-                        <item.icon className={cn("h-4 w-4 shrink-0 group-hover:text-primary", isLinkActive(item.href) && "text-primary")} />
-                        {item.title}
-                    </Link>
-                </Restricted>
-            );
-        }
 
+        const isActive = isLinkActive(item.href);
         return (
             <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setIsOpen?.(false)}
+                onClick={() => setIsOpen && setIsOpen(false)}
                 className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group",
-                    isLinkActive(item.href)
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isActive
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-primary hover:bg-muted"
                 )}
             >
-                <item.icon className={cn("h-4 w-4 shrink-0 group-hover:text-primary", isLinkActive(item.href) && "text-primary")} />
+                <Icon className="h-4 w-4" />
                 {item.title}
             </Link>
         );
     };
 
     return (
-        <div className={cn("flex flex-col h-full min-h-screen bg-background border-r", className)}>
-            <div className="h-16 flex items-center px-6 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="flex items-center gap-2 font-bold text-xl text-primary tracking-tight">
+        <div className={cn("flex flex-col h-screen bg-background border-r", className)}>
+            <div className="h-16 border-b flex items-center justify-center px-4">
+                <div className="flex items-center gap-2 font-semibold text-lg text-primary">
                     {config.SYSTEM_LOGO ? (
                         <img src={config.SYSTEM_LOGO} alt="Logo" className="h-8 w-auto object-contain" />
                     ) : (
@@ -248,7 +270,7 @@ function SidebarContent({ className, setIsOpen }) {
             </div>
             <div className="flex-1 overflow-y-auto py-4 px-3 scrollbar-thin scrollbar-thumb-muted">
                 <nav className="space-y-1">
-                    {navItems.map(item => renderNavItem(item))}
+                    {filteredNavItems.map(item => renderNavItem(item))}
                 </nav>
             </div>
             <div className="p-4 border-t mt-auto bg-muted/10">

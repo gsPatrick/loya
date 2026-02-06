@@ -10,12 +10,12 @@ export default function DashboardLayout({ children }) {
     <RouteProtector>
       <div className="min-h-screen w-full bg-muted/5">
         {/* Sidebar Desktop (Fixa na esquerda) */}
-        <div className="hidden md:block fixed inset-y-0 left-0 z-30 w-[240px] lg:w-[280px] border-r bg-background">
+        <div className="hidden lg:block fixed inset-y-0 left-0 z-30 w-[240px] xl:w-[280px] border-r bg-background">
           <Sidebar />
         </div>
 
         {/* Conteúdo Principal (Empurrado para a direita) */}
-        <div className="flex flex-col md:pl-[240px] lg:pl-[280px] min-h-screen transition-all duration-300">
+        <div className="flex flex-col lg:pl-[240px] xl:pl-[280px] min-h-screen transition-all duration-300">
           <Header />
 
           <main className="flex-1 p-4 lg:p-8 overflow-x-hidden">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit, RefreshCw, Eye, Filter, X, Star } from "lucide-react";
+import { Search, Plus, AlertTriangle, Shirt, Save, Trash2, Edit, RefreshCw, Eye, Filter, X, Star, Package, FileSpreadsheet, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useToast } from "@/hooks/use-toast";
 import api, { API_URL } from "@/services/api";
-import { FileSpreadsheet, Printer } from "lucide-react";
+
 import * as XLSX from 'xlsx';
 
 // Helper component for Measurements

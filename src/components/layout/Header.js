@@ -31,7 +31,7 @@ export function Header() {
                     <Button
                         variant="outline"
                         size="icon"
-                        className="shrink-0 md:hidden"
+                        className="shrink-0 lg:hidden"
                     >
                         <Menu className="h-5 w-5" />
                         <span className="sr-only">Abrir menu</span>
@@ -50,7 +50,7 @@ export function Header() {
                     <Input
                         type="search"
                         placeholder="Buscar peças (código), clientes..."
-                        className="w-full bg-background pl-8 md:w-[300px] lg:w-[400px] h-10"
+                        className="w-full bg-background pl-8 lg:w-[300px] xl:w-[400px] h-10"
                     />
                 </div>
             </div>

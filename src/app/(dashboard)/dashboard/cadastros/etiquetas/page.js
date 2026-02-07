@@ -19,8 +19,10 @@ export default function ImprimirEtiquetasPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [items, setItems] = useState([]);
     const [selectedIds, setSelectedIds] = useState([]);
+    const [labelQuantities, setLabelQuantities] = useState({}); // { id: quantity }
     const [isLoading, setIsLoading] = useState(false);
     const [isPrinting, setIsPrinting] = useState(false);
+    const [isSelectingAll, setIsSelectingAll] = useState(false);
 
     // Filters State
     const [filterFornecedor, setFilterFornecedor] = useState("");
@@ -128,6 +130,33 @@ export default function ImprimirEtiquetasPage() {
         } else {
             setSelectedIds(items.map(i => i.id));
         }
+    };
+
+    const selectAllPages = async () => {
+        setIsSelectingAll(true);
+        try {
+            const params = new URLSearchParams({ limit: 9999 });
+            if (debouncedSearch) params.append('search', debouncedSearch);
+            if (filterFornecedor) params.append('fornecedorId', filterFornecedor);
+            if (filterTamanho) params.append('tamanhoId', filterTamanho);
+            if (filterMarca) params.append('marcaId', filterMarca);
+            if (filterCategoria) params.append('categoriaId', filterCategoria);
+            if (filterTipoAquisicao && filterTipoAquisicao !== 'TODOS') params.append('tipo_aquisicao', filterTipoAquisicao);
+
+            const res = await api.get(`/catalogo/pecas?${params.toString()}`);
+            const allItems = res.data.data || res.data;
+            setSelectedIds(allItems.map(i => i.id));
+            toast({ title: "Sucesso", description: `${allItems.length} peças selecionadas de todas as páginas.`, className: "bg-green-600 text-white border-none" });
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: "Erro ao selecionar todas as páginas.", variant: "destructive" });
+        } finally {
+            setIsSelectingAll(false);
+        }
+    };
+
+    const updateQuantity = (id, qty) => {
+        setLabelQuantities(prev => ({ ...prev, [id]: Math.max(1, parseInt(qty) || 1) }));
     };
 
     const handlePrint = async () => {
@@ -352,18 +381,22 @@ export default function ImprimirEtiquetasPage() {
                 </head>
                 <body>
                     <div class="etiquetas-container">
-                        ${selectedItems.map((item, idx) => {
+                        ${selectedItems.flatMap((item, itemIdx) => {
                 const barcodeValue = String(item.id);
                 const displayCode = barcodeValue.padStart(4, '0');
-                const descricao = item.descricao_curta || item.nome || '';
-                return `
+                // Fallback chain: descricao_curta -> descricao_detalhada -> nome -> 'Sem descrição'
+                const descricao = item.descricao_curta || item.descricao_detalhada || item.nome || 'Sem descrição';
+                const qty = labelQuantities[item.id] || 1;
+                return Array.from({ length: qty }, (_, copyIdx) => {
+                    const uniqueIdx = itemIdx * 100 + copyIdx; // Unique ID for barcode
+                    return `
                                 <div class="etiqueta">
                                     <div class="logo-area">
                                         <div class="logo">${labelConfig.LABEL_STORE_NAME}</div>
                                     </div>
                                     <div class="descricao">${descricao}</div>
                                     <div class="barcode-area">
-                                        <svg id="barcode-${idx}"></svg>
+                                        <svg id="barcode-${uniqueIdx}"></svg>
                                     </div>
                                     <div class="codigo-text">ID: ${displayCode}</div>
                                     <div class="preco-area">
@@ -373,14 +406,18 @@ export default function ImprimirEtiquetasPage() {
                                     <div class="codigo-inferior">F: ${item.fornecedorId || '-'} | SKU: ${item.codigo_etiqueta || item.id}</div>
                                 </div>
                             `;
+                });
             }).join('')}
                     </div>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
-                            ${selectedItems.map((item, idx) => {
+                            ${selectedItems.flatMap((item, itemIdx) => {
                 const barcodeValue = String(item.id);
-                return `
-                                    JsBarcode("#barcode-${idx}", "${barcodeValue}", {
+                const qty = labelQuantities[item.id] || 1;
+                return Array.from({ length: qty }, (_, copyIdx) => {
+                    const uniqueIdx = itemIdx * 100 + copyIdx;
+                    return `
+                                    JsBarcode("#barcode-${uniqueIdx}", "${barcodeValue}", {
                                         format: "CODE128",
                                         width: ${labelConfig.LABEL_BARCODE_WIDTH},
                                         height: ${labelConfig.LABEL_BARCODE_HEIGHT},
@@ -389,6 +426,7 @@ export default function ImprimirEtiquetasPage() {
                                         lineColor: "#000000"
                                     });
                                 `;
+                });
             }).join('')}
                             setTimeout(function() {
                                 window.print();
@@ -507,8 +545,24 @@ export default function ImprimirEtiquetasPage() {
                     </div>
 
                     <div className="flex justify-between items-center pt-2">
-                        <div className="flex-1 md:hidden text-sm text-gray-500">
-                            {isLoading ? "Filtrando..." : `${totalItems} itens`}
+                        <div className="flex items-center gap-2">
+                            <div className="flex-1 md:hidden text-sm text-gray-500">
+                                {isLoading ? "Filtrando..." : `${totalItems} itens`}
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={selectAllPages}
+                                disabled={isSelectingAll || isLoading}
+                                className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                            >
+                                {isSelectingAll ? (
+                                    <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                                ) : (
+                                    <Check className="h-4 w-4 mr-1" />
+                                )}
+                                Selecionar Todas as Páginas ({totalItems})
+                            </Button>
                         </div>
                         {(filterFornecedor || filterTamanho || filterMarca || filterCategoria || filterTipoAquisicao !== 'TODOS') && (
                             <Button
@@ -544,6 +598,7 @@ export default function ImprimirEtiquetasPage() {
                                 <TableHead>Tamanho</TableHead>
                                 <TableHead>Cor</TableHead>
                                 <TableHead className="text-right">Preço</TableHead>
+                                <TableHead className="w-20 text-center">Qtd</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -572,11 +627,22 @@ export default function ImprimirEtiquetasPage() {
                                     <TableCell className="text-right font-bold text-primary">
                                         R$ {parseFloat(item.preco_venda || 0).toFixed(2)}
                                     </TableCell>
+                                    <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                                        {selectedIds.includes(item.id) && (
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                value={labelQuantities[item.id] || 1}
+                                                onChange={(e) => updateQuantity(item.id, e.target.value)}
+                                                className="w-16 h-8 text-center text-sm"
+                                            />
+                                        )}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                             {items.length === 0 && !isLoading && (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                         Nenhuma peça encontrada
                                     </TableCell>
                                 </TableRow>

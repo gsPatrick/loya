@@ -18,7 +18,7 @@ export default function ImprimirEtiquetasPage() {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [items, setItems] = useState([]);
-    const [selectedIds, setSelectedIds] = useState([]);
+    const [selectedItems, setSelectedItems] = useState([]); // Array of objects [{id, nome, ...}]
     const [labelQuantities, setLabelQuantities] = useState({}); // { id: quantity }
     const [isLoading, setIsLoading] = useState(false);
     const [isPrinting, setIsPrinting] = useState(false);
@@ -118,17 +118,28 @@ export default function ImprimirEtiquetasPage() {
         }
     };
 
-    const toggleSelect = (id) => {
-        setSelectedIds(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        );
+    const toggleSelect = (item) => {
+        setSelectedItems(prev => {
+            const isSelected = prev.some(i => i.id === item.id);
+            if (isSelected) {
+                return prev.filter(i => i.id !== item.id);
+            } else {
+                return [...prev, item];
+            }
+        });
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === items.length) {
-            setSelectedIds([]);
+        const allVisibleSelected = items.every(item => selectedItems.some(si => si.id === item.id));
+        if (allVisibleSelected) {
+            // Unselect visible items
+            setSelectedItems(prev => prev.filter(pi => !items.some(i => i.id === pi.id)));
         } else {
-            setSelectedIds(items.map(i => i.id));
+            // Select all visible items (avoiding duplicates)
+            setSelectedItems(prev => {
+                const newItems = items.filter(i => !prev.some(si => si.id === i.id));
+                return [...prev, ...newItems];
+            });
         }
     };
 
@@ -145,7 +156,7 @@ export default function ImprimirEtiquetasPage() {
 
             const res = await api.get(`/catalogo/pecas?${params.toString()}`);
             const allItems = res.data.data || res.data;
-            setSelectedIds(allItems.map(i => i.id));
+            setSelectedItems(allItems);
             toast({ title: "Sucesso", description: `${allItems.length} peças selecionadas de todas as páginas.`, className: "bg-green-600 text-white border-none" });
         } catch (err) {
             console.error(err);
@@ -160,7 +171,7 @@ export default function ImprimirEtiquetasPage() {
     };
 
     const handlePrint = async () => {
-        if (selectedIds.length === 0) {
+        if (selectedItems.length === 0) {
             toast({ title: "Atenção", description: "Selecione pelo menos uma peça.", variant: "destructive" });
             return;
         }
@@ -202,8 +213,6 @@ export default function ImprimirEtiquetasPage() {
                 console.warn('Could not fetch label config, using defaults');
             }
 
-            // Get selected items data
-            const selectedItems = items.filter(i => selectedIds.includes(i.id));
 
             // Generate printable content with dynamic config
             const printWindow = window.open('', '_blank');
@@ -438,8 +447,8 @@ export default function ImprimirEtiquetasPage() {
             `);
             printWindow.document.close();
 
-            toast({ title: "Sucesso", description: `${selectedIds.length} etiqueta(s) enviadas para impressão.`, className: "bg-green-600 text-white border-none" });
-            setSelectedIds([]);
+            toast({ title: "Sucesso", description: `${selectedItems.length} etiqueta(s) enviadas para impressão.`, className: "bg-green-600 text-white border-none" });
+            setSelectedItems([]);
         } catch (err) {
             console.error(err);
             toast({ title: "Erro", description: "Erro ao gerar etiquetas.", variant: "destructive" });
@@ -457,7 +466,7 @@ export default function ImprimirEtiquetasPage() {
                 </div>
                 <Button
                     onClick={handlePrint}
-                    disabled={selectedIds.length === 0 || isPrinting}
+                    disabled={selectedItems.length === 0 || isPrinting}
                     className="bg-primary hover:bg-primary/90"
                 >
                     {isPrinting ? (
@@ -465,7 +474,7 @@ export default function ImprimirEtiquetasPage() {
                     ) : (
                         <Printer className="mr-2 h-4 w-4" />
                     )}
-                    Imprimir Selecionadas ({selectedIds.length})
+                    Imprimir Selecionadas ({selectedItems.length})
                 </Button>
             </div>
 
@@ -484,7 +493,7 @@ export default function ImprimirEtiquetasPage() {
                         </div>
                         <div className="hidden md:flex items-center gap-2 pb-1">
                             <span className="text-sm text-muted-foreground whitespace-nowrap">
-                                {isLoading ? "Carregando..." : `${totalItems} peças • ${selectedIds.length} selecionada(s)`}
+                                {isLoading ? "Carregando..." : `${totalItems} peças • ${selectedItems.length} selecionada(s)`}
                             </span>
                         </div>
                     </div>
@@ -589,7 +598,7 @@ export default function ImprimirEtiquetasPage() {
                             <TableRow>
                                 <TableHead className="w-12">
                                     <Checkbox
-                                        checked={items.length > 0 && selectedIds.length === items.length}
+                                        checked={items.length > 0 && items.every(item => selectedItems.some(si => si.id === item.id))}
                                         onCheckedChange={toggleSelectAll}
                                     />
                                 </TableHead>
@@ -605,13 +614,13 @@ export default function ImprimirEtiquetasPage() {
                             {items.map((item) => (
                                 <TableRow
                                     key={item.id}
-                                    className={`cursor-pointer transition-colors ${selectedIds.includes(item.id) ? 'bg-primary/5' : 'hover:bg-muted/50'}`}
-                                    onClick={() => toggleSelect(item.id)}
+                                    className={`cursor-pointer transition-colors ${selectedItems.some(si => si.id === item.id) ? 'bg-primary/5' : 'hover:bg-muted/50'}`}
+                                    onClick={() => toggleSelect(item)}
                                 >
                                     <TableCell onClick={e => e.stopPropagation()}>
                                         <Checkbox
-                                            checked={selectedIds.includes(item.id)}
-                                            onCheckedChange={() => toggleSelect(item.id)}
+                                            checked={selectedItems.some(si => si.id === item.id)}
+                                            onCheckedChange={() => toggleSelect(item)}
                                         />
                                     </TableCell>
                                     <TableCell>
@@ -628,7 +637,7 @@ export default function ImprimirEtiquetasPage() {
                                         R$ {parseFloat(item.preco_venda || 0).toFixed(2)}
                                     </TableCell>
                                     <TableCell className="text-center" onClick={e => e.stopPropagation()}>
-                                        {selectedIds.includes(item.id) && (
+                                        {selectedItems.some(si => si.id === item.id) && (
                                             <Input
                                                 type="number"
                                                 min="1"

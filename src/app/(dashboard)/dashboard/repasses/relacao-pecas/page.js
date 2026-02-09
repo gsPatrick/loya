@@ -70,7 +70,8 @@ export default function RelacaoPecasPage() {
     // Helper de Status
     const getStatusBadge = (status) => {
         if (status === "VENDIDA") return <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white border-none font-bold">VENDIDA</Badge>;
-        if (status === "A VENDA") return <Badge className="bg-green-600 hover:bg-green-700 text-white border-none font-bold">A VENDA</Badge>;
+        if (status === "A VENDA" || status === "DISPONIVEL") return <Badge className="bg-green-600 hover:bg-green-700 text-white border-none font-bold">DISPONIVEL</Badge>;
+        if (status === "NOVA") return <Badge className="bg-blue-600 hover:bg-blue-700 text-white border-none font-bold">NOVA</Badge>;
         return <Badge variant="outline">{status}</Badge>;
     };
 
@@ -132,7 +133,7 @@ export default function RelacaoPecasPage() {
                     <span className="text-sm font-bold text-gray-600">Lista de Peças</span>
                     <div className="h-4 w-px bg-gray-300 mx-2" />
                     <Badge variant="secondary" className="bg-gray-200 text-gray-700">Selecionadas: 0</Badge>
-                    <Badge variant="secondary" className="bg-gray-200 text-gray-700">Total: 75</Badge>
+                    <Badge variant="secondary" className="bg-gray-200 text-gray-700">Total: {items.length}</Badge>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="gap-2 bg-white text-gray-600 border-gray-300 hover:bg-gray-50">
@@ -175,10 +176,12 @@ export default function RelacaoPecasPage() {
                                 <TableHead className="w-[100px] text-xs font-bold text-purple-700">Entrada</TableHead>
                                 <TableHead className="w-[100px] text-xs font-bold text-purple-700">Alt ID</TableHead>
                                 <TableHead className="text-xs font-bold text-purple-700">Descrição</TableHead>
+                                <TableHead className="w-[100px] text-xs font-bold text-purple-700">Cat</TableHead>
                                 <TableHead className="w-[120px] text-center text-xs font-bold text-purple-700">Status</TableHead>
                                 <TableHead className="w-[120px] text-xs font-bold text-purple-700">Marca</TableHead>
                                 <TableHead className="w-[60px] text-center text-xs font-bold text-purple-700">Tam</TableHead>
-                                <TableHead className="w-[60px] text-center text-xs font-bold text-purple-700">Cor</TableHead>
+                                <TableHead className="w-[80px] text-center text-xs font-bold text-purple-700">Cor</TableHead>
+                                <TableHead className="w-[100px] text-right text-xs font-bold text-purple-700">Venda</TableHead>
                                 <TableHead className="w-[100px] text-right text-xs font-bold text-purple-700">Repasse</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -187,17 +190,21 @@ export default function RelacaoPecasPage() {
                                 <TableRow key={item.id} className="hover:bg-purple-50/10">
                                     <TableCell className="text-center"><Checkbox /></TableCell>
                                     <TableCell className="font-mono text-xs text-gray-600">{item.id}</TableCell>
-                                    <TableCell className="text-xs text-gray-500">{item.entrada}</TableCell>
-                                    <TableCell className="font-mono text-xs text-gray-500">{item.altId}</TableCell>
-                                    <TableCell className="text-xs font-medium text-gray-700 uppercase">{item.desc}</TableCell>
+                                    <TableCell className="text-xs text-gray-500">{item.dataEntrada}</TableCell>
+                                    <TableCell className="font-mono text-xs text-gray-500">{item.codigo}</TableCell>
+                                    <TableCell className="text-xs font-medium text-gray-700 uppercase">{item.descricao}</TableCell>
+                                    <TableCell className="text-xs text-gray-500 uppercase">{item.categoria}</TableCell>
                                     <TableCell className="text-center">
                                         {getStatusBadge(item.status)}
                                     </TableCell>
                                     <TableCell className="text-xs text-gray-600">{item.marca}</TableCell>
-                                    <TableCell className="text-center text-xs font-bold bg-gray-50 rounded mx-1">{item.tam}</TableCell>
-                                    <TableCell className="text-center text-xs text-gray-500">-</TableCell>
+                                    <TableCell className="text-center text-xs font-bold bg-gray-50 rounded mx-1">{item.tamanho}</TableCell>
+                                    <TableCell className="text-center text-xs text-gray-500 uppercase">{item.cor}</TableCell>
+                                    <TableCell className="text-right text-xs font-bold text-gray-400">
+                                        R$ {(item.preco ?? 0).toFixed(2)}
+                                    </TableCell>
                                     <TableCell className="text-right text-xs font-bold text-gray-700">
-                                        R$ {(item.repasse ?? 0).toFixed(2)}
+                                        R$ {(item.custo ?? 0).toFixed(2)}
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -207,7 +214,7 @@ export default function RelacaoPecasPage() {
 
                 {/* Rodapé */}
                 <div className="bg-gray-50 p-3 border-t text-xs text-gray-500 flex justify-between items-center px-4">
-                    <span>Mostrando 1 até {items.length} de 75 registros</span>
+                    <span>Mostrando {items.length} de {items.length} registros</span>
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" disabled className="h-7 text-xs bg-white">Anterior</Button>
                         <Button variant="outline" size="sm" className="h-7 text-xs bg-white">1</Button>

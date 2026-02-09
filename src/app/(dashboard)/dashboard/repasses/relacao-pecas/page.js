@@ -34,6 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import api from "@/services/api";
 
 export default function RelacaoPecasPage() {
@@ -89,16 +90,16 @@ export default function RelacaoPecasPage() {
                         {/* Fornecedor (Select Grande) */}
                         <div className="grid gap-1.5 flex-[2]">
                             <Label className="text-xs font-bold text-purple-700 uppercase">Fornecedor</Label>
-                            <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
-                                <SelectTrigger className="bg-white h-10 border-purple-200">
-                                    <SelectValue placeholder="Selecione um fornecedor" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {suppliers.map(s => (
-                                        <SelectItem key={s.id} value={String(s.id)}>{String(s.id).padStart(8, '0')} {'>'} {s.nome}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                options={suppliers.map(s => ({
+                                    id: s.id,
+                                    nome: `${String(s.id).padStart(8, '0')} > ${s.nome}`
+                                }))}
+                                value={selectedSupplier}
+                                onValueChange={setSelectedSupplier}
+                                placeholder="Selecione um fornecedor"
+                                searchPlaceholder="Buscar fornecedor..."
+                            />
                         </div>
 
                         {/* Datas */}
@@ -196,7 +197,7 @@ export default function RelacaoPecasPage() {
                                     <TableCell className="text-center text-xs font-bold bg-gray-50 rounded mx-1">{item.tam}</TableCell>
                                     <TableCell className="text-center text-xs text-gray-500">-</TableCell>
                                     <TableCell className="text-right text-xs font-bold text-gray-700">
-                                        R$ {item.repasse.toFixed(2)}
+                                        R$ {(item.repasse ?? 0).toFixed(2)}
                                     </TableCell>
                                 </TableRow>
                             ))}

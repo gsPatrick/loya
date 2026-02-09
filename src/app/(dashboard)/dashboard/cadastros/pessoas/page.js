@@ -112,8 +112,7 @@ function PessoasContent() {
 
         let matchesType = true;
         if (filterType === "Fornecedores") matchesType = p.is_fornecedor;
-        if (filterType === "Clientes") matchesType = p.is_cliente;
-        if (filterType === "Ambos") matchesType = p.is_fornecedor && p.is_cliente;
+        if (filterType === "Clientes") matchesType = p.is_cliente && !p.is_fornecedor;
 
         return matchesSearch && matchesType;
     });
@@ -192,7 +191,7 @@ function PessoasContent() {
             <Card className="border-t-4 border-t-primary/50 shadow-sm overflow-hidden">
                 <div className="p-4 bg-white border-b flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex gap-2">
-                        {["Todos", "Fornecedores", "Ambos", "Clientes"].map((type) => (
+                        {["Todos", "Fornecedores", "Clientes"].map((type) => (
                             <Button
                                 key={type}
                                 variant={filterType === type ? "default" : "outline"}

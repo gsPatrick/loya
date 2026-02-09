@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     ShoppingBag, ArrowLeft, Search, Plus, Trash2, Loader2,
-    User, Clock, Send, PackageCheck, XCircle, Package, Shirt, Barcode, Save, Eye, AlertTriangle, RefreshCw, Copy
+    User, Clock, Send, PackageCheck, XCircle, Package, Shirt, Barcode, Save, Eye, AlertTriangle, RefreshCw, Copy, Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

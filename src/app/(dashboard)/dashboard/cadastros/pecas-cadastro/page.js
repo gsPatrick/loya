@@ -393,7 +393,17 @@ function CadastroPecasContent() {
     };
 
     const saveEdit = () => {
-        api.put(`/catalogo/pecas/${currentItem.id}`, editForm)
+        // Sanitize IDs - convert empty strings to null
+        const sanitizedForm = {
+            ...editForm,
+            tamanhoId: editForm.tamanhoId || null,
+            corId: editForm.corId || null,
+            marcaId: editForm.marcaId || null,
+            categoriaId: editForm.categoriaId || null,
+            fornecedorId: editForm.fornecedorId || null
+        };
+
+        api.put(`/catalogo/pecas/${currentItem.id}`, sanitizedForm)
             .then(res => {
                 loadItems(); // Reload from server
                 setIsEditOpen(false);

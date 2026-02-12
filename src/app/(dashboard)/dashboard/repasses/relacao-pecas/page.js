@@ -44,6 +44,13 @@ export default function RelacaoPecasPage() {
     const [dateStart, setDateStart] = useState("");
     const [dateEnd, setDateEnd] = useState("");
 
+    // Paginação
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState("50");
+    const [isLoading, setIsLoading] = useState(false);
+
     useEffect(() => {
         loadSuppliers();
     }, []);
@@ -57,13 +64,36 @@ export default function RelacaoPecasPage() {
         }
     };
 
-    const loadItems = async () => {
+    const loadItems = async (page = 1) => {
         if (!selectedSupplier) return;
+        setIsLoading(true);
         try {
-            const { data } = await api.get(`/relatorios/pecas-fornecedor/${selectedSupplier}?inicio=${dateStart}&fim=${dateEnd}`);
-            setItems(data);
+            const { data: res } = await api.get(`/relatorios/pecas-fornecedor/${selectedSupplier}`, {
+                params: {
+                    inicio: dateStart,
+                    fim: dateEnd,
+                    page,
+                    limit: itemsPerPage
+                }
+            });
+
+            // O backend agora retorna { data, total, totalPages, currentPage }
+            if (res.data) {
+                setItems(res.data);
+                setTotalPages(res.totalPages || 1);
+                setTotalItems(res.total || 0);
+                setCurrentPage(res.currentPage || 1);
+            } else {
+                // Fallback para caso o backend retorne array direto
+                setItems(res);
+                setTotalPages(1);
+                setTotalItems(res.length);
+                setCurrentPage(1);
+            }
         } catch (error) {
             console.error(error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -120,7 +150,7 @@ export default function RelacaoPecasPage() {
                             </div>
                         </div>
 
-                        <Button onClick={loadItems} className="bg-purple-600 hover:bg-purple-700 text-white min-w-[120px] h-10 font-bold shadow-md">
+                        <Button onClick={() => loadItems(1)} className="bg-purple-600 hover:bg-purple-700 text-white min-w-[120px] h-10 font-bold shadow-md">
                             FILTRAR
                         </Button>
                     </div>
@@ -149,7 +179,13 @@ export default function RelacaoPecasPage() {
             <Card className="shadow-sm border-gray-200 overflow-hidden">
                 <div className="bg-white p-4 border-b flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <Select defaultValue="50">
+                        <Select
+                            value={itemsPerPage}
+                            onValueChange={(v) => {
+                                setItemsPerPage(v);
+                                setCurrentPage(1);
+                            }}
+                        >
                             <SelectTrigger className="h-8 w-[70px] text-xs">
                                 <SelectValue />
                             </SelectTrigger>
@@ -214,12 +250,29 @@ export default function RelacaoPecasPage() {
 
                 {/* Rodapé */}
                 <div className="bg-gray-50 p-3 border-t text-xs text-gray-500 flex justify-between items-center px-4">
-                    <span>Mostrando {items.length} de {items.length} registros</span>
+                    <span>Mostrando {items.length} de {totalItems} registros</span>
                     <div className="flex gap-2">
-                        <Button variant="outline" size="sm" disabled className="h-7 text-xs bg-white">Anterior</Button>
-                        <Button variant="outline" size="sm" className="h-7 text-xs bg-white">1</Button>
-                        <Button variant="outline" size="sm" className="h-7 text-xs bg-white">2</Button>
-                        <Button variant="outline" size="sm" className="h-7 text-xs bg-white">Próximo</Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={currentPage <= 1 || isLoading}
+                            onClick={() => loadItems(currentPage - 1)}
+                            className="h-7 text-xs bg-white"
+                        >
+                            Anterior
+                        </Button>
+                        <div className="flex items-center px-4 font-bold text-gray-700">
+                            Página {currentPage} de {totalPages}
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={currentPage >= totalPages || isLoading}
+                            onClick={() => loadItems(currentPage + 1)}
+                            className="h-7 text-xs bg-white"
+                        >
+                            Próximo
+                        </Button>
                     </div>
                 </div>
             </Card>

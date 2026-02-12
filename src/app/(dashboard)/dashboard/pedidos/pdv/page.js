@@ -309,8 +309,16 @@ export default function PDVPage() {
                 const isNumeric = !isNaN(numericId) && /^\d+$/.test(rawInput);
 
                 if (isNumeric) {
-                    // Strict ID Match (123 or 00123 -> ID 123) - IGNORE TAGS
+                    // 1. Try exact ID match first
                     product = foundProducts.find(p => p.id === numericId);
+
+                    // 2. Fallback: If no ID matches, but a Tag matches the number
+                    if (!product && foundProducts.length === 1) {
+                        product = foundProducts[0];
+                    } else if (!product) {
+                        // Look for exact tag suffix match if multiple results
+                        product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase().endsWith(`-${rawInput}`));
+                    }
                 } else {
                     // Text Search (Name/Description) - Fallback for non-numeric, non-tag inputs
                     // Only match if it's NOT a numeric-looking string to avoid ID confusion
@@ -765,9 +773,11 @@ export default function PDVPage() {
 
                                                 // Refine results based on user exclusivity rules
                                                 const refined = foundProducts.filter(p => {
-                                                    // 1. Numeric Input -> Show ONLY if ID starts with it
+                                                    // 1. Numeric Input -> Show if ID starts with it OR Tag suffix matches
                                                     if (isNumeric) {
-                                                        return String(p.id).startsWith(val);
+                                                        const idMatch = String(p.id).startsWith(val);
+                                                        const tagMatch = p.codigo_etiqueta && p.codigo_etiqueta.includes(val);
+                                                        return idMatch || tagMatch;
                                                     }
 
                                                     // 2. TAG Search -> Show ONLY if Tag/SKU starts with it

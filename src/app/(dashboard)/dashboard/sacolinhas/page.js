@@ -66,6 +66,17 @@ export default function SacolinhasPage() {
         }
     };
 
+    const handleDeleteSacolinha = async (id) => {
+        try {
+            await api.delete(`/vendas/sacolinhas/${id}`);
+            toast({ title: "Sucesso", description: "Sacolinha excluída permanentemente e peças liberadas." });
+            loadSacolinhas();
+        } catch (err) {
+            toast({ title: "Erro", description: err.response?.data?.error || "Erro ao excluir sacolinha.", variant: "destructive" });
+        }
+    };
+
+
     const getStatusBadge = (status) => {
         const styles = {
             ABERTA: "bg-cyan-100 text-cyan-700 border-cyan-200",
@@ -286,14 +297,21 @@ export default function SacolinhasPage() {
                                                         <>
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
-                                                                onClick={() => handleUpdateStatus(sac.id, 'CANCELADA')}
+                                                                onClick={() => setConfirmDialog({ open: true, action: 'cancel', sacolinha: sac })}
+                                                                className="text-orange-600"
+                                                            >
+                                                                <XCircle className="mr-2 h-4 w-4" /> Cancelar Sacolinha
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => setConfirmDialog({ open: true, action: 'delete', sacolinha: sac })}
                                                                 className="text-red-600"
                                                             >
-                                                                <XCircle className="mr-2 h-4 w-4" /> Cancelar
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Excluir Totalmente
                                                             </DropdownMenuItem>
                                                         </>
                                                     )}
                                                 </DropdownMenuContent>
+
                                             </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
@@ -303,6 +321,37 @@ export default function SacolinhasPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog(p => ({ ...p, open }))}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            {confirmDialog.action === 'delete' ? 'Excluir Sacolinha Permanentemente?' : 'Cancelar Sacolinha?'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {confirmDialog.action === 'delete'
+                                ? 'Esta ação não pode ser desfeita. A sacolinha será removida do sistema e todas as peças serão devolvidas ao estoque.'
+                                : 'A sacolinha continuará no histórico como cancelada, mas todas as peças serão liberadas para venda novamente.'}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Voltar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (confirmDialog.action === 'delete') {
+                                    handleDeleteSacolinha(confirmDialog.sacolinha.id);
+                                } else {
+                                    handleUpdateStatus(confirmDialog.sacolinha.id, 'CANCELADA');
+                                }
+                                setConfirmDialog({ open: false, action: null, sacolinha: null });
+                            }}
+                            className={confirmDialog.action === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}
+                        >
+                            Confirmar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

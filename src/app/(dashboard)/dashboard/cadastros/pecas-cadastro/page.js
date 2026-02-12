@@ -45,47 +45,65 @@ const MeasurementsInput = ({ value = [], onChange }) => {
     };
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-4 bg-gray-50/30 p-4 rounded-2xl border border-gray-100">
             <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold flex items-center gap-2">
-                    <Shirt className="h-4 w-4 text-primary" /> Medidas do Produto
-                </Label>
+                <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        <Shirt className="h-4 w-4" />
+                    </div>
+                    <Label className="text-sm font-bold uppercase tracking-tight text-gray-700">
+                        Medidas Específicas
+                    </Label>
+                </div>
                 <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={loadStandard}
-                    className="text-xs text-primary hover:bg-primary/10 h-8"
+                    className="text-[10px] font-bold uppercase tracking-wider h-7 px-3 rounded-full border-primary/20 text-primary hover:bg-primary/5"
                 >
-                    <Star className="h-3 w-3 mr-1 fill-primary" /> Carregar Favoritos (Padrão)
+                    <Star className="h-3 w-3 mr-1 fill-primary" /> Sugerir Padrão
                 </Button>
             </div>
-            <div className="space-y-2">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {value.map((m, idx) => (
-                    <div key={idx} className="flex gap-2 items-center bg-gray-50/50 p-2 rounded-lg border border-dashed border-gray-200">
-                        <Input
-                            placeholder="Nome (ex: Busto)"
-                            value={m.nome}
-                            onChange={(e) => updateMeasurement(idx, 'nome', e.target.value)}
-                            className="flex-1 bg-white h-9 text-sm"
-                        />
-                        <Input
-                            placeholder="Valor"
-                            value={m.valor}
-                            onChange={(e) => updateMeasurement(idx, 'valor', e.target.value)}
-                            className="flex-1 bg-white h-9 text-sm"
-                        />
-                        <Button variant="ghost" size="icon" onClick={() => removeMeasurement(idx)} className="text-gray-400 hover:text-red-500 h-9 w-9">
+                    <div key={idx} className="flex gap-2 items-center bg-white p-2 rounded-xl border border-gray-200 shadow-sm transition-all hover:border-primary/30">
+                        <div className="flex-1 space-y-1">
+                            <input
+                                placeholder="ex: Busto"
+                                value={m.nome}
+                                onChange={(e) => updateMeasurement(idx, 'nome', e.target.value)}
+                                className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-gray-400 p-0 uppercase"
+                            />
+                            <Input
+                                placeholder="Valor"
+                                value={m.valor}
+                                onChange={(e) => updateMeasurement(idx, 'valor', e.target.value)}
+                                className="h-8 border-none bg-gray-50/50 p-2 text-sm focus-visible:ring-1 focus-visible:ring-primary/20 font-medium"
+                            />
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeMeasurement(idx)}
+                            className="text-gray-300 hover:text-red-500 hover:bg-red-50 h-8 w-8 rounded-lg flex-shrink-0 self-end mb-1"
+                        >
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
                 ))}
-                <div className="flex gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={addMeasurement} className="h-8 text-xs">
-                        <Plus className="h-3 w-3 mr-1" /> Adicionar Medida
-                    </Button>
-                </div>
             </div>
+
+            <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={addMeasurement}
+                className="w-full h-9 border-2 border-dashed border-gray-200 text-gray-400 hover:border-primary hover:text-primary hover:bg-primary/5 rounded-xl transition-all"
+            >
+                <Plus className="h-4 w-4 mr-2" /> Adicionar Parâmetro de Medida
+            </Button>
         </div>
     );
 };
@@ -1267,123 +1285,171 @@ function CadastroPecasContent() {
                 </DialogContent>
             </Dialog>
 
-            {/* Modal Detalhes */}
+            {/* Modal Detalhes Melhorado */}
             <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Detalhes do Produto {currentItem ? `- #${String(currentItem.id).padStart(6, '0')}` : ''}</DialogTitle>
-                    </DialogHeader>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-none shadow-2xl">
                     {currentItem && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Coluna Fotos */}
-                            <div className="space-y-4">
-                                <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border">
-                                    {currentItem.fotos && currentItem.fotos.length > 0 ? (
-                                        <img
-                                            src={currentItem.fotos[0].url.startsWith('http') ? currentItem.fotos[0].url : `${API_URL.replace('/api/v1', '')}${currentItem.fotos[0].url}`}
-                                            alt="Principal"
-                                            className="w-full h-full object-contain"
-                                        />
-                                    ) : (
-                                        <div className="flex items-center justify-center h-full text-gray-400">
-                                            <Shirt className="h-24 w-24 opacity-20" />
+                        <div className="flex flex-col">
+                            {/* Header Colorido/Moderno */}
+                            <div className="bg-primary p-6 text-primary-foreground">
+                                <div className="flex justify-between items-start">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="text-primary-foreground border-primary-foreground/30 bg-primary-foreground/10 font-mono">
+                                                #{String(currentItem.id).padStart(6, '0')}
+                                            </Badge>
+                                            <Badge variant="outline" className="text-primary-foreground border-primary-foreground/30 bg-primary-foreground/10 uppercase text-[10px] tracking-widest">
+                                                {currentItem.codigo_etiqueta}
+                                            </Badge>
                                         </div>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {currentItem.fotos && currentItem.fotos.slice(1).map((f, idx) => (
-                                        <div key={idx} className="aspect-square bg-gray-50 rounded border overflow-hidden">
-                                            <img
-                                                src={f.url.startsWith('http') ? f.url : `${API_URL.replace('/api/v1', '')}${f.url}`}
-                                                alt={`Foto ${idx + 2}`}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                    ))}
+                                        <h2 className="text-2xl font-bold leading-tight">{currentItem.descricao_curta}</h2>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsDetailsOpen(false)} className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-white/10">
+                                        <X className="h-6 w-6" />
+                                    </Button>
                                 </div>
                             </div>
 
-                            {/* Coluna Infos */}
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="font-bold text-lg">{currentItem.descricao_curta}</h3>
-                                    <p className="text-sm text-gray-500">{currentItem.descricao_detalhada || "Sem descrição detalhada."}</p>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    <div className="p-3 bg-gray-50 rounded-lg border">
-                                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Preço Venda</div>
-                                        <div className="text-xl font-bold text-green-700">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentItem.preco_venda || 0)}
-                                        </div>
-                                    </div>
-                                    <div className="p-3 bg-gray-50 rounded-lg border">
-                                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Estoque Atual</div>
-                                        <div className={`text-xl font-bold ${currentItem.quantidade <= 0 ? 'text-red-600' : 'text-blue-700'}`}>
-                                            {currentItem.quantidade || 0} unid.
-                                        </div>
-                                    </div>
-                                    <div className="p-3 bg-gray-50 rounded-lg border">
-                                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status Atual</div>
-                                        <div className="mt-1">
-                                            <Badge className={currentItem.status === 'DISPONIVEL' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                            <div className="p-6 grid grid-cols-1 md:grid-cols-12 gap-8">
+                                {/* Galeria de Imagens (4 cols) */}
+                                <div className="md:col-span-5 space-y-4">
+                                    <div className="aspect-[4/5] bg-gray-50 rounded-2xl overflow-hidden border-2 border-gray-100 shadow-inner group relative">
+                                        {currentItem.fotos && currentItem.fotos.length > 0 ? (
+                                            <img
+                                                src={currentItem.fotos[0].url.startsWith('http') ? currentItem.fotos[0].url : `${API_URL.replace('/api/v1', '')}${currentItem.fotos[0].url}`}
+                                                alt="Principal"
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                            />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full text-gray-300">
+                                                <Shirt className="h-20 w-20 mb-2 opacity-20" />
+                                                <span className="text-xs font-medium">Sem imagem cadastrada</span>
+                                            </div>
+                                        )}
+                                        <div className="absolute top-3 right-3">
+                                            <Badge className={currentItem.status === 'DISPONIVEL' ? "bg-green-500 shadow-lg" : "bg-amber-500 shadow-lg"}>
                                                 {currentItem.status}
                                             </Badge>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="space-y-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                                    <h4 className="font-bold text-xs uppercase text-gray-400 tracking-widest border-b pb-2 flex items-center gap-2">
-                                        <Shirt className="h-3 w-3" /> Atributos e Identificação
-                                    </h4>
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                        <div className="space-y-1">
-                                            <span className="text-gray-400 block text-[11px] uppercase">Código TAG:</span>
-                                            <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{currentItem.codigo_etiqueta || '-'}</span>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-gray-400 block text-[11px] uppercase">E-commerce Sync:</span>
-                                            <Badge variant="outline" className={currentItem.sync_ecommerce ? "border-green-200 text-green-600 bg-green-50" : "border-gray-200 text-gray-400"}>
-                                                {currentItem.sync_ecommerce ? "Sincronizado" : "Inativo"}
-                                            </Badge>
-                                        </div>
-                                        <div><span className="text-gray-400">Tamanho:</span> <span className="font-medium">{currentItem.tamanho?.nome || '-'}</span></div>
-                                        <div><span className="text-gray-400">Cor:</span> <span className="font-medium">{currentItem.cor?.nome || '-'}</span></div>
-                                        <div><span className="text-gray-400">Marca:</span> <span className="font-medium">{currentItem.marca?.nome || '-'}</span></div>
-                                        <div><span className="text-gray-400">Categoria:</span> <span className="font-medium">{currentItem.categoria?.nome || '-'}</span></div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <h4 className="font-semibold text-sm border-b pb-1">Aquisição</h4>
-                                    <div className="grid grid-cols-2 gap-y-2 text-sm">
-                                        <div><span className="text-gray-500">Tipo:</span> {currentItem.tipo_aquisicao}</div>
-                                        <div><span className="text-gray-500">Fornecedor:</span> {currentItem.fornecedor?.nome || '-'}</div>
-                                        <div><span className="text-gray-500">Custo:</span> {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentItem.preco_custo || 0)}</div>
-                                        <div><span className="text-gray-500">Data Entrada:</span> {new Date(currentItem.data_entrada).toLocaleDateString('pt-BR')}</div>
-                                    </div>
-                                </div>
-
-                                {currentItem.medidas && currentItem.medidas.length > 0 && (
-                                    <div className="space-y-2">
-                                        <h4 className="font-semibold text-sm border-b pb-1">Medidas Específicas</h4>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {currentItem.medidas.map((m, i) => (
-                                                <div key={i} className="text-sm border p-1 rounded bg-white">
-                                                    <span className="font-medium">{m.nome}:</span> {m.valor}
+                                    {currentItem.fotos && currentItem.fotos.length > 1 && (
+                                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                                            {currentItem.fotos.map((f, idx) => (
+                                                <div key={idx} className="flex-shrink-0 w-16 h-20 rounded-lg border overflow-hidden cursor-pointer hover:border-primary transition-colors">
+                                                    <img
+                                                        src={f.url.startsWith('http') ? f.url : `${API_URL.replace('/api/v1', '')}${f.url}`}
+                                                        alt={`Thumbnail ${idx}`}
+                                                        className="w-full h-full object-cover"
+                                                    />
                                                 </div>
                                             ))}
                                         </div>
+                                    )}
+                                </div>
+
+                                {/* Conteúdo de Dados (7 cols) */}
+                                <div className="md:col-span-7 space-y-6">
+                                    {/* Preços e Estoque */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 bg-green-50/50 rounded-2xl border border-green-100">
+                                            <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest block mb-1">Preço de Venda</span>
+                                            <div className="text-2xl font-black text-green-700">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentItem.preco_venda || 0)}
+                                            </div>
+                                        </div>
+                                        <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest block mb-1">Estoque</span>
+                                            <div className="text-2xl font-black text-blue-700">
+                                                {currentItem.quantidade || 0} <span className="text-sm font-medium">unid.</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                )}
+
+                                    {/* Atributos Principais */}
+                                    <div className="grid grid-cols-2 gap-y-4 gap-x-8 py-4 border-y border-gray-100">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
+                                                <Badge variant="outline" className="border-none p-0"><Shirt className="h-4 w-4" /></Badge>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 uppercase font-bold block">Marca</span>
+                                                <span className="font-semibold text-sm">{currentItem.marca?.nome || 'Multimarcas'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xs">
+                                                SZ
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 uppercase font-bold block">Tamanho</span>
+                                                <span className="font-semibold text-sm">{currentItem.tamanho?.nome || 'Único'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
+                                                <div className="w-4 h-4 rounded-full border border-gray-300" style={{ backgroundColor: currentItem.cor?.hex || '#ccc' }} />
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 uppercase font-bold block">Cor</span>
+                                                <span className="font-semibold text-sm">{currentItem.cor?.nome || '-'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
+                                                <Filter className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 uppercase font-bold block">Categoria</span>
+                                                <span className="font-semibold text-sm">{currentItem.categoria?.nome || '-'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Descrição Detalhada */}
+                                    <div className="space-y-2">
+                                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest block">Sobre o Produto</span>
+                                        <p className="text-sm text-gray-600 leading-relaxed italic">
+                                            {currentItem.descricao_detalhada || "Nenhuma descrição detalhada informada para este item."}
+                                        </p>
+                                    </div>
+
+                                    {/* Seção Fornecedor */}
+                                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-full bg-white border flex items-center justify-center text-primary font-bold">
+                                                {currentItem.fornecedor?.nome?.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 uppercase font-bold block">Fornecedor</span>
+                                                <span className="font-bold text-sm">{currentItem.fornecedor?.nome || '-'}</span>
+                                                <span className="text-[10px] block text-gray-400">{currentItem.tipo_aquisicao}</span>
+                                            </div>
+                                        </div>
+                                        {currentItem.fornecedor?.telefone_whatsapp && (
+                                            <Button variant="outline" size="sm" className="h-8 rounded-full gap-2 border-green-200 text-green-600 hover:bg-green-50" onClick={() => window.open(`https://wa.me/55${currentItem.fornecedor.telefone_whatsapp.replace(/\D/g, '')}`, '_blank')}>
+                                                <svg className="h-3 w-3 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.239 8.413 3.488 2.246 2.248 3.484 5.232 3.484 8.412-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.309 1.656zm6.224-3.82c1.516.903 3.188 1.386 4.895 1.387 5.385 0 9.774-4.388 9.777-9.776 0-2.611-1.015-5.065-2.859-6.91-1.84-1.848-4.293-2.866-6.907-2.866-5.385 0-9.774 4.388-9.776 9.776 0 1.832.51 3.615 1.477 5.2l-.387 1.413.973-.255zm10.518-7.14c.299.149.379.225.43.307.052.083.052.242-.147.646-.197.402-.994 1.102-1.41 1.419-.408.312-.823.36-1.059.36-.236 0-1.801-.159-3.414-1.536-1.612-1.377-2.311-2.613-2.585-2.915-.275-.303-.526-.644-.526-1.096 0-.452.235-.664.336-.784.101-.12.235-.224.299-.307.064-.083.101-.11.168-.22.127-.225.064-.424-.032-.625-.096-.2-.401-.967-.549-1.321-.143-.341-.289-.296-.398-.296-.103 0-.323-.002-.549-.002-.225 0-.589.083-.898.424-.31.341-1.184 1.155-1.184 2.81 0 1.656 1.201 3.254 1.368 3.475.168.22 2.36 3.601 5.717 5.049.799.345 1.423.551 1.91.706.801.258 1.53.221 2.106.135.641-.096 1.964-.803 2.241-1.576.277-.774.277-1.438.194-1.576z" /></svg>
+                                                Conversar
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer de Ações */}
+                            <div className="bg-gray-50 p-4 border-t flex justify-between gap-4">
+                                <Button variant="outline" onClick={() => setIsDetailsOpen(false)} className="flex-1 md:flex-none px-6">Fechar</Button>
+                                <div className="flex gap-2 flex-1 md:flex-none">
+                                    <Button variant="outline" className="flex-1 md:flex-none gap-2 border-primary text-primary hover:bg-primary/5 px-6" onClick={() => { setIsDetailsOpen(false); handleSync(currentItem); }}>
+                                        <RefreshCw className="h-4 w-4" /> Sincronizar
+                                    </Button>
+                                    <Button className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 px-8" onClick={() => { setIsDetailsOpen(false); handleEdit(currentItem); }}>
+                                        <Edit className="h-4 w-4" /> Editar Produto
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     )}
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>Fechar</Button>
-                        <Button onClick={() => { setIsDetailsOpen(false); openEdit(currentItem); }}>Editar Produto</Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

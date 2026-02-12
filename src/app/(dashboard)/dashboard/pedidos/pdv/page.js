@@ -171,7 +171,8 @@ export default function PDVPage() {
             const productsRes = await api.get('/catalogo/pecas', {
                 params: { limit: 10000 } // Fetch a large batch
             });
-            setAllProducts(productsRes.data);
+            // Handle paginated response
+            setAllProducts(productsRes.data.data || productsRes.data);
 
         } catch (err) {
             console.error("Erro ao carregar dados iniciais", err);
@@ -287,7 +288,8 @@ export default function PDVPage() {
             const res = await api.get('/catalogo/pecas', {
                 params: { search: barcodeInput }
             });
-            const foundProducts = res.data;
+            // Handle paginated or array response
+            const foundProducts = res.data.data || res.data;
 
             if (foundProducts.length === 0) {
                 toast({
@@ -476,20 +478,6 @@ export default function PDVPage() {
             return;
         }
 
-        if (activeSacolinha) {
-            toast({
-                title: "Sacolinha Atualizada!",
-                description: `Itens salvos na sacolinha do cliente.`,
-                className: "bg-cyan-600 text-white border-none"
-            });
-            // Reset PDV for next customer
-            setItems([]);
-            setClientSearch("");
-            setSelectedClient("");
-            setActiveSacolinha(null);
-            setBarcodeInput("");
-            return;
-        }
 
         setIsProcessing(true);
         try {
@@ -511,6 +499,7 @@ export default function PDVPage() {
 
             const payload = {
                 clienteId: selectedClient || null,
+                sacolinhaId: activeSacolinha?.id || null,
                 itens: items.map(i => {
                     // Apply discount proportionally
                     const netPrice = i.preco * payRatio;
@@ -571,6 +560,8 @@ export default function PDVPage() {
             setFrete(0);
             setSelectedClient("");
             setClientSearch("");
+            setActiveSacolinha(null);
+            sessionStorage.removeItem('activeSacolinha');
 
         } catch (err) {
             console.error(err);

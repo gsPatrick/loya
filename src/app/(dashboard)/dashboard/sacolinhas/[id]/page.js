@@ -98,7 +98,7 @@ export default function DetalheSacolinhaPage() {
             const { data } = await api.get('/catalogo/pecas', {
                 params: { limit: 10000 }
             });
-            setAllProducts(data || []);
+            setAllProducts(data.data || data || []);
         } catch (err) {
             console.error("Erro ao carregar produtos", err);
         }
@@ -129,7 +129,7 @@ export default function DetalheSacolinhaPage() {
             const res = await api.get('/catalogo/pecas', {
                 params: { search: barcodeInput }
             });
-            const foundProducts = res.data;
+            const foundProducts = res.data.data || res.data;
 
             if (foundProducts.length === 0) {
                 toast({

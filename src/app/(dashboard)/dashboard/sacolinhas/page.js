@@ -275,41 +275,40 @@ export default function SacolinhasPage() {
                                                         <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
-                                                    {sac.status === 'ABERTA' && (
-                                                        <DropdownMenuItem onClick={() => handleUpdateStatus(sac.id, 'PRONTA')}>
-                                                            <Clock className="mr-2 h-4 w-4 text-amber-600" />
-                                                            <span className="text-amber-600">Marcar como Pronta</span>
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {sac.status === 'PRONTA' && (
-                                                        <DropdownMenuItem onClick={() => handleUpdateStatus(sac.id, 'ENVIADA')}>
-                                                            <Send className="mr-2 h-4 w-4 text-blue-600" />
-                                                            <span className="text-blue-600">Marcar como Enviada</span>
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {sac.status === 'ENVIADA' && (
-                                                        <DropdownMenuItem onClick={() => handleUpdateStatus(sac.id, 'FECHADA')}>
-                                                            <PackageCheck className="mr-2 h-4 w-4 text-green-600" />
-                                                            <span className="text-green-600">Marcar como Fechada</span>
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {sac.status === 'ABERTA' && (
-                                                        <>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                onClick={() => setConfirmDialog({ open: true, action: 'cancel', sacolinha: sac })}
-                                                                className="text-orange-600"
-                                                            >
-                                                                <XCircle className="mr-2 h-4 w-4" /> Cancelar Sacolinha
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onClick={() => setConfirmDialog({ open: true, action: 'delete', sacolinha: sac })}
-                                                                className="text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Excluir Totalmente
-                                                            </DropdownMenuItem>
-                                                        </>
-                                                    )}
+
+                                                    {/* Quick Status Changes */}
+                                                    <DropdownMenuItem onClick={() => handleUpdateStatus(sac.id, 'ABERTA')}>
+                                                        <ShoppingBag className="mr-2 h-4 w-4 text-cyan-600" />
+                                                        <span className="text-cyan-600">Mudar para Aberta</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleUpdateStatus(sac.id, 'PRONTA')}>
+                                                        <Clock className="mr-2 h-4 w-4 text-amber-600" />
+                                                        <span className="text-amber-600">Mudar para Pronta</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleUpdateStatus(sac.id, 'ENVIADA')}>
+                                                        <Send className="mr-2 h-4 w-4 text-blue-600" />
+                                                        <span className="text-blue-600">Mudar para Enviada</span>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleUpdateStatus(sac.id, 'FECHADA')}>
+                                                        <PackageCheck className="mr-2 h-4 w-4 text-green-600" />
+                                                        <span className="text-green-600">Mudar para Fechada</span>
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuSeparator />
+
+                                                    {/* Critical Actions */}
+                                                    <DropdownMenuItem
+                                                        onClick={() => setConfirmDialog({ open: true, action: 'cancel', sacolinha: sac })}
+                                                        className="text-orange-600"
+                                                    >
+                                                        <XCircle className="mr-2 h-4 w-4" /> Cancelar Sacolinha
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => setConfirmDialog({ open: true, action: 'delete', sacolinha: sac })}
+                                                        className="text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Excluir Totalmente
+                                                    </DropdownMenuItem>
                                                 </DropdownMenuContent>
 
                                             </DropdownMenu>

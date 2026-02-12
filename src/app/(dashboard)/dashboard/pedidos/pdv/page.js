@@ -77,7 +77,6 @@ export default function PDVPage() {
     const [barcodeInput, setBarcodeInput] = useState("");
     const [isSearchingProduct, setIsSearchingProduct] = useState(false);
     const [productSuggestions, setProductSuggestions] = useState([]);
-    const [allProducts, setAllProducts] = useState([]);
 
     // Checkout
     const [descontoTipo, setDescontoTipo] = useState("percent");
@@ -167,13 +166,8 @@ export default function PDVPage() {
 
     const loadInitialData = async () => {
         try {
-            // Fetch all available products for frontend filtering
-            const productsRes = await api.get('/catalogo/pecas', {
-                params: { limit: 10000 } // Fetch a large batch
-            });
-            // Handle paginated response
-            setAllProducts(productsRes.data.data || productsRes.data);
-
+            // No longer fetching 10k products at once for efficiency
+            // setAllProducts is removed
         } catch (err) {
             console.error("Erro ao carregar dados iniciais", err);
         }
@@ -748,7 +742,7 @@ export default function PDVPage() {
                                         placeholder="Bipe o código de barras ou digite o nome..."
                                         className="pl-12 h-14 text-lg shadow-inner bg-muted/10 border-primary/20 focus-visible:ring-primary w-full"
                                         value={barcodeInput}
-                                        onChange={(e) => {
+                                        onChange={async (e) => {
                                             const val = e.target.value;
                                             setBarcodeInput(val);
 
@@ -757,32 +751,40 @@ export default function PDVPage() {
                                                 return;
                                             }
 
-                                            // Filter locally
-                                            const searchLower = val.toLowerCase();
-                                            const numericId = parseInt(val, 10);
-                                            const isNumeric = !isNaN(numericId) && /^\d+$/.test(val);
                                             const searchUpper = val.toUpperCase();
                                             const isTagSearch = searchUpper.startsWith("TAG-");
+                                            const isNumeric = /^\d+$/.test(val);
 
-                                            const filtered = allProducts.filter(p => {
-                                                // 1. Numeric Input -> Search ONLY by ID (starts with)
-                                                if (isNumeric) {
-                                                    return String(p.id).startsWith(val);
-                                                }
+                                            try {
+                                                // Fetch suggestions from API
+                                                const res = await api.get('/catalogo/pecas', {
+                                                    params: { search: val, limit: 15, status: 'DISPONIVEL' }
+                                                });
 
-                                                // 2. TAG Search -> Search ONLY by Tag (starts with)
-                                                if (isTagSearch) {
-                                                    const tagMatch = p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase().startsWith(searchUpper);
-                                                    const skuMatch = p.sku_ecommerce && p.sku_ecommerce.toUpperCase().startsWith(searchUpper);
-                                                    return tagMatch || skuMatch;
-                                                }
+                                                const foundProducts = res.data.data || res.data;
 
-                                                // 3. Fallback: Description Search (for non-numeric, non-tag inputs)
-                                                // We also check if it's NOT a numeric string to avoid confusion
-                                                return p.descricao_curta && p.descricao_curta.toLowerCase().includes(searchLower);
-                                            }).slice(0, 10); // Limit suggestions
+                                                // Refine results based on user exclusivity rules
+                                                const refined = foundProducts.filter(p => {
+                                                    // 1. Numeric Input -> Show ONLY if ID starts with it
+                                                    if (isNumeric) {
+                                                        return String(p.id).startsWith(val);
+                                                    }
 
-                                            setProductSuggestions(filtered);
+                                                    // 2. TAG Search -> Show ONLY if Tag/SKU starts with it
+                                                    if (isTagSearch) {
+                                                        const tMatch = p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase().startsWith(searchUpper);
+                                                        const sMatch = p.sku_ecommerce && p.sku_ecommerce.toUpperCase().startsWith(searchUpper);
+                                                        return tMatch || sMatch;
+                                                    }
+
+                                                    // 3. Text Search -> Show matches that aren't numeric or tagged
+                                                    return p.descricao_curta && p.descricao_curta.toLowerCase().includes(val.toLowerCase());
+                                                }).slice(0, 10);
+
+                                                setProductSuggestions(refined);
+                                            } catch (err) {
+                                                console.error("Erro ao buscar sugestões", err);
+                                            }
                                         }}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') handleSearchProduct();

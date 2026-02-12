@@ -765,20 +765,20 @@ export default function PDVPage() {
                                             const isTagSearch = searchUpper.startsWith("TAG-");
 
                                             const filtered = allProducts.filter(p => {
-                                                // 1. Strict ID Match (Numeric Input)
+                                                // 1. Numeric Input -> Search ONLY by ID (starts with)
                                                 if (isNumeric) {
-                                                    return p.id === numericId;
+                                                    return String(p.id).startsWith(val);
                                                 }
 
-                                                // 2. Strict TAG Match (Starts with TAG-)
+                                                // 2. TAG Search -> Search ONLY by Tag (starts with)
                                                 if (isTagSearch) {
-                                                    return (
-                                                        (p.codigo_etiqueta && p.codigo_etiqueta.toLowerCase().includes(searchLower)) ||
-                                                        (p.sku_ecommerce && p.sku_ecommerce.toLowerCase().includes(searchLower))
-                                                    );
+                                                    const tagMatch = p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase().startsWith(searchUpper);
+                                                    const skuMatch = p.sku_ecommerce && p.sku_ecommerce.toUpperCase().startsWith(searchUpper);
+                                                    return tagMatch || skuMatch;
                                                 }
 
-                                                // 3. Fallback: Description Only
+                                                // 3. Fallback: Description Search (for non-numeric, non-tag inputs)
+                                                // We also check if it's NOT a numeric string to avoid confusion
                                                 return p.descricao_curta && p.descricao_curta.toLowerCase().includes(searchLower);
                                             }).slice(0, 10); // Limit suggestions
 

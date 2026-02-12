@@ -217,6 +217,7 @@ function PessoasContent() {
                                 <TableHead>CPF/CNPJ</TableHead>
                                 <TableHead>Contato</TableHead>
                                 <TableHead>Tipo</TableHead>
+                                <TableHead className="text-right">Saldo</TableHead>
                                 <TableHead className="text-center w-[80px]">Ação</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -241,6 +242,9 @@ function PessoasContent() {
                                         <div className="text-gray-400">{p.email}</div>
                                     </TableCell>
                                     <TableCell><Badge variant="outline">{getTipoLabel(p)}</Badge></TableCell>
+                                    <TableCell className="text-right font-bold text-gray-700">
+                                        R$ {(p.saldo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </TableCell>
                                     <TableCell className="text-center flex items-center justify-center gap-2">
                                         {p.is_fornecedor && (
                                             <Button

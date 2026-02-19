@@ -18,8 +18,7 @@ import {
     ShoppingBag,
     History,
     UserPlus,
-    History,
-    UserPlus,
+
     ArrowRight,
     Edit
 } from "lucide-react";

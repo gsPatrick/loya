@@ -1,5 +1,6 @@
 // src/app/dashboard/pedidos/pdv/page.js
 "use client";
+// forcing build retry
 
 import { useState, useEffect, useRef } from "react";
 import {

@@ -89,7 +89,11 @@ function PessoasContent() {
             toast({ title: "Sucesso", description: "Pessoa cadastrada.", className: "bg-primary text-primary-foreground border-none" });
         } catch (err) {
             console.error(err);
-            toast({ title: "Erro", description: "Erro ao cadastrar pessoa.", variant: "destructive" });
+            toast({
+                title: "Erro",
+                description: err.response?.data?.error || "Erro ao cadastrar pessoa.",
+                variant: "destructive"
+            });
         }
     };
 

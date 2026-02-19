@@ -51,6 +51,11 @@ export default function DetalheSacolinhaPage() {
     const [trackingDialogOpen, setTrackingDialogOpen] = useState(false);
     const [trackingCodeInput, setTrackingCodeInput] = useState("");
 
+    // Price Edit State
+    const [editingPricePeca, setEditingPricePeca] = useState(null);
+    const [newPriceInput, setNewPriceInput] = useState("");
+    const [isUpdatingPrice, setIsUpdatingPrice] = useState(false);
+
     // Beep sound
     const playBeep = () => {
         try {
@@ -284,6 +289,30 @@ export default function DetalheSacolinhaPage() {
         }
     };
 
+    const handleUpdatePrice = async () => {
+        if (!editingPricePeca) return;
+        setIsUpdatingPrice(true);
+        try {
+            // Remove currency formatting if user pasted it
+            const cleanPrice = String(newPriceInput)
+                .replace('R$', '')
+                .replace(/\./g, '')
+                .replace(',', '.')
+                .trim();
+
+            await api.put(`/vendas/sacolinhas/${id}/itens/${editingPricePeca.id}/preco`, {
+                preco: parseFloat(cleanPrice)
+            });
+            toast({ title: "Sucesso", description: "Preço atualizado." });
+            loadSacolinha();
+            setEditingPricePeca(null);
+        } catch (err) {
+            toast({ title: "Erro", description: "Erro ao atualizar preço.", variant: "destructive" });
+        } finally {
+            setIsUpdatingPrice(false);
+        }
+    };
+
     const getStatusBadge = (status) => {
         const styles = {
             ABERTA: { bg: "bg-cyan-100 text-cyan-700", icon: ShoppingBag },
@@ -314,7 +343,7 @@ export default function DetalheSacolinhaPage() {
 
     if (!sacolinha) return null;
 
-    const total = sacolinha.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda || 0), 0) || 0;
+    const total = sacolinha.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda_sacolinha || i.preco_venda || 0), 0) || 0;
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -570,22 +599,46 @@ export default function DetalheSacolinhaPage() {
                                         <TableCell>{item.descricao_curta || '-'}</TableCell>
                                         <TableCell>{item.tamanho?.nome || item.tamanho || '-'}</TableCell>
                                         <TableCell>{item.cor?.nome || item.cor || '-'}</TableCell>
-                                        <TableCell className="text-right font-semibold">{formatCurrency(item.preco_venda)}</TableCell>
+                                        <TableCell className="text-right font-semibold">
+                                            <div className="flex flex-col items-end">
+                                                <span className={item.preco_venda_sacolinha ? "text-amber-600" : ""}>
+                                                    {formatCurrency(item.preco_venda_sacolinha || item.preco_venda)}
+                                                </span>
+                                                {item.preco_venda_sacolinha && (
+                                                    <span className="text-xs text-gray-400 line-through">
+                                                        {formatCurrency(item.preco_venda)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         {sacolinha.status === 'ABERTA' && (
                                             <TableCell>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                                    onClick={() => setConfirmRemove(item)}
-                                                    disabled={removingPeca === item.id}
-                                                >
-                                                    {removingPeca === item.id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" />
-                                                    )}
-                                                </Button>
+                                                <div className="flex items-center gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                                                        onClick={() => {
+                                                            setEditingPricePeca(item);
+                                                            setNewPriceInput(item.preco_venda_sacolinha || item.preco_venda);
+                                                        }}
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                        onClick={() => setConfirmRemove(item)}
+                                                        disabled={removingPeca === item.id}
+                                                    >
+                                                        {removingPeca === item.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         )}
                                     </TableRow>
@@ -682,6 +735,48 @@ export default function DetalheSacolinhaPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+
+            {/* Price Edit Dialog */}
+            <Dialog open={!!editingPricePeca} onOpenChange={() => setEditingPricePeca(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Alterar Preço do Item</DialogTitle>
+                        <DialogDescription>
+                            Defina o preço negociado para este item nesta sacolinha.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 bg-gray-100 rounded flex items-center justify-center">
+                                <Shirt className="h-6 w-6 text-gray-500" />
+                            </div>
+                            <div>
+                                <p className="font-semibold">{editingPricePeca?.descricao_curta}</p>
+                                <p className="text-sm text-gray-500">{editingPricePeca?.codigo_etiqueta}</p>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Preço Negociado (R$)</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                value={newPriceInput}
+                                onChange={(e) => setNewPriceInput(e.target.value)}
+                                placeholder="0.00"
+                            />
+                            <p className="text-xs text-gray-500">
+                                Preço Original: {formatCurrency(editingPricePeca?.preco_venda)}
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditingPricePeca(null)}>Cancelar</Button>
+                        <Button onClick={handleUpdatePrice} disabled={isUpdatingPrice} className="bg-amber-600 hover:bg-amber-700">
+                            {isUpdatingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Preço"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div >
     );
 }

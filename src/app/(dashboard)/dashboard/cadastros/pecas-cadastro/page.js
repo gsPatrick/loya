@@ -518,14 +518,14 @@ function CadastroPecasContent() {
     const handleNotifyAvaria = async (hasDamage) => {
         if (hasDamage && form.fornecedorId) {
             try {
-                const forn = fornecedores.find(f => String(f.id) === String(form.fornecedorId));
-                await api.post('/cadastros/notificacoes', {
-                    mensagem: `AVARIA: Produto do fornecedor ${forn?.nome || 'desconhecido'} reportado com avaria no cadastro.`,
-                    tipo: 'ALERTA'
+                await api.post('/catalogo/pecas/report-avaria', {
+                    supplierId: form.fornecedorId,
+                    mensagemAdicional: "Item(s) reportado(s) com avaria durante o cadastro."
                 });
-                toast({ title: "Notificado", description: "Lembrete de avaria criado e fornecedor marcado." });
+                toast({ title: "Notificado", description: "O fornecedor foi avisado via WhatsApp." });
             } catch (err) {
-                console.error("Erro ao criar lembrete de avaria:", err);
+                console.error("Erro ao reportar avaria:", err);
+                toast({ title: "Erro", description: "Falha ao avisar fornecedor via WhatsApp.", variant: "destructive" });
             }
         }
         setIsDamageReportOpen(false);

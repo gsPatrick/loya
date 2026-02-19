@@ -1319,25 +1319,33 @@ export default function PDVPage() {
                                 <div className="space-y-2">
                                     <Label className="text-[11px] uppercase font-bold text-muted-foreground tracking-widest pl-1">Ou continuar existente:</Label>
                                     <div className="grid gap-2 max-h-[200px] overflow-y-auto pr-1">
-                                        {existingSacolinhas.map(s => (
-                                            <Button
-                                                key={s.id}
-                                                variant="outline"
-                                                className="h-14 justify-between border-cyan-100 hover:border-cyan-200 hover:bg-cyan-50"
-                                                onClick={() => handleSelectExistingSacolinha(s)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <History className="h-5 w-5 text-cyan-600" />
-                                                    <div className="text-left">
-                                                        <div className="font-semibold">Sacolinha #{s.id}</div>
-                                                        <div className="text-[10px] text-muted-foreground">
-                                                            {s.itens?.length || 0} itens • {new Date(s.createdAt).toLocaleDateString()}
+                                        {existingSacolinhas.map(s => {
+                                            const totalSacolinha = (s.itens || []).reduce((acc, item) => {
+                                                // Priority: Negotiated Price > Catalog Price
+                                                const price = parseFloat(item.preco_venda_sacolinha || item.preco_venda || 0);
+                                                return acc + price;
+                                            }, 0);
+
+                                            return (
+                                                <Button
+                                                    key={s.id}
+                                                    variant="outline"
+                                                    className="h-14 justify-between border-cyan-100 hover:border-cyan-200 hover:bg-cyan-50"
+                                                    onClick={() => handleSelectExistingSacolinha(s)}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <History className="h-5 w-5 text-cyan-600" />
+                                                        <div className="text-left">
+                                                            <div className="font-semibold">Sacolinha #{s.id}</div>
+                                                            <div className="text-[10px] text-muted-foreground">
+                                                                {s.itens?.length || 0} itens • R$ {totalSacolinha.toFixed(2)} • {new Date(s.createdAt).toLocaleDateString()}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                                <ArrowRight className="h-4 w-4 text-cyan-600" />
-                                            </Button>
-                                        ))}
+                                                    <ArrowRight className="h-4 w-4 text-cyan-600" />
+                                                </Button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}

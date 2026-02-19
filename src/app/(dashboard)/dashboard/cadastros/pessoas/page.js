@@ -89,9 +89,17 @@ function PessoasContent() {
             toast({ title: "Sucesso", description: "Pessoa cadastrada.", className: "bg-primary text-primary-foreground border-none" });
         } catch (err) {
             console.error(err);
+            let errorMessage = err.response?.data?.error || "Erro ao cadastrar pessoa.";
+
+            if (errorMessage.includes("must be unique")) {
+                if (errorMessage.includes("cpf_cnpj")) errorMessage = "CPF ou CNPJ já está em uso.";
+                else if (errorMessage.includes("email")) errorMessage = "E-mail já está em uso.";
+                else errorMessage = "Este registro já existe.";
+            }
+
             toast({
-                title: "Erro",
-                description: err.response?.data?.error || "Erro ao cadastrar pessoa.",
+                title: "Erro de Validação",
+                description: errorMessage,
                 variant: "destructive"
             });
         }

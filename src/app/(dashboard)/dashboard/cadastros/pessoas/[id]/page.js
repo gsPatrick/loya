@@ -1,8 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import api from "@/services/api";
+import api, { API_URL } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
+// Helper: resolve relative upload paths to full URLs
+const API_HOST = API_URL.replace('/api/v1', '');
+const resolveFileUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path; // Already absolute
+    return `${API_HOST}/${path}`;
+};
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -338,7 +346,7 @@ export default function DetalhesPessoaPage() {
 
                 <div className="relative group">
                     <Avatar className="h-16 w-16 border-2 border-primary/20">
-                        <AvatarImage src={pessoa.foto} className="object-cover" />
+                        <AvatarImage src={resolveFileUrl(pessoa.foto)} className="object-cover" />
                         <AvatarFallback className="bg-primary/10 text-primary text-xl">
                             {pessoa.nome.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
@@ -708,7 +716,7 @@ export default function DetalhesPessoaPage() {
                                                 </div>
                                             </div>
                                             <div className="bg-muted/50 px-2 py-1 flex justify-end gap-1 border-t opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => window.open(c.caminho.startsWith('http') ? c.caminho : `http://localhost:3001/${c.caminho.replace(/\\/g, '/')}`, '_blank')}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => window.open(resolveFileUrl(c.caminho), '_blank')}>
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
@@ -806,7 +814,7 @@ export default function DetalhesPessoaPage() {
                             <div className="flex flex-col items-center gap-2 mb-4 p-4 bg-muted/20 rounded-lg">
                                 <div className="relative group">
                                     <Avatar className="h-24 w-24 border-2 border-primary/20">
-                                        <AvatarImage src={editForm.foto || pessoa.foto} className="object-cover" />
+                                        <AvatarImage src={resolveFileUrl(editForm.foto || pessoa.foto)} className="object-cover" />
                                         <AvatarFallback className="bg-primary/10 text-primary text-2xl">
                                             {editForm.nome?.substring(0, 2).toUpperCase() || "UN"}
                                         </AvatarFallback>

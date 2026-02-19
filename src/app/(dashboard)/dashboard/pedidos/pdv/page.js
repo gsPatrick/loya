@@ -230,256 +230,257 @@ export default function PDVPage() {
     const handleSelectExistingSacolinha = (sacolinha) => {
         setActiveSacolinha(sacolinha);
         // Load items from sacolinha into PDV
-        const formattedItems = (sacolinha.itens || []).map(i => ({        pecaId: i.id,
+        const formattedItems = (sacolinha.itens || []).map(i => ({
+            pecaId: i.id,
             codigo: i.codigo_etiqueta,
-                descricao: i.descricao_curta || i.nome,
-                    preco: parseFloat(i.preco_venda_sacolinha || i.preco_venda),
-                        qtd: 1
-    }));
-    setItems(formattedItems);
-    setSacolinhaModalOpen(false);
-    toast({
-        title: "Sacolinha Selecionada",
-        description: `Retomando sacolinha #${sacolinha.id}.`,
-        className: "bg-blue-600 text-white border-none"
-    });
-};
-
-const handleProceedNormalSale = () => {
-    setActiveSacolinha(null);
-    setSacolinhaModalOpen(false);
-    toast({
-        title: "Venda Direta",
-        description: "Modo de venda normal ativado.",
-    });
-};
-
-const fetchSaldoPermuta = async (clientId) => {
-    setLoadingSaldo(true);
-    try {
-        const res = await api.get(`/pessoas/${clientId}/saldo-permuta`);
-        setSaldoPermuta(res.data);
-    } catch (err) {
-        console.error("Erro ao buscar saldo", err);
+            descricao: i.descricao_curta || i.nome,
+            preco: parseFloat(i.preco_venda_sacolinha || i.preco_venda),
+            qtd: 1
+        }));
+        setItems(formattedItems);
+        setSacolinhaModalOpen(false);
         toast({
-            title: "Erro ao buscar saldo",
-            description: "Não foi possível verificar o saldo de permuta.",
-            variant: "destructive"
+            title: "Sacolinha Selecionada",
+            description: `Retomando sacolinha #${sacolinha.id}.`,
+            className: "bg-blue-600 text-white border-none"
         });
-    } finally {
-        setLoadingSaldo(false);
-    }
-};
+    };
 
-// --- ACTIONS ---
-
-// --- RESTOCK MODAL STATE ---
-const [restockModalOpen, setRestockModalOpen] = useState(false);
-const [productToRestock, setProductToRestock] = useState(null);
-const [restockQuantity, setRestockQuantity] = useState(1);
-const [isRestocking, setIsRestocking] = useState(false);
-
-const handleSearchProduct = async () => {
-    if (!barcodeInput.trim()) return;
-
-    setIsSearchingProduct(true);
-    try {
-        // Fetch all matches first
-        const res = await api.get('/catalogo/pecas', {
-            params: { search: barcodeInput }
+    const handleProceedNormalSale = () => {
+        setActiveSacolinha(null);
+        setSacolinhaModalOpen(false);
+        toast({
+            title: "Venda Direta",
+            description: "Modo de venda normal ativado.",
         });
-        // Handle paginated or array response
-        const foundProducts = res.data.data || res.data;
+    };
 
-        if (foundProducts.length === 0) {
+    const fetchSaldoPermuta = async (clientId) => {
+        setLoadingSaldo(true);
+        try {
+            const res = await api.get(`/pessoas/${clientId}/saldo-permuta`);
+            setSaldoPermuta(res.data);
+        } catch (err) {
+            console.error("Erro ao buscar saldo", err);
             toast({
-                title: "Produto não encontrado",
-                description: "Nenhum produto encontrado com este código ou nome.",
+                title: "Erro ao buscar saldo",
+                description: "Não foi possível verificar o saldo de permuta.",
                 variant: "destructive"
             });
+        } finally {
+            setLoadingSaldo(false);
+        }
+    };
+
+    // --- ACTIONS ---
+
+    // --- RESTOCK MODAL STATE ---
+    const [restockModalOpen, setRestockModalOpen] = useState(false);
+    const [productToRestock, setProductToRestock] = useState(null);
+    const [restockQuantity, setRestockQuantity] = useState(1);
+    const [isRestocking, setIsRestocking] = useState(false);
+
+    const handleSearchProduct = async () => {
+        if (!barcodeInput.trim()) return;
+
+        setIsSearchingProduct(true);
+        try {
+            // Fetch all matches first
+            const res = await api.get('/catalogo/pecas', {
+                params: { search: barcodeInput }
+            });
+            // Handle paginated or array response
+            const foundProducts = res.data.data || res.data;
+
+            if (foundProducts.length === 0) {
+                toast({
+                    title: "Produto não encontrado",
+                    description: "Nenhum produto encontrado com este código ou nome.",
+                    variant: "destructive"
+                });
+                setBarcodeInput("");
+                return;
+            }
+
+            const rawInput = barcodeInput.trim();
+            const upperInput = rawInput.toUpperCase();
+            let product = null;
+
+            // STRICT SEARCH LOGIC
+            if (upperInput.startsWith("TAG-")) {
+                // Case: User specifically typed/scanned a TAG
+                product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase() === upperInput);
+            } else {
+                // Case: Not a TAG (ID or Description)
+                const numericId = parseInt(rawInput, 10);
+                const isNumeric = !isNaN(numericId) && /^\d+$/.test(rawInput);
+
+                if (isNumeric) {
+                    // 1. Try exact ID match first
+                    product = foundProducts.find(p => p.id === numericId);
+
+                    // 2. Fallback: If no ID matches, but a Tag matches the number
+                    if (!product && foundProducts.length === 1) {
+                        product = foundProducts[0];
+                    } else if (!product) {
+                        // Look for exact tag suffix match if multiple results
+                        product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase().endsWith(`-${rawInput}`));
+                    }
+                } else {
+                    // Text Search (Name/Description) - Fallback for non-numeric, non-tag inputs
+                    // Only match if it's NOT a numeric-looking string to avoid ID confusion
+                    if (foundProducts.length === 1) {
+                        product = foundProducts[0];
+                    }
+                }
+            }
+
+            if (!product) {
+                if (foundProducts.length > 1) {
+                    toast({
+                        title: "Múltiplos produtos encontrados",
+                        description: "Use a lista de sugestões para selecionar o item correto.",
+                        variant: "warning"
+                    });
+                } else {
+                    toast({
+                        title: "Produto não identificado",
+                        description: "Verifique se digitou o ID ou TAG corretamente.",
+                        variant: "destructive"
+                    });
+                }
+                return;
+            }
+
+            // Item Found - Proceed to Add
+            checkAndAddItem(product);
             setBarcodeInput("");
+
+        } catch (err) {
+            console.error(err);
+            toast({
+                title: "Erro ao buscar produto",
+                description: "Tente novamente.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSearchingProduct(false);
+            if (barcodeInputRef.current) barcodeInputRef.current.focus();
+        }
+    };
+
+    const checkAndAddItem = async (product) => {
+        // CHECK STOCK Rule
+        if (product.quantidade <= 0 || product.status === 'VENDIDA') {
+            setProductToRestock(product);
+            setRestockQuantity(1);
+            setRestockModalOpen(true);
             return;
         }
 
-        const rawInput = barcodeInput.trim();
-        const upperInput = rawInput.toUpperCase();
-        let product = null;
-
-        // STRICT SEARCH LOGIC
-        if (upperInput.startsWith("TAG-")) {
-            // Case: User specifically typed/scanned a TAG
-            product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase() === upperInput);
-        } else {
-            // Case: Not a TAG (ID or Description)
-            const numericId = parseInt(rawInput, 10);
-            const isNumeric = !isNaN(numericId) && /^\d+$/.test(rawInput);
-
-            if (isNumeric) {
-                // 1. Try exact ID match first
-                product = foundProducts.find(p => p.id === numericId);
-
-                // 2. Fallback: If no ID matches, but a Tag matches the number
-                if (!product && foundProducts.length === 1) {
-                    product = foundProducts[0];
-                } else if (!product) {
-                    // Look for exact tag suffix match if multiple results
-                    product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase().endsWith(`-${rawInput}`));
-                }
-            } else {
-                // Text Search (Name/Description) - Fallback for non-numeric, non-tag inputs
-                // Only match if it's NOT a numeric-looking string to avoid ID confusion
-                if (foundProducts.length === 1) {
-                    product = foundProducts[0];
-                }
-            }
+        // Check if already in cart
+        if (items.find(i => i.pecaId === product.id)) {
+            toast({
+                title: "Item já adicionado",
+                description: "Este item já está no carrinho.",
+                variant: "warning"
+            });
+            return;
         }
 
-        if (!product) {
-            if (foundProducts.length > 1) {
+        if (activeSacolinha) {
+            try {
+                await api.post(`/vendas/sacolinhas/${activeSacolinha.id}/itens`, { pecaId: product.id });
+                addItemToCart(product); // Also update locally
+                playBeep();
+            } catch (err) {
                 toast({
-                    title: "Múltiplos produtos encontrados",
-                    description: "Use a lista de sugestões para selecionar o item correto.",
-                    variant: "warning"
-                });
-            } else {
-                toast({
-                    title: "Produto não identificado",
-                    description: "Verifique se digitou o ID ou TAG corretamente.",
+                    title: "Erro ao adicionar",
+                    description: err.response?.data?.error || "Erro ao salvar na sacolinha.",
                     variant: "destructive"
                 });
             }
-            return;
-        }
-
-        // Item Found - Proceed to Add
-        checkAndAddItem(product);
-        setBarcodeInput("");
-
-    } catch (err) {
-        console.error(err);
-        toast({
-            title: "Erro ao buscar produto",
-            description: "Tente novamente.",
-            variant: "destructive"
-        });
-    } finally {
-        setIsSearchingProduct(false);
-        if (barcodeInputRef.current) barcodeInputRef.current.focus();
-    }
-};
-
-const checkAndAddItem = async (product) => {
-    // CHECK STOCK Rule
-    if (product.quantidade <= 0 || product.status === 'VENDIDA') {
-        setProductToRestock(product);
-        setRestockQuantity(1);
-        setRestockModalOpen(true);
-        return;
-    }
-
-    // Check if already in cart
-    if (items.find(i => i.pecaId === product.id)) {
-        toast({
-            title: "Item já adicionado",
-            description: "Este item já está no carrinho.",
-            variant: "warning"
-        });
-        return;
-    }
-
-    if (activeSacolinha) {
-        try {
-            await api.post(`/vendas/sacolinhas/${activeSacolinha.id}/itens`, { pecaId: product.id });
-            addItemToCart(product); // Also update locally
+        } else {
+            addItemToCart(product);
             playBeep();
-        } catch (err) {
+        }
+    };
+
+    const handleConfirmRestock = async () => {
+        if (!productToRestock) return;
+        setIsRestocking(true);
+        try {
+            // Update stock in backend (this triggers status -> DISPONIVEL)
+            const newStock = (productToRestock.quantidade || 0) + parseInt(restockQuantity);
+
+            await api.put(`/catalogo/pecas/${productToRestock.id}`, {
+                quantidade: newStock
+            });
+
             toast({
-                title: "Erro ao adicionar",
-                description: err.response?.data?.error || "Erro ao salvar na sacolinha.",
+                title: "Estoque Atualizado",
+                description: `Produto agora tem ${newStock} itens e está DISPONÍVEL.`,
+                className: "bg-green-600 text-white border-none"
+            });
+
+            // Update local object to reflect change immediately for adding to cart
+            const updatedProduct = { ...productToRestock, quantidade: newStock, status: 'DISPONIVEL' };
+
+            // Add to cart immediately
+            addItemToCart(updatedProduct);
+
+            setRestockModalOpen(false);
+            setProductToRestock(null);
+
+        } catch (err) {
+            console.error(err);
+            toast({
+                title: "Erro ao atualizar estoque",
+                description: "Tente novamente.",
                 variant: "destructive"
             });
+        } finally {
+            setIsRestocking(false);
         }
-    } else {
-        addItemToCart(product);
-        playBeep();
-    }
-};
+    };
 
-const handleConfirmRestock = async () => {
-    if (!productToRestock) return;
-    setIsRestocking(true);
-    try {
-        // Update stock in backend (this triggers status -> DISPONIVEL)
-        const newStock = (productToRestock.quantidade || 0) + parseInt(restockQuantity);
-
-        await api.put(`/catalogo/pecas/${productToRestock.id}`, {
-            quantidade: newStock
-        });
-
+    const addItemToCart = (product) => {
+        // ... existing implementation ...
+        const newItem = {
+            pecaId: product.id,
+            codigo: product.codigo_etiqueta,
+            descricao: product.descricao_curta || product.nome || "Produto sem nome",
+            preco: parseFloat(product.preco_venda_sacolinha || product.preco_venda),
+            qtd: 1 // Unique items usually 1
+        };
+        setItems([...items, newItem]);
         toast({
-            title: "Estoque Atualizado",
-            description: `Produto agora tem ${newStock} itens e está DISPONÍVEL.`,
+            title: "Item adicionado",
+            description: `${newItem.descricao} adicionado ao carrinho.`,
             className: "bg-green-600 text-white border-none"
         });
-
-        // Update local object to reflect change immediately for adding to cart
-        const updatedProduct = { ...productToRestock, quantidade: newStock, status: 'DISPONIVEL' };
-
-        // Add to cart immediately
-        addItemToCart(updatedProduct);
-
-        setRestockModalOpen(false);
-        setProductToRestock(null);
-
-    } catch (err) {
-        console.error(err);
-        toast({
-            title: "Erro ao atualizar estoque",
-            description: "Tente novamente.",
-            variant: "destructive"
-        });
-    } finally {
-        setIsRestocking(false);
-    }
-};
-
-const addItemToCart = (product) => {
-    // ... existing implementation ...
-    const newItem = {
-        pecaId: product.id,
-        codigo: product.codigo_etiqueta,
-        descricao: product.descricao_curta || product.nome || "Produto sem nome",
-        preco: parseFloat(product.preco_venda_sacolinha || product.preco_venda),
-        qtd: 1 // Unique items usually 1
     };
-    setItems([...items, newItem]);
-    toast({
-        title: "Item adicionado",
-        description: `${newItem.descricao} adicionado ao carrinho.`,
-        className: "bg-green-600 text-white border-none"
-    });
-};
 
-const handleRemoveItem = async (index) => {
-    const itemToRemove = items[index];
+    const handleRemoveItem = async (index) => {
+        const itemToRemove = items[index];
 
-    if (activeSacolinha) {
-        try {
-            await api.delete(`/vendas/sacolinhas/${activeSacolinha.id}/itens/${itemToRemove.pecaId}`);
+        if (activeSacolinha) {
+            try {
+                await api.delete(`/vendas/sacolinhas/${activeSacolinha.id}/itens/${itemToRemove.pecaId}`);
+                const newItems = [...items];
+                newItems.splice(index, 1);
+                setItems(newItems);
+                toast({ title: "Item Removido", description: "Removido da sacolinha com sucesso." });
+            } catch (err) {
+                toast({ title: "Erro", description: "Não foi possível remover da sacolinha.", variant: "destructive" });
+            }
+        } else {
             const newItems = [...items];
             newItems.splice(index, 1);
             setItems(newItems);
-            toast({ title: "Item Removido", description: "Removido da sacolinha com sucesso." });
-        } catch (err) {
-            toast({ title: "Erro", description: "Não foi possível remover da sacolinha.", variant: "destructive" });
         }
-    } else {
-        const newItems = [...items];
-        newItems.splice(index, 1);
-        setItems(newItems);
     }
-}
-    };
+};
 
 const handleUpdateItemPrice = () => {
     if (editingItemIndex === null) return;
@@ -1397,4 +1398,3 @@ return (
         </Dialog>
     </div>
 );
-}

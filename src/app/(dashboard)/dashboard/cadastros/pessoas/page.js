@@ -13,7 +13,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "next/navigation";
-import api from "@/services/api";
+import api, { API_URL } from "@/services/api";
+
+const API_HOST = API_URL.replace('/api/v1', '');
+const resolveFileUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${API_HOST}/${path}`;
+};
 
 function PessoasContent() {
     const { toast } = useToast();
@@ -240,7 +247,7 @@ function PessoasContent() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8 border border-primary/10">
-                                                <AvatarImage src={p.foto} className="object-cover" />
+                                                <AvatarImage src={resolveFileUrl(p.foto)} className="object-cover" />
                                                 <AvatarFallback className="bg-primary/5 text-primary text-[10px]">
                                                     {p.nome.substring(0, 2).toUpperCase()}
                                                 </AvatarFallback>

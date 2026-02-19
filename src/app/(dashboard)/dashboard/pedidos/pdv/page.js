@@ -283,11 +283,13 @@ export default function PDVPage() {
     const handleSearchProduct = async () => {
         if (!barcodeInput.trim()) return;
 
+        const normalizedInput = barcodeInput.trim().replace(/^TAG\s+(\d+)$/i, 'TAG-$1');
+
         setIsSearchingProduct(true);
         try {
             // Fetch all matches first
             const res = await api.get('/catalogo/pecas', {
-                params: { search: barcodeInput }
+                params: { search: normalizedInput }
             });
             // Handle paginated or array response
             const foundProducts = res.data.data || res.data;
@@ -302,7 +304,12 @@ export default function PDVPage() {
                 return;
             }
 
-            const rawInput = barcodeInput.trim();
+            let rawInput = barcodeInput.trim();
+            // Normalize "TAG 123" -> "TAG-123"
+            if (/^TAG\s+\d+$/i.test(rawInput)) {
+                rawInput = rawInput.replace(/\s+/, '-').toUpperCase();
+            }
+
             const upperInput = rawInput.toUpperCase();
             let product = null;
 

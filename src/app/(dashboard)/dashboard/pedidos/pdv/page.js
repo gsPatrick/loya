@@ -283,7 +283,12 @@ export default function PDVPage() {
     const handleSearchProduct = async () => {
         if (!barcodeInput.trim()) return;
 
-        const normalizedInput = barcodeInput.trim().replace(/^TAG\s+(\d+)$/i, 'TAG-$1');
+        // More robust normalization: "TAG 123", "TAG123", "TAG-123" -> "TAG-123"
+        let normalizedInput = barcodeInput.trim();
+        if (/^TAG\s*[- ]?\s*\d+$/i.test(normalizedInput)) {
+            const digits = normalizedInput.match(/\d+/)[0];
+            normalizedInput = `TAG-${digits}`;
+        }
 
         setIsSearchingProduct(true);
         try {
@@ -304,39 +309,32 @@ export default function PDVPage() {
                 return;
             }
 
-            let rawInput = barcodeInput.trim();
-            // Normalize "TAG 123" -> "TAG-123"
-            if (/^TAG\s+\d+$/i.test(rawInput)) {
-                rawInput = rawInput.replace(/\s+/, '-').toUpperCase();
-            }
-
-            const upperInput = rawInput.toUpperCase();
-            let product = null;
-
             // STRICT SEARCH LOGIC
+            const upperInput = normalizedInput.toUpperCase();
+
             if (upperInput.startsWith("TAG-")) {
                 // Case: User specifically typed/scanned a TAG
                 product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase() === upperInput);
             } else {
-                // Case: Not a TAG (ID or Description)
-                const numericId = parseInt(rawInput, 10);
-                const isNumeric = !isNaN(numericId) && /^\d+$/.test(rawInput);
+                // Check for SKU Match (exact match)
+                product = foundProducts.find(p => p.sku_ecommerce && p.sku_ecommerce.toUpperCase() === upperInput);
 
-                if (isNumeric) {
-                    // 1. Try exact ID match first
-                    product = foundProducts.find(p => p.id === numericId);
+                if (!product) {
+                    const numericId = parseInt(normalizedInput, 10);
+                    const isNumeric = !isNaN(numericId) && /^\d+$/.test(normalizedInput);
 
-                    // 2. Fallback: If no ID matches, but a Tag matches the number
-                    if (!product && foundProducts.length === 1) {
-                        product = foundProducts[0];
-                    } else if (!product) {
-                        // Look for exact tag suffix match if multiple results
-                        product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase().endsWith(`-${rawInput}`));
-                    }
-                } else {
-                    // Text Search (Name/Description) - Fallback for non-numeric, non-tag inputs
-                    // Only match if it's NOT a numeric-looking string to avoid ID confusion
-                    if (foundProducts.length === 1) {
+                    if (isNumeric) {
+                        // 1. Try exact ID match first
+                        product = foundProducts.find(p => p.id === numericId);
+
+                        // 2. Fallback: If no ID matches, but a Tag matches the number
+                        if (!product && foundProducts.length === 1) {
+                            product = foundProducts[0];
+                        } else if (!product) {
+                            // Look for exact tag suffix match if multiple results
+                            product = foundProducts.find(p => p.codigo_etiqueta && p.codigo_etiqueta.toUpperCase().endsWith(`-${normalizedInput}`));
+                        }
+                    } else if (foundProducts.length === 1) {
                         product = foundProducts[0];
                     }
                 }
@@ -799,7 +797,7 @@ export default function PDVPage() {
                                             try {
                                                 // Fetch suggestions from API
                                                 const res = await api.get('/catalogo/pecas', {
-                                                    params: { search: val, limit: 15, status: 'DISPONIVEL' }
+                                                    params: { search: val, limit: 15 }
                                                 });
 
                                                 const foundProducts = res.data.data || res.data;

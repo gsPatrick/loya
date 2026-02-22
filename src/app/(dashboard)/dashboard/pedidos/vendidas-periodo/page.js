@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import * as XLSX from 'xlsx';
 import {
     Search,
     Calendar as CalendarIcon,
@@ -83,16 +84,13 @@ export default function PecasVendidasPage() {
             return;
         }
         const headers = ["Data", "ID Venda", "ID Peça", "Descrição", "Marca", "Categoria", "Tipo", "Fornecedora", "Cliente", "Vlr Vendido", "Taxas", "Impostos", "Repasse", "Líquido", "% Margem"];
-        const rows = sales.map(s => [s.data, s.id, s.idAlt, s.desc, s.marca, s.cat, s.tipo, s.fornecedor, s.cliente, s.preco.toFixed(2), s.taxa.toFixed(2), s.imposto.toFixed(2), s.repasse.toFixed(2), s.loja.toFixed(2), s.margem.toFixed(1) + '%']);
-        const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
-        const BOM = '\uFEFF';
-        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `vendas_${dateStart}_a_${dateEnd}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const rows = sales.map(s => [s.data, s.id, s.idAlt, s.desc, s.marca, s.cat, s.tipo, s.fornecedor, s.cliente, parseFloat(s.preco.toFixed(2)), parseFloat(s.taxa.toFixed(2)), parseFloat(s.imposto.toFixed(2)), parseFloat(s.repasse.toFixed(2)), parseFloat(s.loja.toFixed(2)), s.margem.toFixed(1) + '%']);
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws['!cols'] = headers.map(() => ({ wch: 16 }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Vendas Detalhadas');
+        XLSX.writeFile(wb, `vendas_${dateStart}_a_${dateEnd}.xlsx`);
     };
 
     // Calculate Totals

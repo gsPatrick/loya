@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import * as XLSX from 'xlsx';
 import {
     Calendar as CalendarIcon,
     Filter,
@@ -76,16 +77,13 @@ export default function VendasPorFornecedorPage() {
             return;
         }
         const headers = ["Data", "Venda", "Id Peça", "Peça", "Marca", "Fornecedor", "Cliente", "Valor", "Forma 1", "Forma 2", "C%", "Repasse"];
-        const rows = salesData.map(s => [s.data, s.venda, s.idPeca, s.peca, s.marca, s.fornecedor, s.cliente, s.valor.toFixed(2), s.f1, s.f2, s.comissao + '%', s.repasse.toFixed(2)]);
-        const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
-        const BOM = '\uFEFF';
-        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `vendas_fornecedor_${dateStart}_a_${dateEnd}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const rows = salesData.map(s => [s.data, s.venda, s.idPeca, s.peca, s.marca, s.fornecedor, s.cliente, parseFloat(s.valor.toFixed(2)), s.f1, s.f2, s.comissao + '%', parseFloat(s.repasse.toFixed(2))]);
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws['!cols'] = headers.map(() => ({ wch: 18 }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
+        XLSX.writeFile(wb, `vendas_fornecedor_${dateStart}_a_${dateEnd}.xlsx`);
     };
 
     const handleExportDevolucoes = () => {
@@ -94,16 +92,13 @@ export default function VendasPorFornecedorPage() {
             return;
         }
         const headers = ["Data", "Venda", "Id Peça", "Peça", "Marca", "Fornecedor", "Cliente", "Valor", "Forma 1", "Forma 2", "C%", "Repasse"];
-        const rows = returnsData.map(s => [s.data, s.venda, s.idPeca, s.peca, s.marca, s.fornecedor, s.cliente, s.valor.toFixed(2), s.f1, s.f2, s.comissao + '%', s.repasse.toFixed(2)]);
-        const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
-        const BOM = '\uFEFF';
-        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `devolucoes_fornecedor_${dateStart}_a_${dateEnd}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const rows = returnsData.map(s => [s.data, s.venda, s.idPeca, s.peca, s.marca, s.fornecedor, s.cliente, parseFloat(s.valor.toFixed(2)), s.f1, s.f2, s.comissao + '%', parseFloat(s.repasse.toFixed(2))]);
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws['!cols'] = headers.map(() => ({ wch: 18 }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Devoluções');
+        XLSX.writeFile(wb, `devolucoes_fornecedor_${dateStart}_a_${dateEnd}.xlsx`);
     };
 
     // Totais Vendas

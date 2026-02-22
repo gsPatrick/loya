@@ -1023,9 +1023,9 @@ export default function PDVPage() {
                                 <Label className="text-xs uppercase font-bold text-muted-foreground">Pagamento</Label>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     <Button
-                                        variant={paymentMethod === 'CARTAO_CREDITO' ? 'default' : 'outline'}
-                                        onClick={() => setPaymentMethod('CARTAO_CREDITO')}
-                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 ${paymentMethod === 'CARTAO_CREDITO' ? 'bg-primary text-primary-foreground' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'}`}
+                                        variant={paymentMethod === 'CREDITO' ? 'default' : 'outline'}
+                                        onClick={() => setPaymentMethod('CREDITO')}
+                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 ${paymentMethod === 'CREDITO' ? 'bg-primary text-primary-foreground' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'}`}
                                     >
                                         <CreditCard className="h-4 w-4 shrink-0" /> <span className="text-left">Cartão</span>
                                     </Button>

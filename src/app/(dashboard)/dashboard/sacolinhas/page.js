@@ -258,7 +258,7 @@ export default function SacolinhasPage() {
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right font-medium">
-                                            {formatCurrency(sac.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda || 0), 0))}
+                                            {formatCurrency(sac.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda_sacolinha || i.preco_venda || 0), 0))}
                                         </TableCell>
                                         <TableCell className="text-sm text-gray-500">
                                             {new Date(sac.createdAt).toLocaleDateString('pt-BR')}

@@ -1098,9 +1098,35 @@ function CadastroPecasContent() {
                                     <TableCell>{p.cor?.nome || '-'}</TableCell>
                                     <TableCell>{p.marca?.nome || '-'}</TableCell>
                                     <TableCell>
-                                        <Badge variant={p.status === 'VENDIDA' ? 'destructive' : p.status === 'DISPONIVEL' ? 'default' : 'secondary'}>
-                                            {p.status}
-                                        </Badge>
+                                        <select
+                                            value={p.status}
+                                            onChange={async (e) => {
+                                                const novoStatus = e.target.value;
+                                                if (!confirm(`Alterar status de ${p.codigo_etiqueta} para ${novoStatus}?`)) return;
+                                                try {
+                                                    await api.put(`/catalogo/pecas/${p.id}`, { status: novoStatus });
+                                                    toast({ title: "Status Atualizado", description: `${p.codigo_etiqueta} → ${novoStatus}`, className: "bg-green-600 text-white border-none" });
+                                                    loadItems();
+                                                } catch (err) {
+                                                    toast({ title: "Erro", description: err.response?.data?.error || "Falha ao atualizar status.", variant: "destructive" });
+                                                }
+                                            }}
+                                            className={`text-xs font-bold rounded-md px-2 py-1 border cursor-pointer ${p.status === 'DISPONIVEL' ? 'bg-green-100 text-green-800 border-green-300' :
+                                                    p.status === 'VENDIDA' ? 'bg-red-100 text-red-800 border-red-300' :
+                                                        p.status === 'DEVOLVIDA_FORNECEDOR' ? 'bg-orange-100 text-orange-800 border-orange-300' :
+                                                            p.status === 'EXTRAVIADA' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                                                                'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                                }`}
+                                        >
+                                            <option value="DISPONIVEL">DISPONIVEL</option>
+                                            <option value="EM_AUTORIZACAO">EM_AUTORIZACAO</option>
+                                            <option value="VENDIDA">VENDIDA</option>
+                                            <option value="RESERVADA_SACOLINHA">RESERVADA_SACOLINHA</option>
+                                            <option value="RESERVADA_ECOMMERCE">RESERVADA_ECOMMERCE</option>
+                                            <option value="DEVOLVIDA_FORNECEDOR">DEVOLVIDA_FORNECEDOR</option>
+                                            <option value="DOADA">DOADA</option>
+                                            <option value="EXTRAVIADA">EXTRAVIADA</option>
+                                        </select>
                                     </TableCell>
                                     <TableCell className="text-right font-bold text-primary">R$ {parseFloat(p.preco_venda).toFixed(2)}</TableCell>
                                     <TableCell className="text-center">

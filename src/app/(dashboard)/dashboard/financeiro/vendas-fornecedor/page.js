@@ -73,6 +73,42 @@ export default function VendasPorFornecedorPage() {
             .finally(() => setLoading(false));
     };
 
+    const handleExportVendas = () => {
+        if (salesData.length === 0) {
+            toast({ title: "Aviso", description: "Nenhuma venda para exportar.", variant: "destructive" });
+            return;
+        }
+        const headers = ["Data", "Venda", "Id Peça", "Peça", "Marca", "Fornecedor", "Cliente", "Valor", "Forma 1", "Forma 2", "C%", "Repasse"];
+        const rows = salesData.map(s => [s.data, s.venda, s.idPeca, s.peca, s.marca, s.fornecedor, s.cliente, s.valor.toFixed(2), s.f1, s.f2, s.comissao + '%', s.repasse.toFixed(2)]);
+        const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `vendas_fornecedor_${dateStart}_a_${dateEnd}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleExportDevolucoes = () => {
+        if (returnsData.length === 0) {
+            toast({ title: "Aviso", description: "Nenhuma devolução para exportar.", variant: "destructive" });
+            return;
+        }
+        const headers = ["Data", "Venda", "Id Peça", "Peça", "Marca", "Fornecedor", "Cliente", "Valor", "Forma 1", "Forma 2", "C%", "Repasse"];
+        const rows = returnsData.map(s => [s.data, s.venda, s.idPeca, s.peca, s.marca, s.fornecedor, s.cliente, s.valor.toFixed(2), s.f1, s.f2, s.comissao + '%', s.repasse.toFixed(2)]);
+        const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `devolucoes_fornecedor_${dateStart}_a_${dateEnd}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     // Totais Vendas
     const totalVendas = salesData.reduce((acc, curr) => acc + curr.valor, 0);
     const totalRepasse = salesData.reduce((acc, curr) => acc + curr.repasse, 0);
@@ -146,7 +182,7 @@ export default function VendasPorFornecedorPage() {
                     <CardTitle className="text-base font-bold text-purple-600 flex items-center gap-2">
                         <ShoppingBag className="h-5 w-5" /> Vendas com Repasse
                     </CardTitle>
-                    <Button variant="outline" size="sm" className="gap-2 text-purple-600 border-purple-200 hover:bg-purple-50">
+                    <Button onClick={handleExportVendas} variant="outline" size="sm" className="gap-2 text-purple-600 border-purple-200 hover:bg-purple-50">
                         <Download className="h-4 w-4" /> Exportar para Excel
                     </Button>
                 </CardHeader>
@@ -211,7 +247,7 @@ export default function VendasPorFornecedorPage() {
                     <CardTitle className="text-base font-bold text-purple-600 flex items-center gap-2">
                         <RotateCcw className="h-5 w-5" /> Vendas de Peças Devolvidas
                     </CardTitle>
-                    <Button variant="outline" size="sm" className="gap-2 text-purple-600 border-purple-200 hover:bg-purple-50">
+                    <Button onClick={handleExportDevolucoes} variant="outline" size="sm" className="gap-2 text-purple-600 border-purple-200 hover:bg-purple-50">
                         <Download className="h-4 w-4" /> Exportar para Excel
                     </Button>
                 </CardHeader>

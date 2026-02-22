@@ -14,7 +14,8 @@ import {
     TrendingDown,
     TrendingUp,
     Banknote,
-    ArrowRight
+    ArrowRight,
+    Trash2
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ export default function PecasVendidasPage() {
     const [loading, setLoading] = useState(false);
     const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
     const [dateEnd, setDateEnd] = useState(new Date().toISOString().split('T')[0]);
+    const [deletingId, setDeletingId] = useState(null);
 
     useEffect(() => {
         fetchSales();
@@ -53,6 +55,44 @@ export default function PecasVendidasPage() {
                 toast({ title: "Erro", description: "Erro ao buscar vendas detalhadas.", variant: "destructive" });
             })
             .finally(() => setLoading(false));
+    };
+
+    const handleCancelarVenda = async (pedidoId) => {
+        if (!confirm(`Tem certeza que deseja CANCELAR a venda #${pedidoId}?\n\nIsso irá:\n• Restaurar todas as peças ao estoque\n• Reverter repasses dos fornecedores\n• Excluir o pedido permanentemente\n\nEsta ação NÃO pode ser desfeita.`)) return;
+
+        setDeletingId(pedidoId);
+        try {
+            const res = await api.delete(`/vendas/pedidos/${pedidoId}`);
+            toast({
+                title: "Venda Cancelada",
+                description: res.data.message || `Venda #${pedidoId} cancelada com sucesso.`,
+                className: "bg-green-600 text-white border-none"
+            });
+            fetchSales(); // Reload
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: err.response?.data?.error || "Falha ao cancelar venda.", variant: "destructive" });
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleExportExcel = () => {
+        if (sales.length === 0) {
+            toast({ title: "Aviso", description: "Nenhum dado para exportar.", variant: "destructive" });
+            return;
+        }
+        const headers = ["Data", "ID Venda", "ID Peça", "Descrição", "Marca", "Categoria", "Tipo", "Fornecedora", "Cliente", "Vlr Vendido", "Taxas", "Impostos", "Repasse", "Líquido", "% Margem"];
+        const rows = sales.map(s => [s.data, s.id, s.idAlt, s.desc, s.marca, s.cat, s.tipo, s.fornecedor, s.cliente, s.preco.toFixed(2), s.taxa.toFixed(2), s.imposto.toFixed(2), s.repasse.toFixed(2), s.loja.toFixed(2), s.margem.toFixed(1) + '%']);
+        const csv = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `vendas_${dateStart}_a_${dateEnd}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     // Calculate Totals
@@ -77,7 +117,7 @@ export default function PecasVendidasPage() {
                     <p className="text-sm text-muted-foreground">Análise financeira peça a peça no período selecionado.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2 text-green-700 hover:text-green-800 hover:bg-green-50 border-green-200 shadow-sm">
+                    <Button onClick={handleExportExcel} variant="outline" className="gap-2 text-green-700 hover:text-green-800 hover:bg-green-50 border-green-200 shadow-sm">
                         <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
                     </Button>
                 </div>
@@ -187,7 +227,7 @@ export default function PecasVendidasPage() {
                 </div>
 
                 <div className="overflow-x-auto w-full pb-2 relative">
-                    <Table className="min-w-[2600px] border-collapse">
+                    <Table className="min-w-[2700px] border-collapse">
                         <TableHeader className="bg-muted/30 sticky top-0 z-30">
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="w-[100px] font-bold">Data</TableHead>
@@ -206,11 +246,14 @@ export default function PecasVendidasPage() {
                                 <TableHead className="text-right w-[100px] text-red-600">Impostos</TableHead>
                                 <TableHead className="text-right w-[120px] text-orange-600">Repasse</TableHead>
 
-                                <TableHead className="text-right w-[120px] bg-green-100 text-green-800 font-bold sticky right-[80px] z-20 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
+                                <TableHead className="text-right w-[120px] bg-green-100 text-green-800 font-bold sticky right-[130px] z-20 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
                                     Líquido
                                 </TableHead>
-                                <TableHead className="text-right w-[80px] bg-green-100 text-green-800 font-bold sticky right-0 z-20 border-l">
+                                <TableHead className="text-right w-[80px] bg-green-100 text-green-800 font-bold sticky right-[50px] z-20 border-l">
                                     % Margem
+                                </TableHead>
+                                <TableHead className="w-[50px] text-center bg-red-50 text-red-600 font-bold sticky right-0 z-20 border-l">
+                                    Ações
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -218,7 +261,7 @@ export default function PecasVendidasPage() {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={16} className="text-center py-4">Carregando...</TableCell>
+                                    <TableCell colSpan={17} className="text-center py-4">Carregando...</TableCell>
                                 </TableRow>
                             ) : sales.length > 0 ? (
                                 sales.map((sale, index) => (
@@ -248,17 +291,29 @@ export default function PecasVendidasPage() {
                                         <TableCell className="text-right text-xs text-red-600 font-medium">-{sale.imposto.toFixed(2)}</TableCell>
                                         <TableCell className="text-right text-xs text-orange-600 font-medium">-{sale.repasse.toFixed(2)}</TableCell>
 
-                                        <TableCell className="text-right text-xs font-bold text-green-700 bg-green-50 sticky right-[80px] z-20 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)] group-hover:bg-green-100 transition-colors">
+                                        <TableCell className="text-right text-xs font-bold text-green-700 bg-green-50 sticky right-[130px] z-20 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)] group-hover:bg-green-100 transition-colors">
                                             R$ {sale.loja.toFixed(2)}
                                         </TableCell>
-                                        <TableCell className="text-right text-xs font-medium text-green-700 bg-green-50 sticky right-0 z-20 border-l group-hover:bg-green-100 transition-colors">
+                                        <TableCell className="text-right text-xs font-medium text-green-700 bg-green-50 sticky right-[50px] z-20 border-l group-hover:bg-green-100 transition-colors">
                                             {sale.margem.toFixed(1)}%
+                                        </TableCell>
+                                        <TableCell className="text-center bg-red-50/30 sticky right-0 z-20 border-l group-hover:bg-red-50 transition-colors">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-100"
+                                                disabled={deletingId === sale.pedidoId}
+                                                onClick={() => handleCancelarVenda(sale.pedidoId || sale.id)}
+                                                title="Cancelar venda"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={16} className="text-center py-4">Nenhum registro encontrado.</TableCell>
+                                    <TableCell colSpan={17} className="text-center py-4">Nenhum registro encontrado.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>

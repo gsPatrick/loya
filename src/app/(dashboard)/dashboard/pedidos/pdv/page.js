@@ -86,6 +86,7 @@ export default function PDVPage() {
     const [descontoValor, setDescontoValor] = useState(0);
     const [frete, setFrete] = useState(0);
     const [paymentMethod, setPaymentMethod] = useState("DINHEIRO"); // Default
+    const [parcelas, setParcelas] = useState(1); // Credit card installments
     const [voucherAmount, setVoucherAmount] = useState(0); // Amount to pay with voucher
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -574,7 +575,7 @@ export default function PDVPage() {
                 payload.pagamentos.push({
                     metodo: paymentMethod,
                     valor: total,
-                    parcelas: 1
+                    parcelas: paymentMethod === 'CREDITO' ? parcelas : 1
                 });
             }
 
@@ -1071,6 +1072,26 @@ export default function PDVPage() {
                                         <RotateCcw className="h-4 w-4 shrink-0" /> <span className="text-left">Voucher Permuta</span>
                                     </Button>
                                 </div>
+
+                                {/* Installment Selector for Credit Card */}
+                                {paymentMethod === 'CREDITO' && total > 0 && (
+                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 space-y-2 animate-in slide-in-from-top-2">
+                                        <Label className="text-xs uppercase font-bold text-blue-700">Parcelas</Label>
+                                        <div className="grid grid-cols-5 gap-1.5">
+                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                                                <Button
+                                                    key={n}
+                                                    variant={parcelas === n ? 'default' : 'outline'}
+                                                    onClick={() => setParcelas(n)}
+                                                    className={`h-auto py-1.5 px-1 flex flex-col items-center text-xs ${parcelas === n ? 'bg-blue-600 text-white' : 'hover:border-blue-300 hover:bg-blue-50'}`}
+                                                >
+                                                    <span className="font-bold">{n}x</span>
+                                                    <span className="text-[10px] opacity-80">R$ {(total / n).toFixed(2)}</span>
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* --- NO CALCULATOR AREA --- */}

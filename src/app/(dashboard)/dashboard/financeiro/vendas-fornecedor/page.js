@@ -8,7 +8,8 @@ import {
     Search,
     User,
     ShoppingBag,
-    RotateCcw
+    RotateCcw,
+    X
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,13 +23,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+// Select removed - using searchable input instead
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import api from "@/services/api";
@@ -40,6 +35,8 @@ export default function VendasPorFornecedorPage() {
     const [dateEnd, setDateEnd] = useState(new Date().toISOString().split('T')[0]);
     const [selectedFornecedor, setSelectedFornecedor] = useState("todos");
     const [fornecedores, setFornecedores] = useState([]);
+    const [fornecedorSearch, setFornecedorSearch] = useState("");
+    const [showFornecedorList, setShowFornecedorList] = useState(false);
     const [salesData, setSalesData] = useState([]);
     const [returnsData, setReturnsData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -141,19 +138,68 @@ export default function VendasPorFornecedorPage() {
                         {/* Linha 1: Fornecedor */}
                         <div className="grid gap-1.5 w-full">
                             <Label className="text-xs font-bold text-purple-700">Fornecedor (deixe vazio para todos)</Label>
-                            <Select value={selectedFornecedor} onValueChange={setSelectedFornecedor}>
-                                <SelectTrigger className="bg-gray-50 border-gray-200">
-                                    <SelectValue placeholder="Todos os Fornecedores" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="todos">Todos os Fornecedores</SelectItem>
-                                    {fornecedores.map((f, idx) => (
-                                        <SelectItem key={idx} value={f.id ? f.id.toString() : `nome-${f.nome}`}>
-                                            {f.nome}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <div className="relative">
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-purple-400" />
+                                        <Input
+                                            type="text"
+                                            placeholder="Digite para buscar fornecedor..."
+                                            value={fornecedorSearch}
+                                            onChange={(e) => {
+                                                setFornecedorSearch(e.target.value);
+                                                setShowFornecedorList(true);
+                                                if (!e.target.value) {
+                                                    setSelectedFornecedor("todos");
+                                                }
+                                            }}
+                                            onFocus={() => setShowFornecedorList(true)}
+                                            className="pl-9 bg-gray-50 border-gray-200"
+                                        />
+                                        {fornecedorSearch && (
+                                            <button
+                                                onClick={() => {
+                                                    setFornecedorSearch("");
+                                                    setSelectedFornecedor("todos");
+                                                    setShowFornecedorList(false);
+                                                }}
+                                                className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                {showFornecedorList && (
+                                    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-[250px] overflow-y-auto">
+                                        <button
+                                            className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${selectedFornecedor === 'todos' ? 'bg-purple-100 font-bold text-purple-700' : ''}`}
+                                            onClick={() => {
+                                                setSelectedFornecedor("todos");
+                                                setFornecedorSearch("");
+                                                setShowFornecedorList(false);
+                                            }}
+                                        >
+                                            Todos os Fornecedores
+                                        </button>
+                                        {fornecedores
+                                            .filter(f => !fornecedorSearch || f.nome.toLowerCase().includes(fornecedorSearch.toLowerCase()))
+                                            .map((f, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 border-t border-gray-100 ${selectedFornecedor === (f.id ? f.id.toString() : `nome-${f.nome}`) ? 'bg-purple-100 font-bold text-purple-700' : ''}`}
+                                                    onClick={() => {
+                                                        setSelectedFornecedor(f.id ? f.id.toString() : `nome-${f.nome}`);
+                                                        setFornecedorSearch(f.nome);
+                                                        setShowFornecedorList(false);
+                                                    }}
+                                                >
+                                                    {f.nome}
+                                                </button>
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Linha 2: Datas e Botão */}

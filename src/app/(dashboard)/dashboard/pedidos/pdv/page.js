@@ -21,8 +21,12 @@ import {
     UserPlus,
 
     ArrowRight,
-    Edit
+    Edit,
+    TicketPercent,
+    Check
 } from "lucide-react";
+
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,6 +120,8 @@ export default function PDVPage() {
     const [paymentInputValue, setPaymentInputValue] = useState(""); // Amount to add
     const [tempParcelas, setTempParcelas] = useState(1);
     const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+    const [selectedItemIds, setSelectedItemIds] = useState([]); // Array of unique pecaIds or keys
+    const [lastSelectedMethod, setLastSelectedMethod] = useState("DINHEIRO");
 
     const barcodeInputRef = useRef(null);
 
@@ -178,19 +184,26 @@ export default function PDVPage() {
         if (val <= 0) return;
 
         const paidSoFar = addedPayments.reduce((acc, p) => acc + parseFloat(p.valor), 0);
-        if (paidSoFar + val > total + 0.01) {
+        if (paidSoFar + val > total + 0.05) { // Small buffer for floats
             toast({ title: "Valor Excedido", description: "O total dos pagamentos não pode superar o total do pedido.", variant: "destructive" });
             return;
         }
 
-        const newPayment = {
-            id: Date.now(),
-            metodo: method,
-            valor: val,
-            parcelas: method === 'CREDITO' ? tempParcelas : 1
-        };
+        const existingIndex = addedPayments.findIndex(p => p.metodo === method && (method !== 'CREDITO' || p.parcelas === tempParcelas));
 
-        setAddedPayments([...addedPayments, newPayment]);
+        if (existingIndex > -1) {
+            const newPayments = [...addedPayments];
+            newPayments[existingIndex].valor = parseFloat((newPayments[existingIndex].valor + val).toFixed(2));
+            setAddedPayments(newPayments);
+        } else {
+            const newPayment = {
+                id: Date.now(),
+                metodo: method,
+                valor: val,
+                parcelas: method === 'CREDITO' ? tempParcelas : 1
+            };
+            setAddedPayments([...addedPayments, newPayment]);
+        }
         setTempParcelas(1); // Reset
     };
 
@@ -548,13 +561,14 @@ export default function PDVPage() {
     };
 
     const addItemToCart = (product) => {
-        // ... existing implementation ...
         const newItem = {
             pecaId: product.id,
             codigo: product.codigo_etiqueta,
             descricao: product.descricao_curta || product.nome || "Produto sem nome",
             preco: parseFloat(product.preco_venda_sacolinha || product.preco_venda),
-            qtd: 1 // Unique items usually 1
+            tamanho: product.tamanho?.nome || "UN",
+            marca: product.marca?.nome || "Sem Marca",
+            qtd: 1
         };
         setItems([...items, newItem]);
         toast({
@@ -595,10 +609,9 @@ export default function PDVPage() {
             return;
         }
 
-        const itemToUpdate = items[editingItemIndex];
-
         if (activeSacolinha) {
             try {
+                // If it's a sacolinha item, use the dedicated endpoint
                 await api.put(`/vendas/sacolinhas/${activeSacolinha.id}/itens/${itemToUpdate.pecaId}/preco`, {
                     preco: price
                 });
@@ -616,6 +629,43 @@ export default function PDVPage() {
         setNewPriceInput("");
         if (!activeSacolinha) toast({ title: "Preço atualizado!", className: "bg-green-600 text-white border-none" });
     };
+
+    const handleToggleSelectItem = (pecaId) => {
+        setSelectedItemIds(prev =>
+            prev.includes(pecaId) ? prev.filter(id => id !== pecaId) : [...prev, pecaId]
+        );
+    };
+
+    const handleAssignPaymentToSelected = (metodo) => {
+        if (selectedItemIds.length === 0) {
+            toast({ title: "Selecione itens", description: "Marque os itens que deseja atribuir a este pagamento.", variant: "destructive" });
+            return;
+        }
+
+        const selectedItems = items.filter(item => selectedItemIds.includes(item.pecaId));
+        const totalSelected = selectedItems.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
+
+        const newItems = items.map(item => {
+            if (selectedItemIds.includes(item.pecaId)) {
+                return { ...item, metodoPagamento: metodo, parcelas: metodo === 'CREDITO' ? tempParcelas : 1 };
+            }
+            return item;
+        });
+
+        setItems(newItems);
+        setSelectedItemIds([]);
+        setLastSelectedMethod(metodo);
+
+        // Auto-add to addedPayments
+        handleAddPayment(metodo, totalSelected.toString());
+
+        toast({
+            title: `Itens marcados como ${metodo}`,
+            description: `R$ ${totalSelected.toFixed(2)} adicionados ao checkout.`,
+            className: "bg-primary text-white"
+        });
+    };
+
 
     const handleFinishSale = async () => {
         if (items.length === 0) {
@@ -962,27 +1012,95 @@ export default function PDVPage() {
 
                     {/* Tabela de Itens */}
                     <Card className="shadow-sm overflow-hidden flex flex-col min-h-[400px]">
-                        <div className="p-0 overflow-auto flex-1">
+                        <CardHeader className="py-4 px-6 border-b bg-muted/5 flex flex-row items-center justify-between space-y-0">
+                            <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                <ShoppingBag className="h-5 w-5 text-primary" /> Carrinho de Itens
+                            </CardTitle>
+
+                            {/* Assignment Bar */}
+                            {items.length > 0 && (
+                                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm animate-in fade-in slide-in-from-right-2">
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase px-2">Pagar {selectedItemIds.length || '...'} com:</span>
+                                    <Button
+                                        size="sm" variant="outline"
+                                        className="h-8 text-[10px] gap-1 hover:border-green-300 hover:bg-green-50"
+                                        onClick={() => handleAssignPaymentToSelected('DINHEIRO')}
+                                    >
+                                        <Banknote className="h-3 w-3" /> Dinheiro
+                                    </Button>
+                                    <Button
+                                        size="sm" variant="outline"
+                                        className="h-8 text-[10px] gap-1 hover:border-blue-300 hover:bg-blue-50"
+                                        onClick={() => handleAssignPaymentToSelected('PIX')}
+                                    >
+                                        <img src="https://img.icons8.com/color/512/pix.png" className="h-3 w-3" alt="pix" /> Pix
+                                    </Button>
+                                    <Button
+                                        size="sm" variant="outline"
+                                        className="h-8 text-[10px] gap-1 hover:border-primary/30 hover:bg-primary/5"
+                                        onClick={() => handleAssignPaymentToSelected('CREDITO')}
+                                    >
+                                        <CreditCard className="h-3 w-3" /> Cartão
+                                    </Button>
+                                    <Button
+                                        size="sm" variant="outline"
+                                        className="h-8 text-[10px] gap-1 hover:border-purple-300 hover:bg-purple-50"
+                                        onClick={() => handleAssignPaymentToSelected('VOUCHER_PERMUTA')}
+                                    >
+                                        <TicketPercent className="h-3 w-3" /> Voucher
+                                    </Button>
+                                </div>
+                            )}
+                        </CardHeader>
+
+                        <div className="flex-1 overflow-auto max-h-[calc(100vh-340px)]">
                             <Table>
-                                <TableHeader className="bg-muted/30">
+                                <TableHeader className="bg-muted/30 sticky top-0 z-10">
                                     <TableRow>
-                                        <TableHead className="w-[60px] text-center">#</TableHead>
-                                        <TableHead>Descrição do Produto</TableHead>
+                                        <TableHead className="w-[40px] px-4">
+                                            <Checkbox
+                                                checked={items.length > 0 && selectedItemIds.length === items.length}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setSelectedItemIds(items.map(i => i.pecaId));
+                                                    else setSelectedItemIds([]);
+                                                }}
+                                            />
+                                        </TableHead>
+                                        <TableHead className="w-[100px]">Peça</TableHead>
+                                        <TableHead>Descrição</TableHead>
                                         <TableHead className="w-[120px] text-right">Unitário</TableHead>
-                                        <TableHead className="w-[120px] text-right">Total</TableHead>
-                                        <TableHead className="w-[60px]"></TableHead>
+                                        <TableHead className="w-[100px] text-right">Total</TableHead>
+                                        <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {items.map((item, index) => (
-                                        <TableRow key={index} className="group hover:bg-primary/5 transition-colors">
-                                            <TableCell className="text-center font-mono text-xs text-muted-foreground">{index + 1}</TableCell>
+                                        <TableRow key={index} className="group hover:bg-primary/5 transition-colors border-b last:border-0">
+                                            <TableCell className="px-4">
+                                                <Checkbox
+                                                    checked={selectedItemIds.includes(item.pecaId)}
+                                                    onCheckedChange={() => handleToggleSelectItem(item.pecaId)}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="font-medium text-xs">
+                                                <Badge variant="outline" className="font-mono bg-white">{item.codigo}</Badge>
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">
-                                                    <span className="font-semibold text-foreground text-base">{item.descricao}</span>
-                                                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded w-fit mt-1">
-                                                        SKU: {item.codigo}
-                                                    </span>
+                                                    <span className="font-semibold text-sm">{item.descricao}</span>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-[10px] text-muted-foreground uppercase">Tam: {item.tamanho} • {item.marca}</span>
+                                                        {item.metodoPagamento && (
+                                                            <Badge className={`text-[9px] h-4 px-1.5 uppercase font-bold border-none animate-in zoom-in-50 ${item.metodoPagamento === 'PIX' ? 'bg-orange-100 text-orange-700' :
+                                                                item.metodoPagamento === 'DINHEIRO' ? 'bg-green-100 text-green-700' :
+                                                                    item.metodoPagamento === 'CREDITO' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                                                                }`}>
+                                                                {item.metodoPagamento === 'PIX' && <img src="https://img.icons8.com/color/512/pix.png" className="h-2 w-2 mr-1 inline" alt="pix" />}
+                                                                {item.metodoPagamento === 'CREDITO' && `${item.parcelas}x `}
+                                                                {item.metodoPagamento}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right font-medium text-muted-foreground">
@@ -1001,7 +1119,7 @@ export default function PDVPage() {
                                                     </Button>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-right font-bold text-foreground text-lg">
+                                            <TableCell className="text-right font-bold text-foreground">
                                                 R$ {(item.preco * item.qtd).toFixed(2)}
                                             </TableCell>
                                             <TableCell>
@@ -1016,10 +1134,9 @@ export default function PDVPage() {
                                             </TableCell>
                                         </TableRow>
                                     ))}
-                                    {/* Linha Vazia para manter altura */}
                                     {items.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                                            <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                                                 Nenhum item adicionado. Bipe um produto para começar.
                                             </TableCell>
                                         </TableRow>
@@ -1130,73 +1247,76 @@ export default function PDVPage() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                <div className="grid grid-cols-2 gap-2">
                                     <Button
                                         variant="outline"
                                         onClick={() => handleAddPayment('CREDITO', paymentInputValue)}
-                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10"
+                                        className={`justify-start gap-2 h-11 border-blue-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'CREDITO' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-blue-50/50 text-blue-700 hover:bg-blue-600 hover:text-white'}`}
+                                        onMouseEnter={() => setPaymentMethod('CREDITO')}
                                     >
-                                        <CreditCard className="h-4 w-4 shrink-0" /> <span className="text-left">Cartão</span>
+                                        <CreditCard className="h-4 w-4 shrink-0" /> <span className="font-bold">Cartão</span>
                                     </Button>
                                     <Button
                                         variant="outline"
                                         onClick={() => handleAddPayment('DINHEIRO', paymentInputValue)}
-                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 hover:border-green-300 hover:bg-green-50 text-green-700"
+                                        className={`justify-start gap-2 h-11 border-emerald-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'DINHEIRO' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-emerald-50/50 text-emerald-700 hover:bg-emerald-600 hover:text-white'}`}
+                                        onMouseEnter={() => setPaymentMethod('DINHEIRO')}
                                     >
-                                        <Banknote className="h-4 w-4 shrink-0" /> <span className="text-left">Dinheiro</span>
+                                        <Banknote className="h-4 w-4 shrink-0" /> <span className="font-bold">Dinheiro</span>
                                     </Button>
                                     <Button
                                         variant="outline"
                                         onClick={() => handleAddPayment('PIX', paymentInputValue)}
-                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 hover:border-orange-300 hover:bg-orange-50 text-orange-700"
+                                        className={`justify-start gap-2 h-11 border-orange-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'PIX' ? 'bg-orange-600 text-white border-orange-600 shadow-md' : 'bg-orange-50/50 text-orange-700 hover:bg-orange-600 hover:text-white'}`}
+                                        onMouseEnter={() => setPaymentMethod('PIX')}
                                     >
-                                        <div className="h-4 w-4 rounded-full border border-current flex items-center justify-center text-[10px] font-bold shrink-0">P</div> <span className="text-left">Pix</span>
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => handleAddPayment('CREDITO_LOJA', paymentInputValue)}
-                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2"
-                                    >
-                                        <MoreHorizontal className="h-4 w-4 shrink-0" /> <span className="text-left">Crédito</span>
+                                        <img src="https://img.icons8.com/color/512/pix.png" className="h-4 w-4 shrink-0 brightness-110" alt="pix" /> <span className="font-bold">Pix</span>
                                     </Button>
                                     <Button
                                         variant="outline"
                                         onClick={() => {
                                             if (!saldoPermuta || parseFloat(saldoPermuta.saldo) <= 0) {
-                                                toast({
-                                                    title: "Saldo Insuficiente",
-                                                    description: "Cliente não possui saldo de permuta.",
-                                                    variant: "destructive"
-                                                });
+                                                toast({ title: "Saldo Insuficiente", variant: "destructive" });
                                                 return;
                                             }
                                             const amountToAdd = Math.min(parseFloat(paymentInputValue), parseFloat(saldoPermuta.saldo));
                                             handleAddPayment('VOUCHER_PERMUTA', amountToAdd);
                                         }}
-                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 col-span-2 sm:col-span-1 hover:border-purple-300 hover:bg-purple-50 text-purple-700"
+                                        className={`justify-start gap-2 h-11 border-purple-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'VOUCHER_PERMUTA' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-purple-50/50 text-purple-700 hover:bg-purple-600 hover:text-white'}`}
+                                        onMouseEnter={() => setPaymentMethod('VOUCHER_PERMUTA')}
                                     >
-                                        <RotateCcw className="h-4 w-4 shrink-0" /> <span className="text-left">Voucher Permuta</span>
+                                        <TicketPercent className="h-4 w-4 shrink-0" /> <span className="font-bold">Voucher</span>
                                     </Button>
                                 </div>
 
-                                {/* Current selection details (Parcelas) if "Cartão" logic is needed BEFORE adding? */}
-                                {/* Actually, let's keep it simple: if adding as credit card, it uses tempParcelas. */}
-                                <div className="bg-blue-50 p-2 rounded-lg border border-blue-100 flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-blue-700 uppercase">Se for Cartão:</span>
-                                    <div className="flex gap-1 overflow-x-auto">
-                                        {[1, 2, 3, 4, 5, 6, 10].map(n => (
-                                            <Button
-                                                key={n}
-                                                size="sm"
-                                                variant={tempParcelas === n ? 'default' : 'ghost'}
-                                                onClick={() => setTempParcelas(n)}
-                                                className={`h-6 px-2 text-[10px] ${tempParcelas === n ? 'bg-blue-600' : ''}`}
-                                            >
-                                                {n}x
-                                            </Button>
-                                        ))}
+                                {/* Dynamic Details Area */}
+                                {paymentMethod === 'CREDITO' && (
+                                    <div className="bg-blue-50 p-2 rounded-lg border border-blue-100 flex items-center justify-between animate-in slide-in-from-top-1">
+                                        <span className="text-[10px] font-bold text-blue-700 uppercase">Parcelamento:</span>
+                                        <div className="flex gap-1 overflow-x-auto">
+                                            {[1, 2, 3, 4, 5, 6, 10].map(n => (
+                                                <Button
+                                                    key={n}
+                                                    size="sm"
+                                                    variant={tempParcelas === n ? 'default' : 'ghost'}
+                                                    onClick={() => setTempParcelas(n)}
+                                                    className={`h-6 px-2 text-[10px] ${tempParcelas === n ? 'bg-blue-600' : ''}`}
+                                                >
+                                                    {n}x
+                                                </Button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
+
+                                {paymentMethod === 'VOUCHER_PERMUTA' && saldoPermuta && (
+                                    <div className="bg-purple-50 p-2 rounded-lg border border-purple-100 flex items-center justify-between animate-in slide-in-from-top-1 text-[10px]">
+                                        <span className="font-bold text-purple-700 uppercase">Saldo Disponível:</span>
+                                        <span className="font-bold text-purple-900 bg-white px-2 py-0.5 rounded border border-purple-200">
+                                            R$ {parseFloat(saldoPermuta.saldo).toFixed(2)}
+                                        </span>
+                                    </div>
+                                )}
 
                                 {/* List of Added Payments */}
                                 {addedPayments.length > 0 && (
@@ -1224,51 +1344,7 @@ export default function PDVPage() {
                                 )}
                             </div>
 
-                            {/* --- NO CALCULATOR AREA --- */}
-                            {paymentMethod === 'VOUCHER_PERMUTA' && (
-                                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 space-y-3 animate-in slide-in-from-top-2">
-                                    <div className="flex justify-between items-center">
-                                        <Label className="text-purple-900 font-semibold">Valor do Voucher</Label>
-                                        <div className="relative w-32">
-                                            <span className="absolute left-2 top-1.5 text-purple-700 font-bold">R$</span>
-                                            <Input
-                                                type="number"
-                                                value={voucherAmount}
-                                                onChange={(e) => {
-                                                    let val = parseFloat(e.target.value);
-                                                    if (isNaN(val)) val = 0;
-                                                    // Cap at max balance or total
-                                                    const max = Math.min(parseFloat(saldoPermuta.saldo), total);
-                                                    if (val > max) val = max;
-                                                    setVoucherAmount(val);
-                                                }}
-                                                className="pl-8 h-8 bg-white border-purple-200 text-right font-bold text-purple-900"
-                                            />
-                                        </div>
-                                    </div>
 
-                                    <Separator className="bg-purple-200" />
-
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between text-muted-foreground">
-                                            <span>Total da Venda</span>
-                                            <span>R$ {total.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-purple-700 font-medium">
-                                            <span>(-) Voucher Aplicado</span>
-                                            <span>R$ {voucherAmount.toFixed(2)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-lg font-bold text-green-700 pt-1 border-t border-purple-200">
-                                            <span>(=) Restante a Pagar</span>
-                                            <span>R$ {(total - voucherAmount).toFixed(2)}</span>
-                                        </div>
-                                        <div className="text-xs text-center text-muted-foreground pt-1">
-                                            O restante deve ser pago em <strong>DINHEIRO</strong>.
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                            {/* -------------------------- */}
 
                         </CardContent>
 

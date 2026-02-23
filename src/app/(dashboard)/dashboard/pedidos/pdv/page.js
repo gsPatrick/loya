@@ -666,6 +666,24 @@ export default function PDVPage() {
         });
     };
 
+    const handlePaymentButtonClick = (metodo) => {
+        if (selectedItemIds.length > 0) {
+            handleAssignPaymentToSelected(metodo);
+        } else {
+            if (metodo === 'VOUCHER_PERMUTA') {
+                if (!saldoPermuta || parseFloat(saldoPermuta.saldo) <= 0) {
+                    toast({ title: "Saldo Insuficiente", variant: "destructive" });
+                    return;
+                }
+                const amountToAdd = Math.min(parseFloat(paymentInputValue), parseFloat(saldoPermuta.saldo));
+                handleAddPayment('VOUCHER_PERMUTA', amountToAdd);
+            } else {
+                handleAddPayment(metodo, paymentInputValue);
+            }
+        }
+    };
+
+
 
     const handleFinishSale = async () => {
         if (items.length === 0) {
@@ -1012,45 +1030,10 @@ export default function PDVPage() {
 
                     {/* Tabela de Itens */}
                     <Card className="shadow-sm overflow-hidden flex flex-col min-h-[400px]">
-                        <CardHeader className="py-4 px-6 border-b bg-muted/5 flex flex-row items-center justify-between space-y-0">
+                        <CardHeader className="py-4 px-6 border-b bg-muted/5">
                             <CardTitle className="text-xl font-bold flex items-center gap-2">
                                 <ShoppingBag className="h-5 w-5 text-primary" /> Carrinho de Itens
                             </CardTitle>
-
-                            {/* Assignment Bar */}
-                            {items.length > 0 && (
-                                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm animate-in fade-in slide-in-from-right-2">
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase px-2">Pagar {selectedItemIds.length || '...'} com:</span>
-                                    <Button
-                                        size="sm" variant="outline"
-                                        className="h-8 text-[10px] gap-1 hover:border-green-300 hover:bg-green-50"
-                                        onClick={() => handleAssignPaymentToSelected('DINHEIRO')}
-                                    >
-                                        <Banknote className="h-3 w-3" /> Dinheiro
-                                    </Button>
-                                    <Button
-                                        size="sm" variant="outline"
-                                        className="h-8 text-[10px] gap-1 hover:border-blue-300 hover:bg-blue-50"
-                                        onClick={() => handleAssignPaymentToSelected('PIX')}
-                                    >
-                                        <img src="https://img.icons8.com/color/512/pix.png" className="h-3 w-3" alt="pix" /> Pix
-                                    </Button>
-                                    <Button
-                                        size="sm" variant="outline"
-                                        className="h-8 text-[10px] gap-1 hover:border-primary/30 hover:bg-primary/5"
-                                        onClick={() => handleAssignPaymentToSelected('CREDITO')}
-                                    >
-                                        <CreditCard className="h-3 w-3" /> Cartão
-                                    </Button>
-                                    <Button
-                                        size="sm" variant="outline"
-                                        className="h-8 text-[10px] gap-1 hover:border-purple-300 hover:bg-purple-50"
-                                        onClick={() => handleAssignPaymentToSelected('VOUCHER_PERMUTA')}
-                                    >
-                                        <TicketPercent className="h-3 w-3" /> Voucher
-                                    </Button>
-                                </div>
-                            )}
                         </CardHeader>
 
                         <div className="flex-1 overflow-auto max-h-[calc(100vh-340px)]">
@@ -1250,7 +1233,7 @@ export default function PDVPage() {
                                 <div className="grid grid-cols-2 gap-2">
                                     <Button
                                         variant="outline"
-                                        onClick={() => handleAddPayment('CREDITO', paymentInputValue)}
+                                        onClick={() => handlePaymentButtonClick('CREDITO')}
                                         className={`justify-start gap-2 h-11 border-blue-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'CREDITO' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-blue-50/50 text-blue-700 hover:bg-blue-600 hover:text-white'}`}
                                         onMouseEnter={() => setPaymentMethod('CREDITO')}
                                     >
@@ -1258,7 +1241,7 @@ export default function PDVPage() {
                                     </Button>
                                     <Button
                                         variant="outline"
-                                        onClick={() => handleAddPayment('DINHEIRO', paymentInputValue)}
+                                        onClick={() => handlePaymentButtonClick('DINHEIRO')}
                                         className={`justify-start gap-2 h-11 border-emerald-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'DINHEIRO' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-emerald-50/50 text-emerald-700 hover:bg-emerald-600 hover:text-white'}`}
                                         onMouseEnter={() => setPaymentMethod('DINHEIRO')}
                                     >
@@ -1266,7 +1249,7 @@ export default function PDVPage() {
                                     </Button>
                                     <Button
                                         variant="outline"
-                                        onClick={() => handleAddPayment('PIX', paymentInputValue)}
+                                        onClick={() => handlePaymentButtonClick('PIX')}
                                         className={`justify-start gap-2 h-11 border-orange-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'PIX' ? 'bg-orange-600 text-white border-orange-600 shadow-md' : 'bg-orange-50/50 text-orange-700 hover:bg-orange-600 hover:text-white'}`}
                                         onMouseEnter={() => setPaymentMethod('PIX')}
                                     >
@@ -1274,14 +1257,7 @@ export default function PDVPage() {
                                     </Button>
                                     <Button
                                         variant="outline"
-                                        onClick={() => {
-                                            if (!saldoPermuta || parseFloat(saldoPermuta.saldo) <= 0) {
-                                                toast({ title: "Saldo Insuficiente", variant: "destructive" });
-                                                return;
-                                            }
-                                            const amountToAdd = Math.min(parseFloat(paymentInputValue), parseFloat(saldoPermuta.saldo));
-                                            handleAddPayment('VOUCHER_PERMUTA', amountToAdd);
-                                        }}
+                                        onClick={() => handlePaymentButtonClick('VOUCHER_PERMUTA')}
                                         className={`justify-start gap-2 h-11 border-purple-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'VOUCHER_PERMUTA' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-purple-50/50 text-purple-700 hover:bg-purple-600 hover:text-white'}`}
                                         onMouseEnter={() => setPaymentMethod('VOUCHER_PERMUTA')}
                                     >

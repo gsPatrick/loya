@@ -41,6 +41,7 @@ export default function PecasVendidasPage() {
     const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
     const [dateEnd, setDateEnd] = useState(new Date().toISOString().split('T')[0]);
     const [deletingId, setDeletingId] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         fetchSales();
@@ -220,106 +221,139 @@ export default function PecasVendidasPage() {
                     </span>
                     <div className="relative w-[250px]">
                         <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
-                        <Input placeholder="Filtrar nesta lista..." className="pl-8 h-8 text-xs bg-white" />
+                        <Input
+                            placeholder="Filtrar nesta lista..."
+                            className="pl-8 h-8 text-xs bg-white"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
                 </div>
 
                 <div className="overflow-x-auto w-full pb-2 relative">
                     <Table className="min-w-[2700px] border-collapse">
-                        <TableHeader className="bg-muted/30 sticky top-0 z-30">
-                            <TableRow className="hover:bg-transparent">
-                                <TableHead className="w-[100px] font-bold">Data</TableHead>
-                                <TableHead className="w-[80px]">ID Venda</TableHead>
-                                <TableHead className="w-[80px]">ID Peça</TableHead>
-                                <TableHead className="w-[100px]">ID Alt</TableHead>
-                                <TableHead className="w-[250px]">Descrição</TableHead>
-                                <TableHead className="w-[120px]">Marca</TableHead>
-                                <TableHead className="w-[120px]">Categoria</TableHead>
-                                <TableHead className="w-[120px]">Tipo</TableHead>
-                                <TableHead className="w-[150px]">Fornecedora</TableHead>
-                                <TableHead className="w-[150px]">Cliente</TableHead>
+                        {(() => {
+                            const filteredSales = sales.filter(s => {
+                                const term = searchTerm.toLowerCase();
+                                return (
+                                    s.desc?.toLowerCase().includes(term) ||
+                                    s.fornecedor?.toLowerCase().includes(term) ||
+                                    s.cliente?.toLowerCase().includes(term) ||
+                                    s.marca?.toLowerCase().includes(term) ||
+                                    s.codigo_etiqueta?.toLowerCase().includes(term) ||
+                                    s.idAlt?.toString().includes(term)
+                                );
+                            });
 
-                                <TableHead className="text-right w-[120px] bg-blue-50 text-blue-700">Vlr Vendido</TableHead>
-                                <TableHead className="text-right w-[100px] text-red-600">Taxas</TableHead>
-                                <TableHead className="text-right w-[100px] text-red-600">Impostos</TableHead>
-                                <TableHead className="text-right w-[120px] text-orange-600">Repasse</TableHead>
+                            return (
+                                <>
+                                    <TableHeader className="bg-muted/30 sticky top-0 z-30">
+                                        <TableRow className="hover:bg-transparent">
+                                            <TableHead className="w-[100px] font-bold">Data</TableHead>
+                                            <TableHead className="w-[80px]">ID Venda</TableHead>
+                                            <TableHead className="w-[80px]">ID Peça</TableHead>
+                                            <TableHead className="w-[100px]">ID Alt</TableHead>
+                                            <TableHead className="w-[250px]">Descrição</TableHead>
+                                            <TableHead className="w-[120px]">Marca</TableHead>
+                                            <TableHead className="w-[120px]">Categoria</TableHead>
+                                            <TableHead className="w-[120px]">Tipo</TableHead>
+                                            <TableHead className="w-[150px]">Fornecedora</TableHead>
+                                            <TableHead className="w-[150px]">Cliente</TableHead>
 
-                                <TableHead className="text-right w-[120px] bg-green-100 text-green-800 font-bold sticky right-[130px] z-20 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
-                                    Líquido
-                                </TableHead>
-                                <TableHead className="text-right w-[80px] bg-green-100 text-green-800 font-bold sticky right-[50px] z-20 border-l">
-                                    % Margem
-                                </TableHead>
-                                <TableHead className="w-[50px] text-center bg-red-50 text-red-600 font-bold sticky right-0 z-20 border-l">
-                                    Ações
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
+                                            <TableHead className="text-right w-[120px] bg-blue-50 text-blue-700">Vlr Vendido</TableHead>
+                                            <TableHead className="text-right w-[100px] text-red-600">Taxas</TableHead>
+                                            <TableHead className="text-right w-[100px] text-red-600">Impostos</TableHead>
+                                            <TableHead className="text-right w-[120px] text-orange-600">Repasse</TableHead>
 
-                        <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={17} className="text-center py-4">Carregando...</TableCell>
-                                </TableRow>
-                            ) : sales.length > 0 ? (
-                                sales.map((sale, index) => (
-                                    <TableRow key={index} className="hover:bg-muted/30 group">
-                                        <TableCell className="text-xs text-muted-foreground">{sale.data}</TableCell>
-                                        <TableCell className="text-xs font-mono">{sale.id}</TableCell>
-                                        <TableCell className="text-xs font-mono">{sale.idAlt}</TableCell>
-                                        <TableCell className="text-xs font-mono text-muted-foreground">-</TableCell>
-                                        <TableCell className="text-xs font-medium uppercase truncate max-w-[250px]" title={sale.desc}>
-                                            {sale.desc}
-                                        </TableCell>
-                                        <TableCell className="text-xs">{sale.marca}</TableCell>
-                                        <TableCell className="text-xs">{sale.cat}</TableCell>
-                                        <TableCell className="text-xs">
-                                            <Badge variant="outline" className="text-[10px] font-normal border-muted text-muted-foreground">
-                                                {sale.tipo}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-xs truncate max-w-[150px]">{sale.fornecedor}</TableCell>
-                                        <TableCell className="text-xs truncate max-w-[150px]">{sale.cliente}</TableCell>
+                                            <TableHead className="text-right w-[120px] bg-green-100 text-green-800 font-bold sticky right-[130px] z-20 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
+                                                Líquido
+                                            </TableHead>
+                                            <TableHead className="text-right w-[80px] bg-green-100 text-green-800 font-bold sticky right-[50px] z-20 border-l">
+                                                % Margem
+                                            </TableHead>
+                                            <TableHead className="w-[50px] text-center bg-red-50 text-red-600 font-bold sticky right-0 z-20 border-l">
+                                                Ações
+                                            </TableHead>
+                                        </TableRow>
+                                    </TableHeader>
 
-                                        <TableCell className="text-right text-xs font-bold bg-blue-50/50 text-blue-900">
-                                            R$ {sale.preco.toFixed(2)}
-                                        </TableCell>
+                                    <TableBody>
+                                        {loading ? (
+                                            <TableRow>
+                                                <TableCell colSpan={17} className="text-center py-4">Carregando...</TableCell>
+                                            </TableRow>
+                                        ) : filteredSales.length > 0 ? (
+                                            filteredSales.map((sale, idx) => (
+                                                <TableRow key={idx} className="hover:bg-muted/30 group">
+                                                    <TableCell className="text-xs text-muted-foreground">{sale.data}</TableCell>
+                                                    <TableCell className="text-xs font-mono">{sale.id}</TableCell>
+                                                    <TableCell className="text-xs font-mono">{sale.idAlt}</TableCell>
+                                                    <TableCell className="text-xs font-mono text-muted-foreground">-</TableCell>
+                                                    <TableCell className="text-xs font-medium uppercase truncate max-w-[250px]" title={sale.desc}>
+                                                        {sale.desc}
+                                                    </TableCell>
+                                                    <TableCell className="text-xs">{sale.marca}</TableCell>
+                                                    <TableCell className="text-xs">{sale.cat}</TableCell>
+                                                    <TableCell className="text-xs">
+                                                        <Badge variant="outline" className="text-[10px] font-normal border-muted text-muted-foreground">
+                                                            {sale.tipo}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs truncate max-w-[150px]">{sale.fornecedor}</TableCell>
+                                                    <TableCell className="text-xs truncate max-w-[150px]">{sale.cliente}</TableCell>
 
-                                        <TableCell className="text-right text-xs text-red-400">-{sale.taxa.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right text-xs text-red-600 font-medium">-{sale.imposto.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right text-xs text-orange-600 font-medium">-{sale.repasse.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right text-xs font-bold bg-blue-50/50 text-blue-900">
+                                                        R$ {sale.preco.toFixed(2)}
+                                                    </TableCell>
 
-                                        <TableCell className="text-right text-xs font-bold text-green-700 bg-green-50 sticky right-[130px] z-20 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)] group-hover:bg-green-100 transition-colors">
-                                            R$ {sale.loja.toFixed(2)}
-                                        </TableCell>
-                                        <TableCell className="text-right text-xs font-medium text-green-700 bg-green-50 sticky right-[50px] z-20 border-l group-hover:bg-green-100 transition-colors">
-                                            {sale.margem.toFixed(1)}%
-                                        </TableCell>
-                                        <TableCell className="text-center bg-red-50/30 sticky right-0 z-20 border-l group-hover:bg-red-50 transition-colors">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-100"
-                                                disabled={deletingId === sale.pedidoId}
-                                                onClick={() => handleCancelarVenda(sale.pedidoId || sale.id)}
-                                                title="Cancelar venda"
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={17} className="text-center py-4">Nenhum registro encontrado.</TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
+                                                    <TableCell className="text-right text-xs text-red-400">-{sale.taxa.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right text-xs text-red-600 font-medium">-{sale.imposto.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right text-xs text-orange-600 font-medium">-{sale.repasse.toFixed(2)}</TableCell>
+
+                                                    <TableCell className="text-right text-xs font-bold text-green-700 bg-green-50 sticky right-[130px] z-20 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)] group-hover:bg-green-100 transition-colors">
+                                                        R$ {sale.loja.toFixed(2)}
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-xs font-medium text-green-700 bg-green-50 sticky right-[50px] z-20 border-l group-hover:bg-green-100 transition-colors">
+                                                        {sale.margem.toFixed(1)}%
+                                                    </TableCell>
+                                                    <TableCell className="text-center bg-red-50/30 sticky right-0 z-20 border-l group-hover:bg-red-50 transition-colors">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-100"
+                                                            disabled={deletingId === sale.pedidoId}
+                                                            onClick={() => handleCancelarVenda(sale.pedidoId || sale.id)}
+                                                            title="Cancelar venda"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={17} className="text-center py-4">Nenhum registro encontrado.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </>
+                            );
+                        })()}
                     </Table>
                 </div>
 
                 <div className="bg-muted/10 p-3 border-t text-xs text-muted-foreground flex justify-between items-center px-4">
-                    <span>Mostrando {sales.length} registros</span>
+                    <span>Mostrando {sales.length} registros (filtrados: {sales.filter(s => {
+                        const term = searchTerm.toLowerCase();
+                        return (
+                            s.desc?.toLowerCase().includes(term) ||
+                            s.fornecedor?.toLowerCase().includes(term) ||
+                            s.cliente?.toLowerCase().includes(term) ||
+                            s.marca?.toLowerCase().includes(term) ||
+                            s.codigo_etiqueta?.toLowerCase().includes(term) ||
+                            s.idAlt?.toString().includes(term)
+                        );
+                    }).length})</span>
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" disabled className="h-7 text-xs">Anterior</Button>
                         <Button variant="outline" size="sm" disabled className="h-7 text-xs">Próximo</Button>

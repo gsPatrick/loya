@@ -130,7 +130,7 @@ export default function AnaliseEstoquePage() {
                             {/* Texto Central do Donut */}
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[65%] text-center pointer-events-none">
                                 <span className="text-xs text-muted-foreground block">Total</span>
-                                <span className="text-xl font-bold text-foreground">{total.toLocaleString()}</span>
+                                <span className="text-xl font-bold text-foreground">{(total || 0).toLocaleString()}</span>
                             </div>
                         </>
                     ) : (
@@ -155,7 +155,7 @@ export default function AnaliseEstoquePage() {
                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
                                         {item.name}
                                     </TableCell>
-                                    <TableCell className="py-2 text-right">{item.value.toLocaleString()}</TableCell>
+                                    <TableCell className="py-2 text-right">{(item.value || 0).toLocaleString()}</TableCell>
                                     <TableCell className="py-2 text-right text-muted-foreground">
                                         {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%
                                     </TableCell>
@@ -217,7 +217,7 @@ export default function AnaliseEstoquePage() {
                                 {/* Texto Central do Donut */}
                                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
                                     <span className="text-xs text-muted-foreground block">Total</span>
-                                    <span className="text-xl font-bold text-foreground">{total.toLocaleString()}</span>
+                                    <span className="text-xl font-bold text-foreground">{(total || 0).toLocaleString()}</span>
                                 </div>
                             </>
                         ) : (
@@ -261,7 +261,7 @@ export default function AnaliseEstoquePage() {
                                             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
                                             <span className="truncate max-w-[120px]" title={item.name}>{item.name}</span>
                                         </TableCell>
-                                        <TableCell className="py-1.5 text-right">{item.value.toLocaleString()}</TableCell>
+                                        <TableCell className="py-1.5 text-right">{(item.value || 0).toLocaleString()}</TableCell>
                                         <TableCell className="py-1.5 text-right text-muted-foreground">
                                             {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%
                                         </TableCell>
@@ -383,7 +383,7 @@ export default function AnaliseEstoquePage() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right text-xs font-bold text-primary">
-                                        R$ {item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        R$ {(item.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </TableCell>
                                     <TableCell className="text-right text-xs">
                                         {item.margem.toFixed(1)}%

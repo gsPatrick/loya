@@ -432,7 +432,7 @@ export default function DashboardPage() {
               <DialogTitle className="text-xl">Lembrete do Dia: Peças Expirando</DialogTitle>
             </div>
             <CardDescription>
-              As seguintes peças em consignação ultrapassaram o prazo de 60 dias e precisam ser devolvidas ou renegociadas.
+              As seguintes peças em consignação ultrapassaram o prazo de 180 dias e precisam ser devolvidas ou renegociadas.
             </CardDescription>
           </DialogHeader>
 

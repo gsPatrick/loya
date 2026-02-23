@@ -100,6 +100,23 @@ export default function PDVPage() {
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [newPriceInput, setNewPriceInput] = useState("");
 
+    // New Client Modal State
+    const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+    const [newClientData, setNewClientData] = useState({
+        nome: "",
+        cpf_cnpj: "",
+        telefone_whatsapp: "",
+        email: "",
+        is_cliente: true
+    });
+    const [isCreatingClient, setIsCreatingClient] = useState(false);
+
+    // Multi-Payment State
+    const [addedPayments, setAddedPayments] = useState([]);
+    const [paymentInputValue, setPaymentInputValue] = useState(""); // Amount to add
+    const [tempParcelas, setTempParcelas] = useState(1); // Temp parcelas for current addition
+    const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+
     const barcodeInputRef = useRef(null);
 
     // --- EFFECTS ---
@@ -107,6 +124,13 @@ export default function PDVPage() {
         checkCaixaStatus();
         loadInitialData();
     }, []);
+
+    // Update payment input value based on remaining
+    useEffect(() => {
+        const paid = addedPayments.reduce((acc, p) => acc + parseFloat(p.valor), 0);
+        const remaining = Math.max(0, total - paid);
+        setPaymentInputValue(remaining.toFixed(2));
+    }, [total, addedPayments]);
 
     const checkCaixaStatus = async () => {
         try {
@@ -140,6 +164,31 @@ export default function PDVPage() {
                 variant: "destructive"
             });
         }
+    };
+
+    const handleAddPayment = (method, amount) => {
+        const val = parseFloat(amount || 0);
+        if (val <= 0) return;
+
+        const paidSoFar = addedPayments.reduce((acc, p) => acc + parseFloat(p.valor), 0);
+        if (paidSoFar + val > total + 0.01) {
+            toast({ title: "Valor Excedido", description: "O total dos pagamentos não pode superar o total do pedido.", variant: "destructive" });
+            return;
+        }
+
+        const newPayment = {
+            id: Date.now(),
+            metodo: method,
+            valor: val,
+            parcelas: method === 'CREDITO' ? tempParcelas : 1
+        };
+
+        setAddedPayments([...addedPayments, newPayment]);
+        setTempParcelas(1); // Reset
+    };
+
+    const handleRemovePayment = (id) => {
+        setAddedPayments(addedPayments.filter(p => p.id !== id));
     };
 
     const handleFecharCaixa = async () => {
@@ -254,6 +303,47 @@ export default function PDVPage() {
             title: "Venda Direta",
             description: "Modo de venda normal ativado.",
         });
+    };
+
+    const handleCreateClient = async () => {
+        if (!newClientData.nome) {
+            toast({ title: "Erro", description: "O nome é obrigatório.", variant: "destructive" });
+            return;
+        }
+
+        setIsCreatingClient(true);
+        try {
+            const res = await api.post('/pessoas', newClientData);
+            const createdClient = res.data;
+
+            // Selection:
+            setSelectedClient(createdClient.id);
+            setClientSearch(createdClient.nome);
+            setClients([]); // Clear list
+
+            setIsClientModalOpen(false);
+            setNewClientData({
+                nome: "",
+                cpf_cnpj: "",
+                telefone_whatsapp: "",
+                email: "",
+                is_cliente: true
+            });
+
+            toast({
+                title: "Cliente Criado",
+                description: `${createdClient.nome} foi cadastrado e selecionado.`,
+                className: "bg-green-600 text-white border-none"
+            });
+        } catch (err) {
+            toast({
+                title: "Erro ao criar cliente",
+                description: err.response?.data?.error || "Verifique os dados (CPF/E-mail duplicados?).",
+                variant: "destructive"
+            });
+        } finally {
+            setIsCreatingClient(false);
+        }
     };
 
     const fetchSaldoPermuta = async (clientId) => {
@@ -512,6 +602,15 @@ export default function PDVPage() {
             return;
         }
 
+        const paidTotal = addedPayments.reduce((acc, p) => acc + parseFloat(p.valor), 0);
+        if (Math.abs(paidTotal - total) > 0.01) {
+            toast({
+                title: "Pagamento Incompleto",
+                description: `Faltam R$ ${(total - paidTotal).toFixed(2)} para completar o pagamento.`,
+                variant: "destructive"
+            });
+            return;
+        }
 
         setIsProcessing(true);
         try {
@@ -542,42 +641,10 @@ export default function PDVPage() {
                         valor_unitario_venda: parseFloat(netPrice.toFixed(2)) // Send NET price
                     };
                 }),
-                pagamentos: [], // Will be populated below
+                pagamentos: addedPayments, // Now sending the array of added payments
                 origemVendaId: null, // Optional
                 canal: "LOJA_FISICA"
             };
-
-            // Construct payments array
-            if (paymentMethod === 'VOUCHER_PERMUTA') {
-                // Split payment: Voucher + Remaining (Cash/Card/Pix)
-                // Actually, the requirement implies "Voucher + Money" if voucher < total.
-                // But the UI currently only selects ONE method.
-                // We need to support Mixed Payment if Voucher is used.
-                // The "No Calculator" logic implies we calculate the rest.
-                // Let's assume the rest is paid in CASH (Dinheiro) or allow selection?
-                // For simplicity and "No Calculator", let's assume the rest is DINHEIRO as per prompt "Voucher + Dinheiro".
-
-                payload.pagamentos.push({
-                    metodo: 'VOUCHER_PERMUTA',
-                    valor: voucherAmount,
-                    parcelas: 1
-                });
-
-                const remaining = total - voucherAmount;
-                if (remaining > 0.01) {
-                    payload.pagamentos.push({
-                        metodo: 'DINHEIRO', // Defaulting to Cash for the rest
-                        valor: remaining,
-                        parcelas: 1
-                    });
-                }
-            } else {
-                payload.pagamentos.push({
-                    metodo: paymentMethod,
-                    valor: total,
-                    parcelas: paymentMethod === 'CREDITO' ? parcelas : 1
-                });
-            }
 
             const res = await api.post('/vendas/pdv', payload);
 
@@ -595,6 +662,7 @@ export default function PDVPage() {
             setSelectedClient("");
             setClientSearch("");
             setActiveSacolinha(null);
+            setAddedPayments([]); // Reset added payments
             sessionStorage.removeItem('activeSacolinha');
 
         } catch (err) {
@@ -692,7 +760,11 @@ export default function PDVPage() {
                                     </div>
                                 )}
                             </div>
-                            <Button size="icon" className="h-10 w-10 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0">
+                            <Button
+                                size="icon"
+                                className="h-10 w-10 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+                                onClick={() => setIsClientModalOpen(true)}
+                            >
                                 <Plus className="h-5 w-5" />
                             </Button>
                         </div>
@@ -1020,39 +1092,58 @@ export default function PDVPage() {
                             </div>
 
                             {/* Formas de Pagamento */}
-                            <div className="space-y-3">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Pagamento</Label>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">Adicionar Pagamento</Label>
+                                    <div className="flex items-center gap-2 bg-muted/30 px-2 py-1 rounded-md border text-[10px] font-bold">
+                                        RESTANTE: <span className="text-primary">R$ {(total - addedPayments.reduce((acc, p) => acc + parseFloat(p.valor), 0)).toFixed(2)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <span className="absolute left-2 top-2 text-xs text-muted-foreground">R$</span>
+                                        <Input
+                                            type="number"
+                                            value={paymentInputValue}
+                                            onChange={(e) => setPaymentInputValue(e.target.value)}
+                                            className="h-9 pl-7 text-sm"
+                                            placeholder="Valor"
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     <Button
-                                        variant={paymentMethod === 'CREDITO' ? 'default' : 'outline'}
-                                        onClick={() => setPaymentMethod('CREDITO')}
-                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 ${paymentMethod === 'CREDITO' ? 'bg-primary text-primary-foreground' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'}`}
+                                        variant="outline"
+                                        onClick={() => handleAddPayment('CREDITO', paymentInputValue)}
+                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10"
                                     >
                                         <CreditCard className="h-4 w-4 shrink-0" /> <span className="text-left">Cartão</span>
                                     </Button>
                                     <Button
-                                        variant={paymentMethod === 'DINHEIRO' ? 'default' : 'outline'}
-                                        onClick={() => setPaymentMethod('DINHEIRO')}
-                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 ${paymentMethod === 'DINHEIRO' ? 'bg-green-600 text-white' : 'hover:border-green-300 hover:bg-green-50'}`}
+                                        variant="outline"
+                                        onClick={() => handleAddPayment('DINHEIRO', paymentInputValue)}
+                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 hover:border-green-300 hover:bg-green-50 text-green-700"
                                     >
                                         <Banknote className="h-4 w-4 shrink-0" /> <span className="text-left">Dinheiro</span>
                                     </Button>
                                     <Button
-                                        variant={paymentMethod === 'PIX' ? 'default' : 'outline'}
-                                        onClick={() => setPaymentMethod('PIX')}
-                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 ${paymentMethod === 'PIX' ? 'bg-orange-600 text-white' : 'hover:border-orange-300 hover:bg-orange-50'}`}
+                                        variant="outline"
+                                        onClick={() => handleAddPayment('PIX', paymentInputValue)}
+                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 hover:border-orange-300 hover:bg-orange-50 text-orange-700"
                                     >
                                         <div className="h-4 w-4 rounded-full border border-current flex items-center justify-center text-[10px] font-bold shrink-0">P</div> <span className="text-left">Pix</span>
                                     </Button>
                                     <Button
-                                        variant={paymentMethod === 'CREDITO_LOJA' ? 'default' : 'outline'}
-                                        onClick={() => setPaymentMethod('CREDITO_LOJA')}
+                                        variant="outline"
+                                        onClick={() => handleAddPayment('CREDITO_LOJA', paymentInputValue)}
                                         className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2"
                                     >
                                         <MoreHorizontal className="h-4 w-4 shrink-0" /> <span className="text-left">Crédito</span>
                                     </Button>
                                     <Button
-                                        variant={paymentMethod === 'VOUCHER_PERMUTA' ? 'default' : 'outline'}
+                                        variant="outline"
                                         onClick={() => {
                                             if (!saldoPermuta || parseFloat(saldoPermuta.saldo) <= 0) {
                                                 toast({
@@ -1062,32 +1153,54 @@ export default function PDVPage() {
                                                 });
                                                 return;
                                             }
-                                            setPaymentMethod('VOUCHER_PERMUTA');
-                                            // Auto-calculate max usable voucher
-                                            const maxVoucher = Math.min(parseFloat(saldoPermuta.saldo), total);
-                                            setVoucherAmount(maxVoucher);
+                                            const amountToAdd = Math.min(parseFloat(paymentInputValue), parseFloat(saldoPermuta.saldo));
+                                            handleAddPayment('VOUCHER_PERMUTA', amountToAdd);
                                         }}
-                                        className={`justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 col-span-2 sm:col-span-1 ${paymentMethod === 'VOUCHER_PERMUTA' ? 'bg-purple-600 text-white' : 'hover:border-purple-300 hover:bg-purple-50 text-purple-700'}`}
+                                        className="justify-start gap-2 h-auto min-h-[2.5rem] whitespace-normal py-2 col-span-2 sm:col-span-1 hover:border-purple-300 hover:bg-purple-50 text-purple-700"
                                     >
                                         <RotateCcw className="h-4 w-4 shrink-0" /> <span className="text-left">Voucher Permuta</span>
                                     </Button>
                                 </div>
 
-                                {/* Installment Selector for Credit Card */}
-                                {paymentMethod === 'CREDITO' && total > 0 && (
-                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 space-y-2 animate-in slide-in-from-top-2">
-                                        <Label className="text-xs uppercase font-bold text-blue-700">Parcelas</Label>
-                                        <div className="grid grid-cols-5 gap-1.5">
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                                                <Button
-                                                    key={n}
-                                                    variant={parcelas === n ? 'default' : 'outline'}
-                                                    onClick={() => setParcelas(n)}
-                                                    className={`h-auto py-1.5 px-1 flex flex-col items-center text-xs ${parcelas === n ? 'bg-blue-600 text-white' : 'hover:border-blue-300 hover:bg-blue-50'}`}
-                                                >
-                                                    <span className="font-bold">{n}x</span>
-                                                    <span className="text-[10px] opacity-80">R$ {(total / n).toFixed(2)}</span>
-                                                </Button>
+                                {/* Current selection details (Parcelas) if "Cartão" logic is needed BEFORE adding? */}
+                                {/* Actually, let's keep it simple: if adding as credit card, it uses tempParcelas. */}
+                                <div className="bg-blue-50 p-2 rounded-lg border border-blue-100 flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-blue-700 uppercase">Se for Cartão:</span>
+                                    <div className="flex gap-1 overflow-x-auto">
+                                        {[1, 2, 3, 4, 5, 6, 10].map(n => (
+                                            <Button
+                                                key={n}
+                                                size="sm"
+                                                variant={tempParcelas === n ? 'default' : 'ghost'}
+                                                onClick={() => setTempParcelas(n)}
+                                                className={`h-6 px-2 text-[10px] ${tempParcelas === n ? 'bg-blue-600' : ''}`}
+                                            >
+                                                {n}x
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* List of Added Payments */}
+                                {addedPayments.length > 0 && (
+                                    <div className="space-y-2 pt-2 border-t border-dashed">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Pagamentos Selecionados</Label>
+                                        <div className="space-y-1">
+                                            {addedPayments.map(p => (
+                                                <div key={p.id} className="flex justify-between items-center bg-muted/20 p-2 rounded-md border text-xs">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold">{p.metodo === 'CREDITO' ? `${p.parcelas}x Cartão` : p.metodo}</span>
+                                                        <Badge variant="outline" className="h-4 text-[9px]">R$ {parseFloat(p.valor).toFixed(2)}</Badge>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                                                        onClick={() => handleRemovePayment(p.id)}
+                                                    >
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
@@ -1302,6 +1415,74 @@ export default function PDVPage() {
                         <Button onClick={handleConfirmRestock} disabled={isRestocking}>
                             {isRestocking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             Salvar e Adicionar à Venda
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* --- MODAL CRIAR CLIENTE --- */}
+            <Dialog open={isClientModalOpen} onOpenChange={setIsClientModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <UserPlus className="h-5 w-5 text-primary" /> Novo Cliente
+                        </DialogTitle>
+                        <DialogDescription>
+                            Cadastre rapidamente o cliente para prosseguir com a venda.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Nome Completo</Label>
+                            <Input
+                                id="name"
+                                placeholder="Nome do cliente"
+                                value={newClientData.nome}
+                                onChange={(e) => setNewClientData({ ...newClientData, nome: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="cpf">CPF / CNPJ</Label>
+                                <Input
+                                    id="cpf"
+                                    placeholder="000.000.000-00"
+                                    value={newClientData.cpf_cnpj}
+                                    onChange={(e) => setNewClientData({ ...newClientData, cpf_cnpj: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="phone">WhatsApp</Label>
+                                <Input
+                                    id="phone"
+                                    placeholder="(00) 00000-0000"
+                                    value={newClientData.telefone_whatsapp}
+                                    onChange={(e) => setNewClientData({ ...newClientData, telefone_whatsapp: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">E-mail</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="cliente@exemplo.com"
+                                value={newClientData.email}
+                                onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsClientModalOpen(false)}>Cancelar</Button>
+                        <Button
+                            onClick={handleCreateClient}
+                            disabled={isCreatingClient || !newClientData.nome}
+                            className="bg-primary text-white"
+                        >
+                            {isCreatingClient ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                            Criar e Selecionar
                         </Button>
                     </DialogFooter>
                 </DialogContent>

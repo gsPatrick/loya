@@ -2,7 +2,7 @@
 "use client";
 // forcing build retry
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
     Search,
     User,

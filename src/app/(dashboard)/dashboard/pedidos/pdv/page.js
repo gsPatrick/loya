@@ -114,10 +114,17 @@ export default function PDVPage() {
     // Multi-Payment State
     const [addedPayments, setAddedPayments] = useState([]);
     const [paymentInputValue, setPaymentInputValue] = useState(""); // Amount to add
-    const [tempParcelas, setTempParcelas] = useState(1); // Temp parcelas for current addition
+    const [tempParcelas, setTempParcelas] = useState(1);
     const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
 
     const barcodeInputRef = useRef(null);
+
+    // --- CALCULATIONS ---
+    const subtotal = useMemo(() => items.reduce((acc, item) => acc + (item.preco * item.qtd), 0), [items]);
+    const descontoCalculado = useMemo(() => descontoTipo === "percent" ? (subtotal * descontoValor) / 100 : parseFloat(descontoValor || 0), [subtotal, descontoTipo, descontoValor]);
+    const total = useMemo(() => Math.max(0, subtotal - descontoCalculado + parseFloat(frete || 0)), [subtotal, descontoCalculado, frete]);
+
+    const isSaldoInsuficiente = useMemo(() => paymentMethod === 'VOUCHER_PERMUTA' && (!saldoPermuta || parseFloat(saldoPermuta.saldo) < total), [paymentMethod, saldoPermuta, total]);
 
     // --- EFFECTS ---
     useEffect(() => {
@@ -578,7 +585,7 @@ export default function PDVPage() {
     }
 
 
-    const handleUpdateItemPrice = () => {
+    const handleUpdateItemPrice = async () => {
         if (editingItemIndex === null) return;
         const cleanPrice = String(newPriceInput).replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
         const price = parseFloat(cleanPrice);
@@ -588,12 +595,26 @@ export default function PDVPage() {
             return;
         }
 
+        const itemToUpdate = items[editingItemIndex];
+
+        if (activeSacolinha) {
+            try {
+                await api.put(`/vendas/sacolinhas/${activeSacolinha.id}/itens/${itemToUpdate.pecaId}/preco`, {
+                    preco: price
+                });
+                toast({ title: "Preço atualizado na sacolinha!", className: "bg-blue-600 text-white border-none" });
+            } catch (err) {
+                console.error(err);
+                toast({ title: "Erro ao atualizar sacolinha", description: "O preço foi alterado apenas localmente.", variant: "destructive" });
+            }
+        }
+
         const newItems = [...items];
         newItems[editingItemIndex].preco = price;
         setItems(newItems);
         setEditingItemIndex(null);
         setNewPriceInput("");
-        toast({ title: "Preço atualizado!", className: "bg-green-600 text-white border-none" });
+        if (!activeSacolinha) toast({ title: "Preço atualizado!", className: "bg-green-600 text-white border-none" });
     };
 
     const handleFinishSale = async () => {
@@ -633,16 +654,12 @@ export default function PDVPage() {
             const payload = {
                 clienteId: selectedClient || null,
                 sacolinhaId: activeSacolinha?.id || null,
-                itens: items.map(i => {
-                    // Apply discount proportionally
-                    const netPrice = i.preco * payRatio;
-                    return {
-                        pecaId: i.pecaId,
-                        valor_unitario_venda: parseFloat(netPrice.toFixed(2)) // Send NET price
-                    };
-                }),
-                pagamentos: addedPayments, // Now sending the array of added payments
-                origemVendaId: null, // Optional
+                itens: items.map(i => ({
+                    pecaId: i.pecaId,
+                    valor_unitario_venda: i.preco // Send the cart price (negotiated or catalog)
+                })),
+                pagamentos: addedPayments,
+                origemVendaId: null,
                 canal: "LOJA_FISICA"
             };
 
@@ -677,10 +694,10 @@ export default function PDVPage() {
         }
     };
 
-    // --- CALCULATIONS ---
-    const subtotal = items.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
-    const descontoCalculado = descontoTipo === "percent" ? (subtotal * descontoValor) / 100 : parseFloat(descontoValor || 0);
-    const total = Math.max(0, subtotal - descontoCalculado + parseFloat(frete || 0));
+    // --- CALCULATIONS (Moved to top) ---
+    // const subtotal = items.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
+    // const descontoCalculado = ...
+    // const total = ...
 
     const isSaldoInsuficiente = paymentMethod === 'VOUCHER_PERMUTA' && (!saldoPermuta || parseFloat(saldoPermuta.saldo) < total);
 

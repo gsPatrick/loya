@@ -699,7 +699,7 @@ export default function PDVPage() {
     // const descontoCalculado = ...
     // const total = ...
 
-    const isSaldoInsuficiente = paymentMethod === 'VOUCHER_PERMUTA' && (!saldoPermuta || parseFloat(saldoPermuta.saldo) < total);
+
 
     // Filter clients for search
     const filteredClients = clients.filter(c =>

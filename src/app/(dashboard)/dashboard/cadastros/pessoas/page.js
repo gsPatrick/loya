@@ -130,6 +130,10 @@ function PessoasContent() {
         const matchesSearch = (p.nome && p.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (p.cpf_cnpj && p.cpf_cnpj.includes(searchTerm));
 
+        let matchesType = true;
+        if (filterType === "Fornecedores") matchesType = p.is_fornecedor;
+        if (filterType === "Clientes") matchesType = p.is_cliente;
+
         let matchesCredit = true;
         if (showOnlyWithCredit) matchesCredit = (p.saldo > 0);
 

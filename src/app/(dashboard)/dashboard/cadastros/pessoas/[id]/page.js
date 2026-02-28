@@ -592,7 +592,7 @@ export default function DetalhesPessoaPage() {
                                         </div>
                                     </div>
                                     <div>
-                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">De:</Label>
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Entrada De:</Label>
                                         <Input
                                             type="date"
                                             className="h-9 mt-1 text-xs"
@@ -601,7 +601,7 @@ export default function DetalhesPessoaPage() {
                                         />
                                     </div>
                                     <div>
-                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Até:</Label>
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Entrada Até:</Label>
                                         <Input
                                             type="date"
                                             className="h-9 mt-1 text-xs"
@@ -664,7 +664,12 @@ export default function DetalhesPessoaPage() {
                                                 <div className="font-bold text-sm">{p.descricao_curta}</div>
                                                 <div className="text-[10px] text-muted-foreground uppercase">{p.marca?.nome || '-'} • {p.tamanho?.nome || '-'}</div>
                                             </TableCell>
-                                            <TableCell className="text-sm">R$ {parseFloat(p.preco_venda || 0).toFixed(2)}</TableCell>
+                                            <TableCell className="text-sm">
+                                                <div>R$ {parseFloat(p.preco_venda || 0).toFixed(2)}</div>
+                                                {p.status === 'VENDIDA' && p.valor_venda_final && (
+                                                    <div className="text-[9px] text-green-600 font-bold uppercase">Preço Venda</div>
+                                                )}
+                                            </TableCell>
                                             <TableCell className="text-sm">{p.comissao_padrao || 50}%</TableCell>
                                             <TableCell className="font-bold text-green-600 text-sm">R$ {parseFloat(p.valor_liquido_fornecedor || 0).toFixed(2)}</TableCell>
                                             <TableCell>

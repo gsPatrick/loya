@@ -305,6 +305,8 @@ export default function PDVPage() {
             codigo: i.codigo_etiqueta,
             descricao: i.descricao_curta || i.nome,
             preco: parseFloat(i.preco_venda_sacolinha || i.preco_venda),
+            tamanho: i.tamanho?.nome || i.tamanho || "UN",
+            marca: i.marca?.nome || i.marca || "Sem Marca",
             qtd: 1
         }));
         setItems(formattedItems);
@@ -611,6 +613,7 @@ export default function PDVPage() {
 
         if (activeSacolinha) {
             try {
+                const itemToUpdate = items[editingItemIndex];
                 // If it's a sacolinha item, use the dedicated endpoint
                 await api.put(`/vendas/sacolinhas/${activeSacolinha.id}/itens/${itemToUpdate.pecaId}/preco`, {
                     preco: price

@@ -29,6 +29,7 @@ function PessoasContent() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [filterType, setFilterType] = useState(initialType);
+    const [showOnlyWithCredit, setShowOnlyWithCredit] = useState(false);
 
     useEffect(() => {
         const type = searchParams.get("type");
@@ -129,11 +130,10 @@ function PessoasContent() {
         const matchesSearch = (p.nome && p.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (p.cpf_cnpj && p.cpf_cnpj.includes(searchTerm));
 
-        let matchesType = true;
-        if (filterType === "Fornecedores") matchesType = p.is_fornecedor;
-        if (filterType === "Clientes") matchesType = p.is_cliente && !p.is_fornecedor;
+        let matchesCredit = true;
+        if (showOnlyWithCredit) matchesCredit = (p.saldo > 0);
 
-        return matchesSearch && matchesType;
+        return matchesSearch && matchesType && matchesCredit;
     });
 
     const getTipoLabel = (p) => {
@@ -221,6 +221,14 @@ function PessoasContent() {
                                 {type}
                             </Button>
                         ))}
+                        <Button
+                            variant={showOnlyWithCredit ? "default" : "outline"}
+                            onClick={() => setShowOnlyWithCredit(!showOnlyWithCredit)}
+                            size="sm"
+                            className={showOnlyWithCredit ? "h-8 bg-green-600 hover:bg-green-700" : "h-8"}
+                        >
+                            Com Crédito
+                        </Button>
                     </div>
                     <div className="relative w-[250px]">
                         <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar..." className="h-9 pl-9" />

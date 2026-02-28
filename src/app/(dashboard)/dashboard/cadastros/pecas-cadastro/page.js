@@ -124,6 +124,8 @@ function CadastroPecasContent() {
     const [filterCategoria, setFilterCategoria] = useState("");
     const [filterTipoAquisicao, setFilterTipoAquisicao] = useState("TODOS");
     const [filterStatus, setFilterStatus] = useState("TODOS");
+    const [filterDataInicio, setFilterDataInicio] = useState("");
+    const [filterDataFim, setFilterDataFim] = useState("");
 
     // Modal Details State
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -204,7 +206,7 @@ function CadastroPecasContent() {
     // Load items when page or search changes
     useEffect(() => {
         loadItems();
-    }, [currentPage, debouncedSearch, fornecedorIdParam, filterFornecedor, filterTamanho, filterMarca, filterCategoria, filterTipoAquisicao, filterStatus]);
+    }, [currentPage, debouncedSearch, fornecedorIdParam, filterFornecedor, filterTamanho, filterMarca, filterCategoria, filterTipoAquisicao, filterStatus, filterDataInicio, filterDataFim]);
 
     const loadDropdownData = async () => {
         try {
@@ -251,6 +253,8 @@ function CadastroPecasContent() {
             if (filterCategoria) params.append('categoriaId', filterCategoria);
             if (filterTipoAquisicao && filterTipoAquisicao !== 'TODOS') params.append('tipo_aquisicao', filterTipoAquisicao);
             if (filterStatus && filterStatus !== 'TODOS') params.append('status', filterStatus);
+            if (filterDataInicio) params.append('dataInicio', filterDataInicio);
+            if (filterDataFim) params.append('dataFim', filterDataFim);
 
             const res = await api.get(`/catalogo/pecas?${params.toString()}`);
             // New paginated response format
@@ -1026,6 +1030,14 @@ function CadastroPecasContent() {
                                 </SelectContent>
                             </Select>
                         </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Entrada De</Label>
+                            <Input type="date" value={filterDataInicio} onChange={e => setFilterDataInicio(e.target.value)} className="h-9" />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-gray-500">Entrada Até</Label>
+                            <Input type="date" value={filterDataFim} onChange={e => setFilterDataFim(e.target.value)} className="h-9" />
+                        </div>
                     </div>
 
                     <div className="flex justify-between items-center pt-2">
@@ -1043,6 +1055,8 @@ function CadastroPecasContent() {
                                     setFilterCategoria("");
                                     setFilterTipoAquisicao("TODOS");
                                     setFilterStatus("TODOS");
+                                    setFilterDataInicio("");
+                                    setFilterDataFim("");
                                     setSearchTerm("");
                                 }}
                                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
@@ -1112,10 +1126,10 @@ function CadastroPecasContent() {
                                                 }
                                             }}
                                             className={`text-xs font-bold rounded-md px-2 py-1 border cursor-pointer ${p.status === 'DISPONIVEL' ? 'bg-green-100 text-green-800 border-green-300' :
-                                                    p.status === 'VENDIDA' ? 'bg-red-100 text-red-800 border-red-300' :
-                                                        p.status === 'DEVOLVIDA_FORNECEDOR' ? 'bg-orange-100 text-orange-800 border-orange-300' :
-                                                            p.status === 'EXTRAVIADA' ? 'bg-gray-100 text-gray-800 border-gray-300' :
-                                                                'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                                p.status === 'VENDIDA' ? 'bg-red-100 text-red-800 border-red-300' :
+                                                    p.status === 'DEVOLVIDA_FORNECEDOR' ? 'bg-orange-100 text-orange-800 border-orange-300' :
+                                                        p.status === 'EXTRAVIADA' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                                                            'bg-yellow-100 text-yellow-800 border-yellow-300'
                                                 }`}
                                         >
                                             <option value="DISPONIVEL">DISPONIVEL</option>
@@ -1128,7 +1142,16 @@ function CadastroPecasContent() {
                                             <option value="EXTRAVIADA">EXTRAVIADA</option>
                                         </select>
                                     </TableCell>
-                                    <TableCell className="text-right font-bold text-primary">R$ {parseFloat(p.preco_venda).toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-bold text-primary">
+                                        {p.status === 'VENDIDA' && p.valor_venda_final ? (
+                                            <span className="flex flex-col items-end">
+                                                <span className="text-red-600">R$ {parseFloat(p.valor_venda_final).toFixed(2)}</span>
+                                                <span className="text-[10px] text-muted-foreground uppercase leading-none">Venda Final</span>
+                                            </span>
+                                        ) : (
+                                            <span>R$ {parseFloat(p.preco_venda).toFixed(2)}</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="text-center">
                                         <div className="flex items-center justify-center gap-2">
                                             <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setCurrentItem(p); setIsDetailsOpen(true); }}><Eye className="h-4 w-4 text-purple-600" /></Button>

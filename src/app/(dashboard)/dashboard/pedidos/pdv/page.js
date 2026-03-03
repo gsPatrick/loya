@@ -307,6 +307,8 @@ export default function PDVPage() {
                 codigo: i.codigo_etiqueta,
                 descricao: i.descricao_curta || i.nome,
                 preco: parseFloat(i.preco_venda_sacolinha || i.preco_venda),
+                tamanho: i.tamanho?.nome || i.tamanho || "UN",
+                marca: i.marca?.nome || i.marca || "Sem Marca",
                 qtd: 1
             }));
         setItems(formattedItems);
@@ -544,8 +546,8 @@ export default function PDVPage() {
             // Update local object to reflect change immediately for adding to cart
             const updatedProduct = { ...productToRestock, quantidade: newStock, status: 'DISPONIVEL' };
 
-            // Add to cart immediately
-            addItemToCart(updatedProduct);
+            // Add to cart with sacolinha sync check
+            await checkAndAddItem(updatedProduct);
 
             setRestockModalOpen(false);
             setProductToRestock(null);
@@ -613,6 +615,7 @@ export default function PDVPage() {
 
         if (activeSacolinha) {
             try {
+                const itemToUpdate = items[editingItemIndex];
                 // If it's a sacolinha item, use the dedicated endpoint
                 await api.put(`/vendas/sacolinhas/${activeSacolinha.id}/itens/${itemToUpdate.pecaId}/preco`, {
                     preco: price
@@ -999,7 +1002,7 @@ export default function PDVPage() {
                                                     key={p.id}
                                                     className="p-3 hover:bg-primary/5 cursor-pointer border-b last:border-none flex justify-between items-center"
                                                     onClick={() => {
-                                                        addItemToCart(p);
+                                                        checkAndAddItem(p);
                                                         setBarcodeInput("");
                                                         setProductSuggestions([]);
                                                         if (barcodeInputRef.current) barcodeInputRef.current.focus();

@@ -354,7 +354,7 @@ export default function SacolinhasPage() {
                                                                     <AlertDialogTitle className="text-green-700">Emitir Nota Fiscal (NFC-e)</AlertDialogTitle>
                                                                 </div>
                                                                 <AlertDialogDescription>
-                                                                    Confirmar emissão fiscal para <strong>{sac.cliente?.nome}</strong> no valor de <strong>R$ {sac.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda), 0).toFixed(2)}</strong>?<br /><br />
+                                                                    Confirmar emissão fiscal para <strong>{sac.cliente?.nome}</strong> no valor de <strong>R$ {sac.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda_sacolinha || i.preco_venda || 0), 0).toFixed(2)}</strong>?<br /><br />
                                                                     <span className="flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded text-xs font-medium border border-amber-100">
                                                                         <AlertTriangle className="h-3 w-3" /> Atenção: Esta ação enviará os dados para a SEFAZ e não poderá ser desfeita facilmente.
                                                                     </span>
@@ -437,7 +437,7 @@ export default function SacolinhasPage() {
                                         </TableCell>
 
                                         <TableCell className="text-right font-bold text-foreground">
-                                            {sac.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda), 0).toFixed(2)}
+                                            {sac.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda_sacolinha || i.preco_venda || 0), 0).toFixed(2)}
                                         </TableCell>
 
                                         <TableCell className="text-xs text-muted-foreground">{moment(sac.createdAt).format('DD/MM/YYYY')}</TableCell>

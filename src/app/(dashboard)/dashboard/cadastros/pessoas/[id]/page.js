@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
     ArrowLeft, Wallet, History, Calendar, MapPin, CreditCard, Package, Info, Users, Edit, Trash2,
-    Camera, Upload, FileText, Download, Eye, FilePlus, Printer, FileSpreadsheet, File, Search, X, RefreshCw
+    Camera, Upload, FileText, Download, Eye, FilePlus, Printer, FileSpreadsheet, File, Search, X, RefreshCw, ChevronDown
 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,7 @@ export default function DetalhesPessoaPage() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [editForm, setEditForm] = useState(null);
+    const [selectedMonthKey, setSelectedMonthKey] = useState(null);
 
     // Selection/Export State
     const [selectedPecas, setSelectedPecas] = useState([]);
@@ -791,19 +792,59 @@ export default function DetalhesPessoaPage() {
 
                                     {permuta?.detalhamento && permuta.detalhamento.length > 0 && (
                                         <div className="mt-6 pt-4 border-t border-purple-200">
-                                            <p className="text-[10px] font-bold text-purple-500 uppercase mb-3">Histórico por Competência</p>
+                                            <p className="text-[10px] font-bold text-purple-500 uppercase mb-3 text-center">Histórico por Competência (Clique p/ ver peças)</p>
                                             <div className="space-y-2">
                                                 {permuta.detalhamento.map((d, i) => (
-                                                    <div key={i} className={`flex justify-between items-center p-2 rounded-md ${d.status === 'PENDENTE' ? 'bg-slate-100 border border-slate-200 opacity-60' : 'bg-white/50 border border-purple-100'}`}>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-medium text-purple-700 capitalize">
-                                                                {new Date(d.ano, d.mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
-                                                            </span>
-                                                            <span className={`text-[9px] font-bold uppercase ${d.status === 'PENDENTE' ? 'text-slate-500' : 'text-green-600'}`}>
-                                                                {d.status === 'PENDENTE' ? 'Em Apuração' : 'Liberado'}
-                                                            </span>
+                                                    <div 
+                                                        key={i} 
+                                                        onClick={() => setSelectedMonthKey(selectedMonthKey === d.key ? null : d.key)}
+                                                        className={`flex flex-col cursor-pointer transition-all hover:ring-1 hover:ring-purple-400 p-2 rounded-md ${d.status === 'PENDENTE' ? 'bg-slate-100 border border-slate-200 opacity-60' : 'bg-white border border-purple-100 shadow-sm'} ${selectedMonthKey === d.key ? 'ring-2 ring-purple-500 scale-[1.01]' : ''}`}
+                                                    >
+                                                        <div className="flex justify-between items-center w-full">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-medium text-purple-700 capitalize">
+                                                                    {new Date(d.ano, d.mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
+                                                                </span>
+                                                                <span className={`text-[9px] font-bold uppercase ${d.status === 'PENDENTE' ? 'text-slate-500' : 'text-green-600'}`}>
+                                                                    {d.status === 'PENDENTE' ? 'Em Apuração' : 'Liberado'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className={`text-sm font-bold ${d.status === 'PENDENTE' ? 'text-slate-500' : 'text-purple-900'}`}>R$ {parseFloat(d.valor).toFixed(2)}</span>
+                                                                <ChevronDown className={`h-4 w-4 text-purple-400 transition-transform ${selectedMonthKey === d.key ? 'rotate-180' : ''}`} />
+                                                            </div>
                                                         </div>
-                                                        <span className={`text-sm font-bold ${d.status === 'PENDENTE' ? 'text-slate-500' : 'text-purple-900'}`}>R$ {parseFloat(d.valor).toFixed(2)}</span>
+
+                                                        {selectedMonthKey === d.key && (
+                                                            <div className="mt-4 animate-in fade-in slide-in-from-top-2 overflow-x-auto">
+                                                                <table className="w-full text-[11px]">
+                                                                    <thead>
+                                                                        <tr className="border-b border-purple-100 text-purple-500">
+                                                                            <th className="text-left py-1 font-bold">CÓDIGO</th>
+                                                                            <th className="text-left py-1 font-bold">DESCRIÇÃO</th>
+                                                                            <th className="text-right py-1 font-bold">VENDA</th>
+                                                                            <th className="text-right py-1 font-bold">CRÉDITO</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {d.pecas?.map((peca, pi) => (
+                                                                            <tr key={pi} className="border-b border-purple-50/50 last:border-0 hover:bg-purple-50/30">
+                                                                                <td className="py-1.5 font-mono font-bold text-purple-800">{peca.codigo}</td>
+                                                                                <td className="py-1.5 text-slate-600 max-w-[120px] truncate">{peca.descricao}</td>
+                                                                                <td className="py-1.5 text-right text-slate-400">R$ {peca.valor_venda.toFixed(2)}</td>
+                                                                                <td className="py-1.5 text-right font-bold text-green-700">R$ {peca.comissao.toFixed(2)}</td>
+                                                                            </tr>
+                                                                        ))}
+                                                                        {d.outros?.map((o, oi) => (
+                                                                            <tr key={`o-${oi}`} className="bg-slate-50/50">
+                                                                                <td colSpan={3} className="py-1.5 font-bold text-slate-500 uppercase italic">{o.descricao}</td>
+                                                                                <td className="py-1.5 text-right font-bold text-purple-700">R$ {o.valor.toFixed(2)}</td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -830,8 +871,8 @@ export default function DetalhesPessoaPage() {
                                                     <p className="font-medium">{item.descricao}</p>
                                                     <p className="text-xs text-muted-foreground">{new Date(item.data).toLocaleDateString()} às {new Date(item.data).toLocaleTimeString()}</p>
                                                 </div>
-                                                <span className="font-bold text-red-600">
-                                                    - R$ {parseFloat(item.valor).toFixed(2)}
+                                                <span className={`font-bold ${item.tipo === 'USO' || item.tipo === 'DEBITO' ? 'text-red-600' : 'text-green-600'}`}>
+                                                    {item.tipo === 'USO' || item.tipo === 'DEBITO' ? '-' : '+'} R$ {parseFloat(item.valor).toFixed(2)}
                                                 </span>
                                             </div>
                                         ))

@@ -820,6 +820,7 @@ export default function DetalhesPessoaPage() {
                                                                 <table className="w-full text-[11px]">
                                                                     <thead>
                                                                         <tr className="border-b border-purple-100 text-purple-500">
+                                                                            <th className="text-left py-1 font-bold">DATA</th>
                                                                             <th className="text-left py-1 font-bold">CÓDIGO</th>
                                                                             <th className="text-left py-1 font-bold">DESCRIÇÃO</th>
                                                                             <th className="text-right py-1 font-bold">VENDA</th>
@@ -829,6 +830,7 @@ export default function DetalhesPessoaPage() {
                                                                     <tbody>
                                                                         {d.pecas?.map((peca, pi) => (
                                                                             <tr key={pi} className="border-b border-purple-50/50 last:border-0 hover:bg-purple-50/30">
+                                                                                <td className="py-1.5 text-slate-500">{new Date(peca.data).toLocaleDateString('pt-BR')}</td>
                                                                                 <td className="py-1.5 font-mono font-bold text-purple-800">{peca.codigo}</td>
                                                                                 <td className="py-1.5 text-slate-600 max-w-[120px] truncate">{peca.descricao}</td>
                                                                                 <td className="py-1.5 text-right text-slate-400">R$ {peca.valor_venda.toFixed(2)}</td>
@@ -837,7 +839,7 @@ export default function DetalhesPessoaPage() {
                                                                         ))}
                                                                         {d.outros?.map((o, oi) => (
                                                                             <tr key={`o-${oi}`} className="bg-slate-50/50">
-                                                                                <td colSpan={3} className="py-1.5 font-bold text-slate-500 uppercase italic">{o.descricao}</td>
+                                                                                <td colSpan={4} className="py-1.5 font-bold text-slate-500 uppercase italic">{o.descricao}</td>
                                                                                 <td className="py-1.5 text-right font-bold text-purple-700">R$ {o.valor.toFixed(2)}</td>
                                                                             </tr>
                                                                         ))}

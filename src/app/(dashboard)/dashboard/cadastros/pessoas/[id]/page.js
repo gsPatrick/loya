@@ -592,7 +592,7 @@ export default function DetalhesPessoaPage() {
                                         </div>
                                     </div>
                                     <div>
-                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">De:</Label>
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Entrada De:</Label>
                                         <Input
                                             type="date"
                                             className="h-9 mt-1 text-xs"
@@ -601,7 +601,7 @@ export default function DetalhesPessoaPage() {
                                         />
                                     </div>
                                     <div>
-                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Até:</Label>
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Entrada Até:</Label>
                                         <Input
                                             type="date"
                                             className="h-9 mt-1 text-xs"
@@ -664,7 +664,12 @@ export default function DetalhesPessoaPage() {
                                                 <div className="font-bold text-sm">{p.descricao_curta}</div>
                                                 <div className="text-[10px] text-muted-foreground uppercase">{p.marca?.nome || '-'} • {p.tamanho?.nome || '-'}</div>
                                             </TableCell>
-                                            <TableCell className="text-sm">R$ {parseFloat(p.preco_venda || 0).toFixed(2)}</TableCell>
+                                            <TableCell className="text-sm">
+                                                <div>R$ {parseFloat(p.preco_venda || 0).toFixed(2)}</div>
+                                                {p.status === 'VENDIDA' && p.valor_venda_final && (
+                                                    <div className="text-[9px] text-green-600 font-bold uppercase">Preço Venda</div>
+                                                )}
+                                            </TableCell>
                                             <TableCell className="text-sm">{p.comissao_padrao || 50}%</TableCell>
                                             <TableCell className="font-bold text-green-600 text-sm">R$ {parseFloat(p.valor_liquido_fornecedor || 0).toFixed(2)}</TableCell>
                                             <TableCell>
@@ -758,15 +763,53 @@ export default function DetalhesPessoaPage() {
                                 <CardDescription className="text-purple-600">Total em créditos para permuta lojista</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-4xl font-bold text-purple-800">
-                                    R$ {parseFloat(permuta?.saldo || 0).toFixed(2)}
-                                </div>
-                                {permuta?.proximoVencimento && (
-                                    <div className="mt-2 flex items-center gap-2 text-sm text-purple-600">
-                                        <Calendar className="h-4 w-4" />
-                                        Próximo vencimento: {new Date(permuta.proximoVencimento).toLocaleDateString()}
+                                <div className="space-y-4">
+                                    <div>
+                                        <div className="text-[10px] font-bold text-purple-500 uppercase mb-1">Saldo Disponível (Liberado)</div>
+                                        <div className="text-4xl font-bold text-purple-800">
+                                            R$ {parseFloat(permuta?.saldo || 0).toFixed(2)}
+                                        </div>
+                                        {permuta?.proximoVencimento && (
+                                            <div className="mt-1 flex items-center gap-2 text-xs text-purple-600">
+                                                <Calendar className="h-4 w-4" />
+                                                Vence em: {new Date(permuta.proximoVencimento).toLocaleDateString()}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+
+                                    {permuta?.saldoPendente > 0 && (
+                                        <div className="p-3 bg-white/40 rounded-lg border border-purple-100 flex justify-between items-center animate-in fade-in slide-in-from-top-2">
+                                            <div>
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase">Aguardando Fechamento</div>
+                                                <div className="text-sm text-slate-400 italic">Vendas do mês atual</div>
+                                            </div>
+                                            <div className="text-xl font-bold text-slate-500">
+                                                R$ {parseFloat(permuta.saldoPendente).toFixed(2)}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {permuta?.detalhamento && permuta.detalhamento.length > 0 && (
+                                        <div className="mt-6 pt-4 border-t border-purple-200">
+                                            <p className="text-[10px] font-bold text-purple-500 uppercase mb-3">Histórico por Competência</p>
+                                            <div className="space-y-2">
+                                                {permuta.detalhamento.map((d, i) => (
+                                                    <div key={i} className={`flex justify-between items-center p-2 rounded-md ${d.status === 'PENDENTE' ? 'bg-slate-100 border border-slate-200 opacity-60' : 'bg-white/50 border border-purple-100'}`}>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-medium text-purple-700 capitalize">
+                                                                {new Date(d.ano, d.mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
+                                                            </span>
+                                                            <span className={`text-[9px] font-bold uppercase ${d.status === 'PENDENTE' ? 'text-slate-500' : 'text-green-600'}`}>
+                                                                {d.status === 'PENDENTE' ? 'Em Apuração' : 'Liberado'}
+                                                            </span>
+                                                        </div>
+                                                        <span className={`text-sm font-bold ${d.status === 'PENDENTE' ? 'text-slate-500' : 'text-purple-900'}`}>R$ {parseFloat(d.valor).toFixed(2)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
 

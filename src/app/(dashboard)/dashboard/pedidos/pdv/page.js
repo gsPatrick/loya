@@ -299,14 +299,16 @@ export default function PDVPage() {
 
     const handleSelectExistingSacolinha = (sacolinha) => {
         setActiveSacolinha(sacolinha);
-        // Load items from sacolinha into PDV
-        const formattedItems = (sacolinha.itens || []).map(i => ({
-            pecaId: i.id,
-            codigo: i.codigo_etiqueta,
-            descricao: i.descricao_curta || i.nome,
-            preco: parseFloat(i.preco_venda_sacolinha || i.preco_venda),
-            qtd: 1
-        }));
+        // Load items from sacolinha into PDV (only items not sold yet)
+        const formattedItems = (sacolinha.itens || [])
+            .filter(i => i.status !== 'VENDIDA')
+            .map(i => ({
+                pecaId: i.id,
+                codigo: i.codigo_etiqueta,
+                descricao: i.descricao_curta || i.nome,
+                preco: parseFloat(i.preco_venda_sacolinha || i.preco_venda),
+                qtd: 1
+            }));
         setItems(formattedItems);
         setSacolinhaModalOpen(false);
         toast({
@@ -1076,7 +1078,8 @@ export default function PDVPage() {
                                                         {item.metodoPagamento && (
                                                             <Badge className={`text-[9px] h-4 px-1.5 uppercase font-bold border-none animate-in zoom-in-50 ${item.metodoPagamento === 'PIX' ? 'bg-orange-100 text-orange-700' :
                                                                 item.metodoPagamento === 'DINHEIRO' ? 'bg-green-100 text-green-700' :
-                                                                    item.metodoPagamento === 'CREDITO' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                                                                    item.metodoPagamento === 'CREDITO' ? 'bg-blue-100 text-blue-700' : 
+                                                                        item.metodoPagamento === 'DEBITO' ? 'bg-sky-100 text-sky-700' : 'bg-purple-100 text-purple-700'
                                                                 }`}>
                                                                 {item.metodoPagamento === 'PIX' && <img src="https://img.icons8.com/color/512/pix.png" className="h-2 w-2 mr-1 inline" alt="pix" />}
                                                                 {item.metodoPagamento === 'CREDITO' && `${item.parcelas}x `}
@@ -1110,7 +1113,7 @@ export default function PDVPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() => handleRemoveItem(index)}
-                                                    className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-all"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -1237,7 +1240,15 @@ export default function PDVPage() {
                                         className={`justify-start gap-2 h-11 border-blue-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'CREDITO' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-blue-50/50 text-blue-700 hover:bg-blue-600 hover:text-white'}`}
                                         onMouseEnter={() => setPaymentMethod('CREDITO')}
                                     >
-                                        <CreditCard className="h-4 w-4 shrink-0" /> <span className="font-bold">Cartão</span>
+                                        <CreditCard className="h-4 w-4 shrink-0" /> <span className="font-bold whitespace-nowrap">Crédito</span>
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => handlePaymentButtonClick('DEBITO')}
+                                        className={`justify-start gap-2 h-11 border-sky-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'DEBITO' ? 'bg-sky-600 text-white border-sky-600 shadow-md' : 'bg-sky-50/50 text-sky-700 hover:bg-sky-600 hover:text-white'}`}
+                                        onMouseEnter={() => setPaymentMethod('DEBITO')}
+                                    >
+                                        <CreditCard className="h-4 w-4 shrink-0" /> <span className="font-bold whitespace-nowrap">Débito</span>
                                     </Button>
                                     <Button
                                         variant="outline"
@@ -1245,7 +1256,7 @@ export default function PDVPage() {
                                         className={`justify-start gap-2 h-11 border-emerald-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'DINHEIRO' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-emerald-50/50 text-emerald-700 hover:bg-emerald-600 hover:text-white'}`}
                                         onMouseEnter={() => setPaymentMethod('DINHEIRO')}
                                     >
-                                        <Banknote className="h-4 w-4 shrink-0" /> <span className="font-bold">Dinheiro</span>
+                                        <Banknote className="h-4 w-4 shrink-0" /> <span className="font-bold whitespace-nowrap">Dinheiro</span>
                                     </Button>
                                     <Button
                                         variant="outline"
@@ -1253,15 +1264,15 @@ export default function PDVPage() {
                                         className={`justify-start gap-2 h-11 border-orange-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'PIX' ? 'bg-orange-600 text-white border-orange-600 shadow-md' : 'bg-orange-50/50 text-orange-700 hover:bg-orange-600 hover:text-white'}`}
                                         onMouseEnter={() => setPaymentMethod('PIX')}
                                     >
-                                        <img src="https://img.icons8.com/color/512/pix.png" className="h-4 w-4 shrink-0 brightness-110" alt="pix" /> <span className="font-bold">Pix</span>
+                                        <img src="https://img.icons8.com/color/512/pix.png" className="h-4 w-4 shrink-0 brightness-110" alt="pix" /> <span className="font-bold whitespace-nowrap">Pix</span>
                                     </Button>
                                     <Button
                                         variant="outline"
                                         onClick={() => handlePaymentButtonClick('VOUCHER_PERMUTA')}
-                                        className={`justify-start gap-2 h-11 border-purple-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'VOUCHER_PERMUTA' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-purple-50/50 text-purple-700 hover:bg-purple-600 hover:text-white'}`}
+                                        className={`col-span-2 justify-start gap-2 h-11 border-purple-200 transition-all hover:scale-[1.02] active:scale-95 ${paymentMethod === 'VOUCHER_PERMUTA' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-purple-50/50 text-purple-700 hover:bg-purple-600 hover:text-white'}`}
                                         onMouseEnter={() => setPaymentMethod('VOUCHER_PERMUTA')}
                                     >
-                                        <TicketPercent className="h-4 w-4 shrink-0" /> <span className="font-bold">Voucher</span>
+                                        <TicketPercent className="h-4 w-4 shrink-0" /> <span className="font-bold whitespace-nowrap uppercase">Usar Crédito / Voucher</span>
                                     </Button>
                                 </div>
 

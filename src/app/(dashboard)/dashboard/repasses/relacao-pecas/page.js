@@ -43,6 +43,8 @@ export default function RelacaoPecasPage() {
     const [items, setItems] = useState([]);
     const [dateStart, setDateStart] = useState("");
     const [dateEnd, setDateEnd] = useState("");
+    const [statusFilter, setStatusFilter] = useState("TODOS");
+    const [searchText, setSearchText] = useState("");
 
     // Paginação
     const [currentPage, setCurrentPage] = useState(1);
@@ -68,14 +70,16 @@ export default function RelacaoPecasPage() {
         if (!selectedSupplier) return;
         setIsLoading(true);
         try {
-            const { data: res } = await api.get(`/relatorios/pecas-fornecedor/${selectedSupplier}`, {
-                params: {
-                    inicio: dateStart,
-                    fim: dateEnd,
-                    page,
-                    limit: itemsPerPage
-                }
-            });
+            const params = {
+                page,
+                limit: itemsPerPage
+            };
+            if (dateStart) params.inicio = dateStart;
+            if (dateEnd) params.fim = dateEnd;
+            if (statusFilter && statusFilter !== 'TODOS') params.status = statusFilter;
+            if (searchText.trim()) params.search = searchText.trim();
+
+            const { data: res } = await api.get(`/relatorios/pecas-fornecedor/${selectedSupplier}`, { params });
 
             // O backend agora retorna { data, total, totalPages, currentPage }
             if (res.data) {
@@ -100,8 +104,11 @@ export default function RelacaoPecasPage() {
     // Helper de Status
     const getStatusBadge = (status) => {
         if (status === "VENDIDA") return <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white border-none font-bold">VENDIDA</Badge>;
-        if (status === "A VENDA" || status === "DISPONIVEL") return <Badge className="bg-green-600 hover:bg-green-700 text-white border-none font-bold">DISPONIVEL</Badge>;
+        if (status === "A VENDA" || status === "DISPONIVEL" || status === "A_VENDA") return <Badge className="bg-green-600 hover:bg-green-700 text-white border-none font-bold">DISPONÍVEL</Badge>;
+        if (status === "RESERVADA_SACOLINHA") return <Badge className="bg-cyan-500 hover:bg-cyan-600 text-white border-none font-bold">SACOLINHA</Badge>;
+        if (status === "RESERVADA_ECOMMERCE") return <Badge className="bg-blue-500 hover:bg-blue-600 text-white border-none font-bold">ECOMMERCE</Badge>;
         if (status === "NOVA") return <Badge className="bg-blue-600 hover:bg-blue-700 text-white border-none font-bold">NOVA</Badge>;
+        if (status === "DEVOLVIDA") return <Badge className="bg-red-500 hover:bg-red-600 text-white border-none font-bold">DEVOLVIDA</Badge>;
         return <Badge variant="outline">{status}</Badge>;
     };
 
@@ -133,6 +140,22 @@ export default function RelacaoPecasPage() {
                             />
                         </div>
 
+                        {/* Status Filter */}
+                        <div className="grid gap-1.5 flex-1">
+                            <Label className="text-xs font-bold text-purple-700 uppercase">Status</Label>
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className="bg-white h-10">
+                                    <SelectValue placeholder="Todos" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="TODOS">Todos</SelectItem>
+                                    <SelectItem value="DISPONIVEL">Disponível</SelectItem>
+                                    <SelectItem value="VENDIDA">Vendida</SelectItem>
+                                    <SelectItem value="DEVOLVIDA">Devolvida</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         {/* Datas */}
                         <div className="grid gap-1.5 flex-1">
                             <Label className="text-xs font-bold text-gray-500 uppercase">Cadastradas de</Label>
@@ -162,8 +185,7 @@ export default function RelacaoPecasPage() {
                 <div className="flex items-center gap-4 px-2">
                     <span className="text-sm font-bold text-gray-600">Lista de Peças</span>
                     <div className="h-4 w-px bg-gray-300 mx-2" />
-                    <Badge variant="secondary" className="bg-gray-200 text-gray-700">Selecionadas: 0</Badge>
-                    <Badge variant="secondary" className="bg-gray-200 text-gray-700">Total: {items.length}</Badge>
+                    <Badge variant="secondary" className="bg-gray-200 text-gray-700">Total: {totalItems}</Badge>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="gap-2 bg-white text-gray-600 border-gray-300 hover:bg-gray-50">
@@ -197,9 +219,20 @@ export default function RelacaoPecasPage() {
                         </Select>
                         <span className="text-xs text-muted-foreground">resultados por página</span>
                     </div>
-                    <div className="relative w-[300px]">
-                        <Search className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" />
-                        <Input placeholder="Pesquisar na lista..." className="pl-9 h-8 text-xs bg-gray-50" />
+                    <div className="relative w-[300px] flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" />
+                            <Input
+                                placeholder="Pesquisar código ou descrição..."
+                                className="pl-9 h-8 text-xs bg-gray-50"
+                                value={searchText}
+                                onChange={e => setSearchText(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') loadItems(1); }}
+                            />
+                        </div>
+                        <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => loadItems(1)}>
+                            <Search className="h-3 w-3" />
+                        </Button>
                     </div>
                 </div>
 
@@ -222,7 +255,19 @@ export default function RelacaoPecasPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {items.map((item) => (
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={12} className="text-center py-8 text-sm text-gray-400">
+                                        Carregando...
+                                    </TableCell>
+                                </TableRow>
+                            ) : items.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={12} className="text-center py-8 text-sm text-gray-400">
+                                        {selectedSupplier ? "Nenhuma peça encontrada com os filtros selecionados." : "Selecione um fornecedor e clique em FILTRAR."}
+                                    </TableCell>
+                                </TableRow>
+                            ) : items.map((item) => (
                                 <TableRow key={item.id} className="hover:bg-purple-50/10">
                                     <TableCell className="text-center"><Checkbox /></TableCell>
                                     <TableCell className="font-mono text-xs text-gray-600">{item.id}</TableCell>

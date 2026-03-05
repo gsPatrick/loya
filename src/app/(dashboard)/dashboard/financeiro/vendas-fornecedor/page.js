@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as XLSX from 'xlsx';
 import {
     Calendar as CalendarIcon,
@@ -10,7 +10,9 @@ import {
     User,
     ShoppingBag,
     RotateCcw,
-    X
+    X,
+    Printer,
+    FileText
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,36 +26,37 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-// Select removed - using searchable input instead
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 export default function VendasPorFornecedorPage() {
     const { toast } = useToast();
-    const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
-    const [dateEnd, setDateEnd] = useState(new Date().toISOString().split('T')[0]);
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const [dateStart, setDateStart] = useState(firstDay);
+    const [dateEnd, setDateEnd] = useState(now.toISOString().split('T')[0]);
     const [selectedFornecedor, setSelectedFornecedor] = useState("todos");
     const [fornecedores, setFornecedores] = useState([]);
-    const [fornecedorSearch, setFornecedorSearch] = useState("");
-    const [showFornecedorList, setShowFornecedorList] = useState(false);
     const [salesData, setSalesData] = useState([]);
     const [returnsData, setReturnsData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const printRef = useRef(null);
 
     useEffect(() => {
         fetchFornecedores();
         fetchData();
     }, []);
 
-    const fetchFornecedores = () => {
-        api.get(`/relatorios/vendas-fornecedor?inicio=${dateStart}&fim=${dateEnd}`)
-            .then(res => {
-                const uniqueFornecedores = res.data.map(v => ({ id: v.id, nome: v.nome }));
-                setFornecedores(uniqueFornecedores);
-            })
-            .catch(err => console.error("Erro ao buscar fornecedores", err));
+    const fetchFornecedores = async () => {
+        try {
+            const { data } = await api.get('/pessoas?is_fornecedor=true');
+            setFornecedores(data);
+        } catch (err) {
+            console.error("Erro ao buscar fornecedores", err);
+        }
     };
 
     const fetchData = () => {
@@ -101,6 +104,45 @@ export default function VendasPorFornecedorPage() {
         XLSX.writeFile(wb, `devolucoes_fornecedor_${dateStart}_a_${dateEnd}.xlsx`);
     };
 
+    const handlePrint = () => {
+        const content = printRef.current;
+        if (!content) return;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Vendas por Fornecedor - ${dateStart} a ${dateEnd}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; font-size: 11px; }
+                    h1 { font-size: 16px; margin-bottom: 4px; }
+                    h2 { font-size: 13px; margin-top: 20px; margin-bottom: 6px; }
+                    p { font-size: 10px; color: #666; margin-bottom: 10px; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+                    th { background: #f3e8ff; text-align: left; padding: 4px 6px; font-size: 10px; border: 1px solid #ddd; }
+                    td { padding: 3px 6px; border: 1px solid #eee; font-size: 10px; }
+                    .right { text-align: right; }
+                    .bold { font-weight: bold; }
+                    .total-row { background: #f9f9f9; font-weight: bold; }
+                    @media print { body { margin: 0; } }
+                </style>
+            </head>
+            <body>
+                <h1>Vendas por Fornecedor</h1>
+                <p>Período: ${dateStart} a ${dateEnd}</p>
+                ${content.innerHTML}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+    };
+
+    const handleGeneratePDF = () => {
+        // Use print-to-PDF via browser
+        handlePrint();
+    };
+
     // Totais Vendas
     const totalVendas = salesData.reduce((acc, curr) => acc + curr.valor, 0);
     const totalRepasse = salesData.reduce((acc, curr) => acc + curr.repasse, 0);
@@ -132,69 +174,20 @@ export default function VendasPorFornecedorPage() {
 
                         {/* Linha 1: Fornecedor */}
                         <div className="grid gap-1.5 w-full">
-                            <Label className="text-xs font-bold text-purple-700">Fornecedor (deixe vazio para todos)</Label>
-                            <div className="relative">
-                                <div className="flex items-center gap-2">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-purple-400" />
-                                        <Input
-                                            type="text"
-                                            placeholder="Digite para buscar fornecedor..."
-                                            value={fornecedorSearch}
-                                            onChange={(e) => {
-                                                setFornecedorSearch(e.target.value);
-                                                setShowFornecedorList(true);
-                                                if (!e.target.value) {
-                                                    setSelectedFornecedor("todos");
-                                                }
-                                            }}
-                                            onFocus={() => setShowFornecedorList(true)}
-                                            className="pl-9 bg-gray-50 border-gray-200"
-                                        />
-                                        {fornecedorSearch && (
-                                            <button
-                                                onClick={() => {
-                                                    setFornecedorSearch("");
-                                                    setSelectedFornecedor("todos");
-                                                    setShowFornecedorList(false);
-                                                }}
-                                                className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                                {showFornecedorList && (
-                                    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-[250px] overflow-y-auto">
-                                        <button
-                                            className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${selectedFornecedor === 'todos' ? 'bg-purple-100 font-bold text-purple-700' : ''}`}
-                                            onClick={() => {
-                                                setSelectedFornecedor("todos");
-                                                setFornecedorSearch("");
-                                                setShowFornecedorList(false);
-                                            }}
-                                        >
-                                            Todos os Fornecedores
-                                        </button>
-                                        {fornecedores
-                                            .filter(f => !fornecedorSearch || f.nome.toLowerCase().includes(fornecedorSearch.toLowerCase()))
-                                            .map((f, idx) => (
-                                                <button
-                                                    key={idx}
-                                                    className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 border-t border-gray-100 ${selectedFornecedor === (f.id ? f.id.toString() : `nome-${f.nome}`) ? 'bg-purple-100 font-bold text-purple-700' : ''}`}
-                                                    onClick={() => {
-                                                        setSelectedFornecedor(f.id ? f.id.toString() : `nome-${f.nome}`);
-                                                        setFornecedorSearch(f.nome);
-                                                        setShowFornecedorList(false);
-                                                    }}
-                                                >
-                                                    {f.nome}
-                                                </button>
-                                            ))}
-                                    </div>
-                                )}
-                            </div>
+                            <Label className="text-xs font-bold text-purple-700">Fornecedor</Label>
+                            <SearchableSelect
+                                options={[
+                                    { id: 'todos', nome: 'Todos os Fornecedores' },
+                                    ...fornecedores.map(s => ({
+                                        id: s.id,
+                                        nome: `${String(s.id).padStart(8, '0')} > ${s.nome}`
+                                    }))
+                                ]}
+                                value={selectedFornecedor}
+                                onValueChange={setSelectedFornecedor}
+                                placeholder="Selecione um fornecedor"
+                                searchPlaceholder="Buscar fornecedor..."
+                            />
                         </div>
 
                         {/* Linha 2: Datas e Botão */}
@@ -216,6 +209,27 @@ export default function VendasPorFornecedorPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* --- Barra de ações --- */}
+            <div className="flex items-center justify-between bg-gray-100 p-2 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-4 px-2">
+                    <span className="text-sm font-bold text-gray-600">Resultados</span>
+                    <div className="h-4 w-px bg-gray-300 mx-2" />
+                    <Badge variant="secondary" className="bg-gray-200 text-gray-700">Vendas: {salesData.length}</Badge>
+                    <Badge variant="secondary" className="bg-gray-200 text-gray-700">Devoluções: {returnsData.length}</Badge>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="gap-2 bg-white text-gray-600 border-gray-300 hover:bg-gray-50" onClick={handlePrint}>
+                        <Printer className="h-4 w-4" /> Imprimir
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-2 bg-white text-gray-600 border-gray-300 hover:bg-gray-50" onClick={handleGeneratePDF}>
+                        <FileText className="h-4 w-4" /> Gerar PDF
+                    </Button>
+                </div>
+            </div>
+
+            {/* Printable area */}
+            <div ref={printRef}>
 
             {/* --- 2. TABELA DE VENDAS COM REPASSE --- */}
             <Card className="border-t-4 border-t-purple-400 shadow-sm overflow-hidden">
@@ -283,7 +297,7 @@ export default function VendasPorFornecedorPage() {
             </Card>
 
             {/* --- 3. TABELA DE VENDAS DEVOLVIDAS --- */}
-            <Card className="border-t-4 border-t-purple-400 shadow-sm overflow-hidden">
+            <Card className="border-t-4 border-t-purple-400 shadow-sm overflow-hidden mt-6">
                 <CardHeader className="pb-3 border-b border-gray-100 bg-white flex flex-row justify-between items-center px-5 pt-5">
                     <CardTitle className="text-base font-bold text-purple-600 flex items-center gap-2">
                         <RotateCcw className="h-5 w-5" /> Vendas de Peças Devolvidas
@@ -347,6 +361,7 @@ export default function VendasPorFornecedorPage() {
                 </div>
             </Card>
 
+            </div>
         </div>
     );
 }

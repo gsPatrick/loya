@@ -343,7 +343,7 @@ export default function DetalheSacolinhaPage() {
 
     if (!sacolinha) return null;
 
-    const total = sacolinha.itens?.reduce((acc, i) => acc + parseFloat(i.preco_venda_sacolinha || i.preco_venda || 0), 0) || 0;
+    const total = sacolinha.itens?.reduce((acc, i) => acc + parseFloat(i.valor_venda_final || i.preco_venda_sacolinha || i.preco_venda || 0), 0) || 0;
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -601,13 +601,28 @@ export default function DetalheSacolinhaPage() {
                                         <TableCell>{item.cor?.nome || item.cor || '-'}</TableCell>
                                         <TableCell className="text-right font-semibold">
                                             <div className="flex flex-col items-end">
-                                                <span className={item.preco_venda_sacolinha ? "text-amber-600" : ""}>
-                                                    {formatCurrency(item.preco_venda_sacolinha || item.preco_venda)}
-                                                </span>
-                                                {item.preco_venda_sacolinha && (
-                                                    <span className="text-xs text-gray-400 line-through">
-                                                        {formatCurrency(item.preco_venda)}
-                                                    </span>
+                                                {item.valor_venda_final ? (
+                                                    <>
+                                                        <span className="text-green-600">
+                                                            {formatCurrency(item.valor_venda_final)}
+                                                        </span>
+                                                        {parseFloat(item.valor_venda_final) !== parseFloat(item.preco_venda) && (
+                                                            <span className="text-xs text-gray-400 line-through">
+                                                                {formatCurrency(item.preco_venda)}
+                                                            </span>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className={item.preco_venda_sacolinha ? "text-amber-600" : ""}>
+                                                            {formatCurrency(item.preco_venda_sacolinha || item.preco_venda)}
+                                                        </span>
+                                                        {item.preco_venda_sacolinha && (
+                                                            <span className="text-xs text-gray-400 line-through">
+                                                                {formatCurrency(item.preco_venda)}
+                                                            </span>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </TableCell>

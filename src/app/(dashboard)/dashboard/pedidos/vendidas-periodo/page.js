@@ -16,7 +16,9 @@ import {
     TrendingUp,
     Banknote,
     ArrowRight,
-    Trash2
+    Trash2,
+    RotateCcw,
+    Ban
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -60,20 +62,40 @@ export default function PecasVendidasPage() {
     };
 
     const handleCancelarVenda = async (pedidoId) => {
-        if (!confirm(`Tem certeza que deseja CANCELAR a venda #${pedidoId}?\n\nIsso irá:\n• Restaurar todas as peças ao estoque\n• Reverter repasses dos fornecedores\n• Excluir o pedido permanentemente\n\nEsta ação NÃO pode ser desfeita.`)) return;
+        if (!confirm(`⚠️ ATENÇÃO: Deseja CANCELAR O PEDIDO #${pedidoId} COMPLETO?\n\nIsso irá:\n• Restaurar TODAS AS PEÇAS deste pedido ao estoque\n• Reverter repasses de todos os fornecedores do pedido\n• Excluir o pedido financeiro e fiscal\n\nEsta ação NÃO pode ser desfeita.`)) return;
 
         setDeletingId(pedidoId);
         try {
             const res = await api.delete(`/vendas/pedidos/${pedidoId}`);
             toast({
-                title: "Venda Cancelada",
-                description: res.data.message || `Venda #${pedidoId} cancelada com sucesso.`,
-                className: "bg-green-600 text-white border-none"
+                title: "Pedido Cancelado",
+                description: res.data.message || `Pedido #${pedidoId} cancelado com sucesso.`,
+                className: "bg-red-600 text-white border-none"
             });
             fetchSales(); // Reload
         } catch (err) {
             console.error(err);
-            toast({ title: "Erro", description: err.response?.data?.error || "Falha ao cancelar venda.", variant: "destructive" });
+            toast({ title: "Erro", description: err.response?.data?.error || "Falha ao cancelar pedido.", variant: "destructive" });
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleDevolverPeca = async (pecaId, desc) => {
+        if (!confirm(`Deseja processar a DEVOLUÇÃO da peça "${desc}"?\n\nIsso irá:\n• Retornar a peça ao estoque como DISPONÍVEL\n• Gerar um crédito para o cliente no valor da venda\n• Estornar a comissão do fornecedor\n\nA peça sairá deste relatório após a devolução.`)) return;
+
+        setDeletingId(pecaId);
+        try {
+            await api.post('/vendas/devolucao', { pecaId });
+            toast({
+                title: "Devolução Realizada",
+                description: `A peça "${desc}" foi retornada ao estoque.`,
+                className: "bg-green-600 text-white border-none"
+            });
+            fetchSales();
+        } catch (err) {
+            console.error(err);
+            toast({ title: "Erro", description: err.response?.data?.error || "Falha ao processar devolução.", variant: "destructive" });
         } finally {
             setDeletingId(null);
         }
@@ -316,17 +338,30 @@ export default function PecasVendidasPage() {
                                                     <TableCell className="text-right text-xs font-medium text-green-700 bg-green-50 sticky right-[50px] z-20 border-l group-hover:bg-green-100 transition-colors">
                                                         {sale.margem.toFixed(1)}%
                                                     </TableCell>
-                                                    <TableCell className="text-center bg-red-50/30 sticky right-0 z-20 border-l group-hover:bg-red-50 transition-colors">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-100"
-                                                            disabled={deletingId === sale.pedidoId}
-                                                            onClick={() => handleCancelarVenda(sale.pedidoId || sale.id)}
-                                                            title="Cancelar venda"
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </Button>
+                                                    <TableCell className="text-center bg-red-50/10 sticky right-0 z-20 border-l group-hover:bg-red-50/30 transition-colors">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-100"
+                                                                disabled={deletingId === sale.id}
+                                                                onClick={() => handleDevolverPeca(sale.id, sale.desc)}
+                                                                title="Devolver apenas esta peça"
+                                                            >
+                                                                <RotateCcw className="h-4 w-4" />
+                                                            </Button>
+                                                            <div className="w-px h-4 bg-red-200 mx-0.5" />
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
+                                                                disabled={deletingId === sale.pedidoId}
+                                                                onClick={() => handleCancelarVenda(sale.pedidoId)}
+                                                                title="CANCELAR PEDIDO INTEIRO"
+                                                            >
+                                                                <Ban className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))

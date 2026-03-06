@@ -158,7 +158,9 @@ export default function RelacaoPecasPage() {
 
                         {/* Datas */}
                         <div className="grid gap-1.5 flex-1">
-                            <Label className="text-xs font-bold text-gray-500 uppercase">Cadastradas de</Label>
+                            <Label className="text-xs font-bold text-gray-500 uppercase">
+                                {statusFilter === 'VENDIDA' ? 'Vendidas de' : 'Cadastradas de'}
+                            </Label>
                             <div className="relative">
                                 <CalendarIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                                 <Input type="date" className="pl-9 bg-white h-10" value={dateStart} onChange={e => setDateStart(e.target.value)} />

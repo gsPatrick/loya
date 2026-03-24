@@ -125,10 +125,22 @@ export default function PDVPage() {
 
     const barcodeInputRef = useRef(null);
 
+    const parseCurrency = (val) => {
+        if (!val || typeof val === 'number') return val || 0;
+        const clean = String(val).replace('R$', '').replace(/\s/g, '').replace(',', '.').trim();
+        // If there are multiple dots, treat all but the last one as thousands separators
+        const parts = clean.split('.');
+        if (parts.length > 2) {
+            const decimal = parts.pop();
+            return parseFloat(parts.join('') + '.' + decimal) || 0;
+        }
+        return parseFloat(clean) || 0;
+    };
+
     // --- CALCULATIONS ---
     const subtotal = useMemo(() => items.reduce((acc, item) => acc + (item.preco * item.qtd), 0), [items]);
-    const descontoCalculado = useMemo(() => descontoTipo === "percent" ? (subtotal * descontoValor) / 100 : parseFloat(descontoValor || 0), [subtotal, descontoTipo, descontoValor]);
-    const total = useMemo(() => Math.max(0, subtotal - descontoCalculado + parseFloat(frete || 0)), [subtotal, descontoCalculado, frete]);
+    const descontoCalculado = useMemo(() => descontoTipo === "percent" ? (subtotal * parseCurrency(descontoValor)) / 100 : parseCurrency(descontoValor), [subtotal, descontoTipo, descontoValor]);
+    const total = useMemo(() => Math.max(0, subtotal - descontoCalculado + parseCurrency(frete)), [subtotal, descontoCalculado, frete]);
 
     const isSaldoInsuficiente = useMemo(() => paymentMethod === 'VOUCHER_PERMUTA' && (!saldoPermuta || parseFloat(saldoPermuta.saldo) < total), [paymentMethod, saldoPermuta, total]);
 
@@ -162,7 +174,7 @@ export default function PDVPage() {
     const handleAbrirCaixa = async () => {
         if (!saldoInicial) return;
         try {
-            const res = await api.post('/caixa/abrir', { saldo_inicial: parseFloat(saldoInicial) });
+            const res = await api.post('/caixa/abrir', { saldo_inicial: parseCurrency(saldoInicial) });
             setCaixaAberto(res.data);
             setCaixaModalOpen(false);
             toast({
@@ -180,7 +192,7 @@ export default function PDVPage() {
     };
 
     const handleAddPayment = (method, amount) => {
-        const val = parseFloat(amount || 0);
+        const val = parseCurrency(amount);
         if (val <= 0) return;
 
         const paidSoFar = addedPayments.reduce((acc, p) => acc + parseFloat(p.valor), 0);
@@ -214,7 +226,7 @@ export default function PDVPage() {
     const handleFecharCaixa = async () => {
         if (!saldoFinal) return;
         try {
-            const res = await api.post('/caixa/fechar', { saldo_final: parseFloat(saldoFinal) });
+            const res = await api.post('/caixa/fechar', { saldo_final: parseCurrency(saldoFinal) });
             setCaixaAberto(null); // Close locally
             setFecharCaixaModalOpen(false);
             toast({
@@ -605,8 +617,7 @@ export default function PDVPage() {
 
     const handleUpdateItemPrice = async () => {
         if (editingItemIndex === null) return;
-        const cleanPrice = String(newPriceInput).replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
-        const price = parseFloat(cleanPrice);
+        const price = parseCurrency(newPriceInput);
 
         if (isNaN(price) || price < 0) {
             toast({ title: "Valor inválido", variant: "destructive" });
@@ -680,7 +691,7 @@ export default function PDVPage() {
                     toast({ title: "Saldo Insuficiente", variant: "destructive" });
                     return;
                 }
-                const amountToAdd = Math.min(parseFloat(paymentInputValue), parseFloat(saldoPermuta.saldo));
+                const amountToAdd = Math.min(parseCurrency(paymentInputValue), parseFloat(saldoPermuta.saldo));
                 handleAddPayment('VOUCHER_PERMUTA', amountToAdd);
             } else {
                 handleAddPayment(metodo, paymentInputValue);
@@ -715,9 +726,9 @@ export default function PDVPage() {
 
             let discountAmount = 0;
             if (descontoTipo === 'percent') {
-                discountAmount = (localSubtotal * parseFloat(descontoValor || 0)) / 100;
+                discountAmount = (localSubtotal * parseCurrency(descontoValor)) / 100;
             } else {
-                discountAmount = parseFloat(descontoValor || 0);
+                discountAmount = parseCurrency(descontoValor);
             }
 
             // Ratio of Pay / Subtotal (e.g. 90 / 100 = 0.9)
@@ -1177,10 +1188,11 @@ export default function PDVPage() {
                                         <Label className="text-xs">Desconto</Label>
                                         <div className="relative">
                                             <Input
-                                                type="number"
+                                                type="text"
+                                                inputMode="decimal"
                                                 value={descontoValor}
                                                 onChange={(e) => setDescontoValor(e.target.value)}
-                                                className="h-9 pr-8 text-right"
+                                                className="h-9 pr-8 text-right font-medium"
                                             />
                                             <button
                                                 onClick={() => setDescontoTipo(descontoTipo === 'percent' ? 'fixed' : 'percent')}
@@ -1195,10 +1207,11 @@ export default function PDVPage() {
                                         <div className="relative">
                                             <Truck className="absolute left-2 top-2 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                type="number"
+                                                type="text"
+                                                inputMode="decimal"
                                                 value={frete}
                                                 onChange={(e) => setFrete(e.target.value)}
-                                                className="h-9 pl-8 text-right"
+                                                className="h-9 pl-8 text-right font-medium"
                                             />
                                         </div>
                                     </div>
@@ -1227,10 +1240,11 @@ export default function PDVPage() {
                                     <div className="relative flex-1">
                                         <span className="absolute left-2 top-2 text-xs text-muted-foreground">R$</span>
                                         <Input
-                                            type="number"
+                                            type="text"
+                                            inputMode="decimal"
                                             value={paymentInputValue}
                                             onChange={(e) => setPaymentInputValue(e.target.value)}
-                                            className="h-9 pl-7 text-sm"
+                                            className="h-9 pl-7 text-sm font-semibold"
                                             placeholder="Valor"
                                         />
                                     </div>
@@ -1420,10 +1434,11 @@ export default function PDVPage() {
                             </Label>
                             <Input
                                 id="saldoInicial"
-                                type="number"
+                                type="text"
+                                inputMode="decimal"
                                 value={saldoInicial}
                                 onChange={(e) => setSaldoInicial(e.target.value)}
-                                className="col-span-3"
+                                className="col-span-3 font-medium"
                                 placeholder="0.00"
                             />
                         </div>
@@ -1452,10 +1467,11 @@ export default function PDVPage() {
                             </Label>
                             <Input
                                 id="saldoFinal"
-                                type="number"
+                                type="text"
+                                inputMode="decimal"
                                 value={saldoFinal}
                                 onChange={(e) => setSaldoFinal(e.target.value)}
-                                className="col-span-3"
+                                className="col-span-3 font-medium"
                                 placeholder="0.00"
                             />
                         </div>
@@ -1676,11 +1692,11 @@ export default function PDVPage() {
                             </Label>
                             <Input
                                 id="newPrice"
-                                type="number"
-                                step="0.01"
+                                type="text"
+                                inputMode="decimal"
                                 value={newPriceInput}
                                 onChange={(e) => setNewPriceInput(e.target.value)}
-                                className="col-span-3"
+                                className="col-span-3 font-semibold"
                             />
                         </div>
                     </div>

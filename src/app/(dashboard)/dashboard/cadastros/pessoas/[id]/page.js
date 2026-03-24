@@ -798,56 +798,56 @@ export default function DetalhesPessoaPage() {
                                                     <div 
                                                         key={i} 
                                                         onClick={() => setSelectedMonthKey(selectedMonthKey === d.key ? null : d.key)}
-                                                        className={`flex flex-col cursor-pointer transition-all hover:ring-1 hover:ring-purple-400 p-2 rounded-md ${d.status === 'PENDENTE' ? 'bg-slate-100 border border-slate-200 opacity-60' : 'bg-white border border-purple-100 shadow-sm'} ${selectedMonthKey === d.key ? 'ring-2 ring-purple-500 scale-[1.01]' : ''}`}
+                                                        className={`flex flex-col cursor-pointer transition-all hover:ring-1 hover:ring-purple-400 p-2 rounded-md ${d.status === 'PENDENTE' ? 'bg-slate-100 border border-slate-200 opacity-60' : d.status === 'EXPIRADO' ? 'bg-gray-50 border border-gray-200 opacity-60' : 'bg-white border border-purple-100 shadow-sm'} ${selectedMonthKey === d.key ? 'ring-2 ring-purple-500 scale-[1.01]' : ''}`}
                                                     >
                                                         <div className="flex justify-between items-center w-full">
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-medium text-purple-700 capitalize">
+                                                                <span className={`text-sm font-medium capitalize ${d.status === 'EXPIRADO' ? 'text-gray-500 line-through' : 'text-purple-700'}`}>
                                                                     {new Date(d.ano, d.mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
                                                                 </span>
-                                                                <span className={`text-[9px] font-bold uppercase ${d.status === 'PENDENTE' ? 'text-slate-500' : 'text-green-600'}`}>
-                                                                    {d.status === 'PENDENTE' ? 'Em Apuração' : 'Liberado'}
+                                                                <span className={`text-[9px] font-bold uppercase ${d.status === 'PENDENTE' ? 'text-slate-500' : d.status === 'EXPIRADO' ? 'text-red-500' : 'text-green-600'}`}>
+                                                                    {d.status === 'PENDENTE' ? 'Em Apuração' : d.status === 'EXPIRADO' ? 'Expirado' : 'Liberado'}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center gap-3">
-                                                                <span className={`text-sm font-bold ${d.status === 'PENDENTE' ? 'text-slate-500' : 'text-purple-900'}`}>R$ {parseFloat(d.valor).toFixed(2)}</span>
+                                                                <span className={`text-sm font-bold ${d.status === 'PENDENTE' ? 'text-slate-500' : d.status === 'EXPIRADO' ? 'text-gray-400 line-through' : 'text-purple-900'}`}>R$ {parseFloat(d.valor).toFixed(2)}</span>
                                                                 <ChevronDown className={`h-4 w-4 text-purple-400 transition-transform ${selectedMonthKey === d.key ? 'rotate-180' : ''}`} />
                                                             </div>
                                                         </div>
 
-                                                        {selectedMonthKey === d.key && (
-                                                            <div className="mt-4 animate-in fade-in slide-in-from-top-2 overflow-x-auto">
-                                                                <table className="w-full text-[11px]">
-                                                                    <thead>
-                                                                        <tr className="border-b border-purple-100 text-purple-500">
-                                                                            <th className="text-left py-1 font-bold">DATA</th>
-                                                                            <th className="text-left py-1 font-bold">CÓDIGO</th>
-                                                                            <th className="text-left py-1 font-bold">DESCRIÇÃO</th>
-                                                                            <th className="text-right py-1 font-bold">VENDA</th>
-                                                                            <th className="text-right py-1 font-bold">CRÉDITO</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {d.pecas?.map((peca, pi) => (
-                                                                            <tr key={pi} className="border-b border-purple-50/50 last:border-0 hover:bg-purple-50/30">
-                                                                                <td className="py-1.5 text-slate-500">{new Date(peca.data).toLocaleDateString('pt-BR')}</td>
-                                                                                <td className="py-1.5 font-mono font-bold text-purple-800">{peca.codigo}</td>
-                                                                                <td className="py-1.5 text-slate-600 max-w-[120px] truncate">{peca.descricao}</td>
-                                                                                <td className="py-1.5 text-right text-slate-400">R$ {peca.valor_venda.toFixed(2)}</td>
-                                                                                <td className="py-1.5 text-right font-bold text-green-700">R$ {peca.comissao.toFixed(2)}</td>
+                                                            {selectedMonthKey === d.key && (
+                                                                <div className="mt-4 animate-in fade-in slide-in-from-top-2 overflow-x-auto">
+                                                                    <table className="w-full text-[11px]">
+                                                                        <thead>
+                                                                            <tr className="border-b border-purple-100 text-purple-500">
+                                                                                <th className="text-left py-1 font-bold">DATA</th>
+                                                                                <th className="text-left py-1 font-bold">CÓDIGO</th>
+                                                                                <th className="text-left py-1 font-bold">DESCRIÇÃO</th>
+                                                                                <th className="text-right py-1 font-bold">VENDA</th>
+                                                                                <th className="text-right py-1 font-bold">CRÉDITO</th>
                                                                             </tr>
-                                                                        ))}
-                                                                        {d.outros?.map((o, oi) => (
-                                                                            <tr key={`o-${oi}`} className="bg-slate-50/50">
-                                                                                <td colSpan={4} className="py-1.5 font-bold text-slate-500 uppercase italic">{o.descricao}</td>
-                                                                                <td className="py-1.5 text-right font-bold text-purple-700">R$ {o.valor.toFixed(2)}</td>
-                                                                            </tr>
-                                                                        ))}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            {d.pecas?.map((peca, pi) => (
+                                                                                <tr key={pi} className="border-b border-purple-50/50 last:border-0 hover:bg-purple-50/30">
+                                                                                    <td className="py-1.5 text-slate-500">{new Date(peca.data).toLocaleDateString('pt-BR')}</td>
+                                                                                    <td className="py-1.5 font-mono font-bold text-purple-800">{peca.codigo}</td>
+                                                                                    <td className="py-1.5 text-slate-600 max-w-[120px] truncate">{peca.descricao}</td>
+                                                                                    <td className="py-1.5 text-right text-slate-400">R$ {peca.valor_venda.toFixed(2)}</td>
+                                                                                    <td className="py-1.5 text-right font-bold text-green-700">R$ {peca.comissao.toFixed(2)}</td>
+                                                                                </tr>
+                                                                            ))}
+                                                                            {d.outros?.map((o, oi) => (
+                                                                                <tr key={`o-${oi}`} className="bg-slate-50/50">
+                                                                                    <td colSpan={4} className="py-1.5 font-bold text-slate-500 uppercase italic">{o.descricao}</td>
+                                                                                    <td className="py-1.5 text-right font-bold text-purple-700">R$ {o.valor.toFixed(2)}</td>
+                                                                                </tr>
+                                                                            ))}
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                 ))}
                                             </div>
                                         </div>

@@ -600,31 +600,15 @@ export default function DetalheSacolinhaPage() {
                                         <TableCell>{item.tamanho?.nome || item.tamanho || '-'}</TableCell>
                                         <TableCell>{item.cor?.nome || item.cor || '-'}</TableCell>
                                         <TableCell className="text-right font-semibold">
-                                            <div className="flex flex-col items-end">
-                                                {item.valor_venda_final ? (
-                                                    <>
-                                                        <span className="text-green-600">
-                                                            {formatCurrency(item.valor_venda_final)}
-                                                        </span>
-                                                        {parseFloat(item.valor_venda_final) !== parseFloat(item.preco_venda) && (
-                                                            <span className="text-xs text-gray-400 line-through">
-                                                                {formatCurrency(item.preco_venda)}
-                                                            </span>
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <span className={item.preco_venda_sacolinha ? "text-amber-600" : ""}>
-                                                            {formatCurrency(item.preco_venda_sacolinha || item.preco_venda)}
-                                                        </span>
-                                                        {item.preco_venda_sacolinha && (
-                                                            <span className="text-xs text-gray-400 line-through">
-                                                                {formatCurrency(item.preco_venda)}
-                                                            </span>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
+                                            {item.valor_venda_final ? (
+                                                <span className="text-green-600">
+                                                    {formatCurrency(item.valor_venda_final)}
+                                                </span>
+                                            ) : (
+                                                <span className={item.preco_venda_sacolinha ? "text-amber-600" : ""}>
+                                                    {formatCurrency(item.preco_venda_sacolinha || item.preco_venda)}
+                                                </span>
+                                            )}
                                         </TableCell>
                                         {sacolinha.status === 'ABERTA' && (
                                             <TableCell>

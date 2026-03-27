@@ -135,7 +135,7 @@ function PessoasContent() {
         if (filterType === "Clientes") matchesType = p.is_cliente;
 
         let matchesCredit = true;
-        if (showOnlyWithCredit) matchesCredit = (p.saldo > 0);
+        if (showOnlyWithCredit) matchesCredit = (p.saldo > 0 || p._has_any_balance);
 
         return matchesSearch && matchesType && matchesCredit;
     });

@@ -128,16 +128,23 @@ function PessoasContent() {
 
     const filtered = people.filter(p => {
         const matchesSearch = (p.nome && p.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (p.cpf_cnpj && p.cpf_cnpj.includes(searchTerm));
+            (p.cpf_cnpj && String(p.cpf_cnpj).includes(searchTerm));
 
         let matchesType = true;
         if (filterType === "Fornecedores") matchesType = p.is_fornecedor;
         if (filterType === "Clientes") matchesType = p.is_cliente;
 
-        let matchesCredit = true;
-        if (showOnlyWithCredit) matchesCredit = (p.saldo > 0 || p._has_any_balance);
-
-        return matchesSearch && matchesType && matchesCredit;
+        return matchesSearch && matchesType;
+    }).sort((a, b) => {
+        if (showOnlyWithCredit) {
+            // Prioritize saldo > 0
+            if (a.saldo > 0 && b.saldo <= 0) return -1;
+            if (a.saldo <= 0 && b.saldo > 0) return 1;
+            // Then sort by saldo descending
+            return (b.saldo || 0) - (a.saldo || 0);
+        }
+        // Default sorting (by name or ID if needed)
+        return (a.nome || '').localeCompare(b.nome || '');
     });
 
     const getTipoLabel = (p) => {

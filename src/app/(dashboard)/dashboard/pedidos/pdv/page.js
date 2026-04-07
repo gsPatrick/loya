@@ -821,6 +821,28 @@ export default function PDVPage() {
         }
     };
 
+    const handleResetPDV = () => {
+        setItems([]);
+        setSelectedClient("");
+        setClientSearch("");
+        setActiveSacolinha(null);
+        setDescontoValor(0);
+        setFrete(0);
+        setAddedPayments([]);
+        setPaymentMethod("DINHEIRO");
+        setBarcodeInput("");
+        setTempParcelas(1);
+        setVoucherAmount(0);
+        setSelectedItemIds([]);
+        if (barcodeInputRef.current) barcodeInputRef.current.focus();
+
+        toast({
+            title: "Venda Cancelada",
+            description: "O carrinho e os dados do cliente foram limpos.",
+            className: "bg-red-600 text-white border-none"
+        });
+    };
+
     // --- CALCULATIONS (Moved to top) ---
     // const subtotal = items.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
     // const descontoCalculado = ...
@@ -1434,7 +1456,11 @@ export default function PDVPage() {
                                 <Button variant="outline" className="w-full border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:border-orange-300">
                                     <Save className="mr-2 h-4 w-4" /> Pré-Venda
                                 </Button>
-                                <Button variant="outline" className="w-full border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200 hover:text-red-700">
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200 hover:text-red-700"
+                                    onClick={handleResetPDV}
+                                >
                                     Cancelar
                                 </Button>
                             </div>

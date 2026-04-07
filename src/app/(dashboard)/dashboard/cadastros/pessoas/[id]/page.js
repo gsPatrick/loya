@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import api, { API_URL } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 import * as XLSX from 'xlsx';
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -65,6 +66,26 @@ export default function DetalhesPessoaPage() {
     const [tamanhos, setTamanhos] = useState([]);
     const [categorias, setCategorias] = useState([]);
     const [isPecasLoading, setIsPecasLoading] = useState(false);
+
+    // Grouping logic for history
+    const historyByMonth = useMemo(() => {
+        if (!permuta?.historico) return {};
+        const groups = {};
+        permuta.historico.forEach(item => {
+            const date = new Date(item.data);
+            const monthName = date.toLocaleString('pt-BR', { month: 'long' });
+            const year = date.getFullYear();
+            const key = `${year}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            if (!groups[key]) {
+                groups[key] = {
+                    label: `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} de ${year}`,
+                    items: []
+                };
+            }
+            groups[key].items.push(item);
+        });
+        return groups;
+    }, [permuta?.historico]);
 
     useEffect(() => {
         if (params.id) {
@@ -862,24 +883,47 @@ export default function DetalhesPessoaPage() {
                                 <CardTitle className="flex items-center gap-2">
                                     <History className="h-5 w-5" /> Histórico de Uso
                                 </CardTitle>
-                                <CardDescription>Movimentações recentes de crédito de permuta</CardDescription>
+                                <CardDescription>Movimentações de crédito de permuta agrupadas por mês</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-4">
-                                    {permuta?.historico && permuta.historico.length > 0 ? (
-                                        permuta.historico.map((item, i) => (
-                                            <div key={i} className="flex items-center justify-between border-b last:border-0 pb-2 last:pb-0">
-                                                <div>
-                                                    <p className="font-medium">{item.descricao}</p>
-                                                    <p className="text-xs text-muted-foreground">{new Date(item.data).toLocaleDateString()} às {new Date(item.data).toLocaleTimeString()}</p>
-                                                </div>
-                                                <span className={`font-bold ${item.tipo === 'USO' || item.tipo === 'DEBITO' ? 'text-red-600' : 'text-green-600'}`}>
-                                                    {item.tipo === 'USO' || item.tipo === 'DEBITO' ? '-' : '+'} R$ {parseFloat(item.valor).toFixed(2)}
-                                                </span>
-                                            </div>
+                                <div className="space-y-3">
+                                    {Object.keys(historyByMonth).length > 0 ? (
+                                        Object.keys(historyByMonth).sort().reverse().map((key) => (
+                                            <Collapsible key={key} defaultOpen={Object.keys(historyByMonth).sort().reverse()[0] === key}>
+                                                <CollapsibleTrigger asChild>
+                                                    <Button variant="ghost" className="w-full flex items-center justify-between p-3 bg-gray-50/50 hover:bg-gray-100/50 border rounded-lg group">
+                                                        <div className="flex items-center gap-2">
+                                                            <Calendar className="h-4 w-4 text-primary/60" />
+                                                            <span className="font-bold text-sm text-primary">{historyByMonth[key].label}</span>
+                                                            <Badge variant="outline" className="text-[10px] font-normal">{historyByMonth[key].items.length} mov.</Badge>
+                                                        </div>
+                                                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                                                    </Button>
+                                                </CollapsibleTrigger>
+                                                <CollapsibleContent className="px-1 pt-2 pb-4 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    {historyByMonth[key].items.map((item, i) => (
+                                                        <div key={i} className="flex items-center justify-between border-b border-dashed last:border-0 pb-2 last:pb-0 px-2 group/item hover:bg-muted/30 transition-colors rounded">
+                                                            <div>
+                                                                <p className="text-sm font-medium leading-tight">{item.descricao}</p>
+                                                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                                    {new Date(item.data).toLocaleDateString('pt-BR')} às {new Date(item.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <span className={`font-bold text-sm ${item.tipo === 'USO' || item.tipo === 'DEBITO' ? 'text-red-600' : 'text-green-600'}`}>
+                                                                    {item.tipo === 'USO' || item.tipo === 'DEBITO' ? '-' : '+'} R$ {parseFloat(item.valor).toFixed(2)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </CollapsibleContent>
+                                            </Collapsible>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-muted-foreground italic">Nenhum uso registrado até o momento.</p>
+                                        <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed rounded-xl">
+                                            <History className="h-10 w-10 text-muted-foreground/30 mb-2" />
+                                            <p className="text-sm text-muted-foreground italic">Nenhum uso registrado até o momento.</p>
+                                        </div>
                                     )}
                                 </div>
                             </CardContent>

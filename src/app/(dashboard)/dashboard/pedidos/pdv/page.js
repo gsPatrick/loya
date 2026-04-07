@@ -510,15 +510,7 @@ export default function PDVPage() {
             return;
         }
 
-        // Check if already in cart
-        if (items.find(i => i.pecaId === product.id)) {
-            toast({
-                title: "Item já adicionado",
-                description: "Este item já está no carrinho.",
-                variant: "warning"
-            });
-            return;
-        }
+        /* Removed: check if already in cart - now handled inside addItemToCart to allow incrementing qtd */
 
         if (activeSacolinha) {
             try {
@@ -577,6 +569,32 @@ export default function PDVPage() {
     };
 
     const addItemToCart = (product) => {
+        const existingIndex = items.findIndex(i => i.pecaId === product.id);
+
+        if (existingIndex > -1) {
+            const newItems = [...items];
+            const currentItem = newItems[existingIndex];
+            const stockLimit = product.quantidade || currentItem.estoque || 1;
+
+            if (currentItem.qtd < stockLimit) {
+                currentItem.qtd += 1;
+                setItems(newItems);
+                toast({
+                    title: "Quantidade Atualizada",
+                    description: `Agora você tem ${currentItem.qtd} unidades de ${currentItem.descricao}.`,
+                    className: "bg-blue-600 text-white border-none"
+                });
+                playBeep();
+            } else {
+                toast({
+                    title: "Limite de Estoque",
+                    description: "Não há mais unidades disponíveis deste produto.",
+                    variant: "warning"
+                });
+            }
+            return;
+        }
+
         const newItem = {
             pecaId: product.id,
             codigo: product.codigo_etiqueta,
@@ -584,7 +602,8 @@ export default function PDVPage() {
             preco: parseFloat(product.preco_venda_sacolinha || product.preco_venda),
             tamanho: product.tamanho?.nome || "UN",
             marca: product.marca?.nome || "Sem Marca",
-            qtd: 1
+            qtd: 1,
+            estoque: product.quantidade || 1
         };
         setItems([...items, newItem]);
         toast({
@@ -592,6 +611,29 @@ export default function PDVPage() {
             description: `${newItem.descricao} adicionado ao carrinho.`,
             className: "bg-green-600 text-white border-none"
         });
+    };
+
+    const handleUpdateQuantity = (index, delta) => {
+        const newItems = [...items];
+        const item = newItems[index];
+        const newQtd = item.qtd + delta;
+
+        if (newQtd <= 0) {
+            handleRemoveItem(index);
+            return;
+        }
+
+        if (newQtd > item.estoque) {
+            toast({
+                title: "Limite de Estoque",
+                description: `Apenas ${item.estoque} unidades disponíveis.`,
+                variant: "warning"
+            });
+            return;
+        }
+
+        item.qtd = newQtd;
+        setItems(newItems);
     };
 
     const handleRemoveItem = async (index) => {
@@ -740,7 +782,8 @@ export default function PDVPage() {
                 sacolinhaId: activeSacolinha?.id || null,
                 itens: items.map(i => ({
                     pecaId: i.pecaId,
-                    valor_unitario_venda: i.preco // Send the cart price (negotiated or catalog)
+                    valor_unitario_venda: i.preco, // Send the cart price (negotiated or catalog)
+                    quantidade: i.qtd || 1
                 })),
                 pagamentos: addedPayments,
                 origemVendaId: null,
@@ -1067,6 +1110,7 @@ export default function PDVPage() {
                                         </TableHead>
                                         <TableHead className="w-[100px]">Peça</TableHead>
                                         <TableHead>Descrição</TableHead>
+                                        <TableHead className="w-[120px] text-center">Quantidade</TableHead>
                                         <TableHead className="w-[120px] text-right">Unitário</TableHead>
                                         <TableHead className="w-[100px] text-right">Total</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
@@ -1101,6 +1145,30 @@ export default function PDVPage() {
                                                             </Badge>
                                                         )}
                                                     </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <div className="flex items-center bg-muted/30 rounded-lg p-0.5 border shadow-inner">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 rounded-md hover:bg-white hover:text-primary transition-all shadow-sm"
+                                                            onClick={() => handleUpdateQuantity(index, -1)}
+                                                        >
+                                                            <span className="text-lg font-bold">−</span>
+                                                        </Button>
+                                                        <span className="w-10 text-center font-bold text-sm leading-none tabular-nums">{item.qtd}</span>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 rounded-md hover:bg-white hover:text-primary transition-all shadow-sm"
+                                                            onClick={() => handleUpdateQuantity(index, 1)}
+                                                        >
+                                                            <Plus className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
+                                                    <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Estoque: {item.estoque}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right font-medium text-muted-foreground">

@@ -134,16 +134,16 @@ function PessoasContent() {
         if (filterType === "Fornecedores") matchesType = p.is_fornecedor;
         if (filterType === "Clientes") matchesType = p.is_cliente;
 
-        return matchesSearch && matchesType;
+        let matchesCredit = true;
+        if (showOnlyWithCredit) matchesCredit = (p.saldo || 0) > 0;
+
+        return matchesSearch && matchesType && matchesCredit;
     }).sort((a, b) => {
         if (showOnlyWithCredit) {
-            // Prioritize saldo > 0
-            if (a.saldo > 0 && b.saldo <= 0) return -1;
-            if (a.saldo <= 0 && b.saldo > 0) return 1;
-            // Then sort by saldo descending
+            // Sort by saldo descending if filtering by credit
             return (b.saldo || 0) - (a.saldo || 0);
         }
-        // Default sorting (by name or ID if needed)
+        // Default sorting
         return (a.nome || '').localeCompare(b.nome || '');
     });
 
